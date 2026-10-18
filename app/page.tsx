@@ -2,19 +2,29 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Flame, CheckCircle, ChevronRight, RefreshCw, Play, Clock, Sparkles } from 'lucide-react';
-import HeroBanner from '@/components/HeroBanner';
-import AnimeCard from '@/components/AnimeCard';
-import { GridSkeleton, HeroSkeleton } from '@/components/LoadingSkeleton';
+import { Flame, CheckCircle, ChevronRight, RefreshCw, Sparkles, BookOpen, Film } from 'lucide-react';
+import FluentHeader from '@/components/FluentHeader';
+import HeroCarousel from '@/components/HeroCarousel';
+import LanjutNontonCard from '@/components/LanjutNontonCard';
+import AnimeGlassCard from '@/components/AnimeGlassCard';
+import FloatingGlassDock, { DockTab } from '@/components/FloatingGlassDock';
+import AnimeListView from '@/components/AnimeListView';
+import HistoryBookmarksView from '@/components/HistoryBookmarksView';
+import AnimeAiChat from '@/components/AnimeAiChat';
+import UserProfileView from '@/components/UserProfileView';
 import { getHomeData } from '@/lib/clientApi';
 import { getWatchHistory } from '@/lib/storage';
 import { HomeData, WatchHistoryItem } from '@/lib/types';
+import { useTheme } from '@/lib/themeContext';
 
 export default function HomePage() {
   const [data, setData] = useState<HomeData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [history, setHistory] = useState<WatchHistoryItem[]>([]);
+  const [activeCategory, setActiveCategory] = useState<'Anime' | 'Komik' | 'Donghua'>('Anime');
+  const [activeTab, setActiveTab] = useState<DockTab>('jelajah');
+  const { accentColor } = useTheme();
 
   const loadData = async () => {
     try {
@@ -24,7 +34,7 @@ export default function HomePage() {
       setData(res);
     } catch (err: any) {
       console.error(err);
-      setError(err.message || 'Gagal memuat data dari server SankaVollerei');
+      setError(err.message || 'Gagal memuat data dari server Sanka Vollerei');
     } finally {
       setLoading(false);
     }
@@ -36,171 +46,178 @@ export default function HomePage() {
   }, []);
 
   return (
-    <div className="space-y-10 animate-fade-in">
-      {/* Loading State */}
-      {loading && (
-        <div>
-          <HeroSkeleton />
-          <div className="space-y-4 mb-8">
-            <div className="h-6 w-48 rounded-lg skeleton-shimmer" />
-            <GridSkeleton count={6} />
-          </div>
-          <div className="space-y-4">
-            <div className="h-6 w-48 rounded-lg skeleton-shimmer" />
-            <GridSkeleton count={6} />
-          </div>
-        </div>
-      )}
+    <div className="min-h-screen flex flex-col selection:bg-white selection:text-black">
+      {/* Top Header with Pill Switcher ("Anime", "Komik", "Donghua"), Search & Avatar */}
+      <FluentHeader
+        activeCategory={activeCategory}
+        onSelectCategory={(cat) => setActiveCategory(cat)}
+        onOpenProfile={() => setActiveTab('profil')}
+      />
 
-      {/* Error State */}
-      {error && !loading && (
-        <div className="p-8 rounded-3xl glass-card border-red-500/30 text-center space-y-4 max-w-lg mx-auto my-12">
-          <div className="w-14 h-14 rounded-full bg-red-500/20 text-red-400 mx-auto flex items-center justify-center">
-            <RefreshCw className="w-6 h-6 animate-spin" />
+      {/* Main Container */}
+      <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 safe-dock-padding space-y-8">
+        {/* If Active Category is not Anime (e.g. Komik or Donghua), show contextual banner */}
+        {activeCategory !== 'Anime' && (
+          <div className="p-8 rounded-3xl glass-fluent border border-white/10 text-center space-y-4">
+            <div className="w-14 h-14 rounded-2xl bg-white/10 border border-white/20 flex items-center justify-center mx-auto text-white">
+              {activeCategory === 'Komik' ? <BookOpen className="w-7 h-7" /> : <Film className="w-7 h-7" />}
+            </div>
+            <h2 className="font-cinematic font-bold text-xl text-white">
+              Katalog {activeCategory} Segera Hadir
+            </h2>
+            <p className="text-xs text-zinc-400 max-w-md mx-auto">
+              Fitur integrasi pembaca {activeCategory} sedang dikembangkan. Kamu tetap dapat menikmati ribuan judul anime subtitle Indonesia melalui tab Anime!
+            </p>
+            <button
+              onClick={() => setActiveCategory('Anime')}
+              className="px-6 py-2.5 rounded-full bg-white text-black font-extrabold text-xs hover:bg-zinc-200 transition-all shadow-md active:scale-95"
+            >
+              Kembali ke Anime
+            </button>
           </div>
-          <h2 className="text-xl font-bold text-white">Gagal Menghubungkan ke API</h2>
-          <p className="text-sm text-slate-400">{error}</p>
-          <button
-            onClick={loadData}
-            className="px-6 py-2.5 rounded-2xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-semibold text-xs shadow-neon-cyan transition-all flutter-button"
-          >
-            Coba Lagi
-          </button>
-        </div>
-      )}
+        )}
 
-      {/* Main Content */}
-      {!loading && data && (
-        <>
-          {/* Futuristic Hero Banner */}
-          {data.ongoing?.animeList?.length > 0 && (
-            <HeroBanner featuredList={data.ongoing.animeList} />
-          )}
-
-          {/* Resume Watching ("Lanjut Nonton") Section if history exists */}
-          {history.length > 0 && (
-            <section className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="p-1.5 rounded-lg bg-pink-500/20 border border-pink-500/30 text-pink-400">
-                    <Clock className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <h2 className="text-base sm:text-lg font-bold text-white">Lanjut Nonton</h2>
-                    <p className="text-[11px] text-slate-400">Episode terakhir yang kamu tonton</p>
-                  </div>
+        {/* Tab 1: JELAJAH (Main Home Feed) */}
+        {activeTab === 'jelajah' && activeCategory === 'Anime' && (
+          <div className="space-y-8 animate-fade-in">
+            {/* Loading State */}
+            {loading && (
+              <div className="space-y-6">
+                <div className="w-full h-[400px] sm:h-[480px] rounded-3xl skeleton-shimmer" />
+                <div className="w-full h-32 rounded-3xl skeleton-shimmer" />
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4">
+                  {[...Array(6)].map((_, i) => (
+                    <div key={i} className="aspect-[3/4] rounded-2xl skeleton-shimmer" />
+                  ))}
                 </div>
-                <Link
-                  href="/saved"
-                  className="text-xs text-cyan-400 hover:text-cyan-300 flex items-center gap-1 font-medium transition-colors"
-                >
-                  Semua Riwayat <ChevronRight className="w-3.5 h-3.5" />
-                </Link>
               </div>
+            )}
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-                {history.slice(0, 3).map((item) => (
-                  <Link
-                    key={item.episodeId}
-                    href={`/watch/${item.episodeId}`}
-                    className="flex items-center gap-3 p-3 rounded-2xl glass-card hover:border-pink-500/40 transition-all flutter-button group"
-                  >
-                    <div className="relative w-16 h-20 rounded-xl overflow-hidden flex-shrink-0 bg-slate-900">
-                      <img
-                        src={item.poster}
-                        alt={item.animeTitle}
-                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                      />
-                      <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Play className="w-5 h-5 text-white fill-white" />
+            {/* Error State */}
+            {error && !loading && (
+              <div className="p-8 rounded-3xl glass-fluent border border-red-500/30 text-center space-y-4 max-w-lg mx-auto my-12">
+                <div className="w-12 h-12 rounded-full bg-red-500/20 text-red-400 mx-auto flex items-center justify-center">
+                  <RefreshCw className="w-6 h-6 animate-spin" />
+                </div>
+                <h2 className="font-cinematic font-bold text-lg text-white">
+                  Gagal Menghubungkan ke API Sanka Vollerei
+                </h2>
+                <p className="text-xs text-zinc-400">{error}</p>
+                <button
+                  onClick={loadData}
+                  className="px-6 py-2.5 rounded-full bg-white text-black font-bold text-xs hover:bg-zinc-200 transition-all shadow-md"
+                >
+                  Coba Lagi
+                </button>
+              </div>
+            )}
+
+            {/* Content */}
+            {!loading && data && (
+              <>
+                {/* Hero Carousel Besar Bergradasi Gelap */}
+                {data.ongoing?.animeList?.length > 0 && (
+                  <HeroCarousel featuredList={data.ongoing.animeList} />
+                )}
+
+                {/* Komponen Kartu Kaca Transparan "LANJUT NONTON" */}
+                <LanjutNontonCard
+                  historyItem={history.length > 0 ? history[0] : null}
+                  fallbackAnime={data.ongoing?.animeList?.[0] || null}
+                />
+
+                {/* Section: Anime Sedang Tayang (Ongoing) */}
+                {data.ongoing?.animeList?.length > 0 && (
+                  <section className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2.5">
+                        <div className="p-2 rounded-xl bg-white/10 border border-white/15 text-white">
+                          <Flame className="w-4 h-4 text-amber-400" />
+                        </div>
+                        <div>
+                          <h2 className="font-cinematic font-bold text-lg sm:text-xl text-white">
+                            Anime Sedang Tayang
+                          </h2>
+                          <p className="text-xs text-zinc-400">Rilis episode mingguan terhangat</p>
+                        </div>
                       </div>
+
+                      <button
+                        onClick={() => setActiveTab('list')}
+                        className="px-4 py-1.5 rounded-full bg-white/[0.06] hover:bg-white/[0.12] border border-white/10 text-xs font-semibold text-zinc-300 hover:text-white transition-all flex items-center gap-1"
+                      >
+                        Lihat Semua <ChevronRight className="w-3.5 h-3.5" />
+                      </button>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <span className="text-[10px] text-pink-400 font-semibold uppercase tracking-wider">
-                        Terakhir Diputar
-                      </span>
-                      <h4 className="text-xs font-bold text-white truncate">{item.animeTitle}</h4>
-                      <p className="text-[11px] text-slate-400 truncate mt-0.5">{item.episodeTitle}</p>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4">
+                      {data.ongoing.animeList.slice(0, 12).map((anime) => (
+                        <AnimeGlassCard
+                          key={anime.animeId || anime.title}
+                          anime={anime}
+                        />
+                      ))}
                     </div>
-                  </Link>
-                ))}
-              </div>
-            </section>
-          )}
+                  </section>
+                )}
 
-          {/* Section: Ongoing Anime */}
-          {data.ongoing?.animeList?.length > 0 && (
-            <section className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2.5">
-                  <div className="p-1.5 rounded-xl bg-cyan-500/20 border border-cyan-400/40 text-cyan-400 shadow-neon-cyan">
-                    <Flame className="w-4 h-4 animate-pulse" />
-                  </div>
-                  <div>
-                    <h2 className="text-lg sm:text-xl font-extrabold text-white tracking-wide">
-                      Anime Sedang Tayang
-                    </h2>
-                    <p className="text-xs text-slate-400">Episode baru rilis minggu ini</p>
-                  </div>
-                </div>
+                {/* Section: Anime Tamat (Completed) */}
+                {data.complete?.animeList?.length > 0 && (
+                  <section className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2.5">
+                        <div className="p-2 rounded-xl bg-white/10 border border-white/15 text-white">
+                          <CheckCircle className="w-4 h-4 text-emerald-400" />
+                        </div>
+                        <div>
+                          <h2 className="font-cinematic font-bold text-lg sm:text-xl text-white">
+                            Anime Tamat (Completed)
+                          </h2>
+                          <p className="text-xs text-zinc-400">Siap maraton langsung tanpa menunggu</p>
+                        </div>
+                      </div>
 
-                <Link
-                  href="/ongoing"
-                  className="px-3.5 py-1.5 rounded-full bg-[#121824] hover:bg-[#1a2335] border border-white/10 hover:border-cyan-500/40 text-xs font-semibold text-cyan-400 hover:text-cyan-300 flex items-center gap-1 transition-all flutter-button"
-                >
-                  Lihat Semua
-                  <ChevronRight className="w-3.5 h-3.5" />
-                </Link>
-              </div>
+                      <button
+                        onClick={() => setActiveTab('list')}
+                        className="px-4 py-1.5 rounded-full bg-white/[0.06] hover:bg-white/[0.12] border border-white/10 text-xs font-semibold text-zinc-300 hover:text-white transition-all flex items-center gap-1"
+                      >
+                        Lihat Semua <ChevronRight className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
 
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4 md:gap-5">
-                {data.ongoing.animeList.slice(0, 12).map((anime) => (
-                  <AnimeCard
-                    key={anime.animeId || anime.title}
-                    anime={anime}
-                  />
-                ))}
-              </div>
-            </section>
-          )}
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4">
+                      {data.complete.animeList.slice(0, 12).map((anime) => (
+                        <AnimeGlassCard
+                          key={anime.animeId || anime.title}
+                          anime={anime}
+                        />
+                      ))}
+                    </div>
+                  </section>
+                )}
+              </>
+            )}
+          </div>
+        )}
 
-          {/* Section: Completed Anime */}
-          {data.complete?.animeList?.length > 0 && (
-            <section className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2.5">
-                  <div className="p-1.5 rounded-xl bg-purple-500/20 border border-purple-400/40 text-purple-400 shadow-neon-purple">
-                    <CheckCircle className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <h2 className="text-lg sm:text-xl font-extrabold text-white tracking-wide">
-                      Anime Tamat (Complete)
-                    </h2>
-                    <p className="text-xs text-slate-400">Siap maraton dari episode pertama hingga akhir</p>
-                  </div>
-                </div>
+        {/* Tab 2: LIST (Directory) */}
+        {activeTab === 'list' && <AnimeListView />}
 
-                <Link
-                  href="/complete"
-                  className="px-3.5 py-1.5 rounded-full bg-[#121824] hover:bg-[#1a2335] border border-white/10 hover:border-purple-500/40 text-xs font-semibold text-purple-400 hover:text-purple-300 flex items-center gap-1 transition-all flutter-button"
-                >
-                  Lihat Semua
-                  <ChevronRight className="w-3.5 h-3.5" />
-                </Link>
-              </div>
+        {/* Tab 3: RIWAYAT (History & Bookmarks) */}
+        {activeTab === 'riwayat' && <HistoryBookmarksView />}
 
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4 md:gap-5">
-                {data.complete.animeList.slice(0, 12).map((anime) => (
-                  <AnimeCard
-                    key={anime.animeId || anime.title}
-                    anime={anime}
-                  />
-                ))}
-              </div>
-            </section>
-          )}
-        </>
-      )}
+        {/* Tab 4: CHAT (Anime AI Assistant) */}
+        {activeTab === 'chat' && <AnimeAiChat />}
+
+        {/* Tab 5: PROFIL (User Profile) */}
+        {activeTab === 'profil' && <UserProfileView />}
+      </main>
+
+      {/* Floating Glass Dock (Bottom Navigation: Jelajah, List, Riwayat, Chat, Profil) */}
+      <FloatingGlassDock
+        activeTab={activeTab}
+        onTabChange={(tab) => setActiveTab(tab)}
+      />
     </div>
   );
 }

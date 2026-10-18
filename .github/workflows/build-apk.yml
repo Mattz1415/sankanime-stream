@@ -32,11 +32,8 @@ jobs:
       - name: Install Dependencies
         run: npm install
 
-      - name: Build Web Application
-        run: |
-          npm run build
-          mkdir -p out
-          echo '<!DOCTYPE html><html><head><title>NexusAnime</title></head><body>Loading NexusAnime...</body></html>' > out/index.html
+      - name: Build Web Application (Static Export)
+        run: npm run build
 
       - name: Sync Capacitor Android
         run: npx cap sync android

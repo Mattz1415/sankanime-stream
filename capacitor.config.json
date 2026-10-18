@@ -2,11 +2,6 @@
   "appId": "com.nexus.anime",
   "appName": "NexusAnime",
   "webDir": "out",
-  "server": {
-    "url": "https://nexus-anime-stream.vercel.app",
-    "cleartext": true,
-    "androidScheme": "https"
-  },
   "android": {
     "allowMixedContent": true,
     "captureInput": true,

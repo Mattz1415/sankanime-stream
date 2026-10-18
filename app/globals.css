@@ -3,13 +3,12 @@
 @tailwind utilities;
 
 :root {
-  --bg-cyber: #07090e;
-  --surface-cyber: #0e131d;
-  --card-cyber: #141b29;
-  --border-cyber: #1e283d;
-  --neon-cyan: #00f0ff;
-  --neon-purple: #9333ea;
-  --neon-pink: #ff2a85;
+  --bg-deep: #05070c;
+  --accent-cyan: #00f0ff;
+  --accent-purple: #a855f7;
+  --accent-crimson: #f43f5e;
+  --accent-emerald: #10b981;
+  --accent-amber: #f59e0b;
 }
 
 * {
@@ -17,69 +16,116 @@
 }
 
 body {
-  background-color: var(--bg-cyber);
+  background-color: #06080e;
   color: #f1f5f9;
   font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
   overflow-x: hidden;
   min-height: 100vh;
-  background-image: 
-    radial-gradient(circle at 15% 15%, rgba(0, 240, 255, 0.05) 0%, transparent 40%),
-    radial-gradient(circle at 85% 75%, rgba(147, 51, 234, 0.05) 0%, transparent 45%);
+  /* Deep black dot-matrix background */
+  background-image: radial-gradient(rgba(255, 255, 255, 0.09) 1.25px, transparent 1.25px);
+  background-size: 22px 22px;
   background-attachment: fixed;
 }
 
-/* Cyber Custom Scrollbar */
+/* Serif Cinematic Font Utility */
+.font-cinematic {
+  font-family: 'Georgia', 'Playfair Display', 'Merriweather', 'Noto Serif', serif;
+}
+
+/* Fluent Glassmorphism Cards */
+.glass-fluent {
+  background: rgba(18, 24, 38, 0.55);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.45);
+}
+
+.glass-fluent-card {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.015) 100%);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.glass-fluent-card:hover {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.09) 0%, rgba(255, 255, 255, 0.03) 100%);
+  border-color: rgba(255, 255, 255, 0.22);
+  transform: translateY(-4px);
+  box-shadow: 0 16px 36px -10px rgba(0, 0, 0, 0.8), 0 0 20px -5px rgba(255, 255, 255, 0.12);
+}
+
+/* Floating Glass Dock (Bottom Nav) */
+.glass-dock {
+  background: rgba(10, 14, 22, 0.82);
+  backdrop-filter: blur(28px);
+  -webkit-backdrop-filter: blur(28px);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.85), 0 0 25px rgba(255, 255, 255, 0.06);
+}
+
+/* Glass Pill Switcher */
+.glass-pill-container {
+  background: rgba(20, 26, 40, 0.65);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Theme accent variables for dynamic glow */
+.theme-cyan {
+  --theme-accent: #00f0ff;
+  --theme-glow: rgba(0, 240, 255, 0.35);
+  --theme-subtle: rgba(0, 240, 255, 0.12);
+}
+
+.theme-purple {
+  --theme-accent: #c084fc;
+  --theme-glow: rgba(168, 85, 247, 0.35);
+  --theme-subtle: rgba(168, 85, 247, 0.12);
+}
+
+.theme-crimson {
+  --theme-accent: #fb7185;
+  --theme-glow: rgba(244, 63, 94, 0.35);
+  --theme-subtle: rgba(244, 63, 94, 0.12);
+}
+
+.theme-emerald {
+  --theme-accent: #34d399;
+  --theme-glow: rgba(16, 185, 129, 0.35);
+  --theme-subtle: rgba(16, 185, 129, 0.12);
+}
+
+.theme-amber {
+  --theme-accent: #fbbf24;
+  --theme-glow: rgba(245, 158, 11, 0.35);
+  --theme-subtle: rgba(245, 158, 11, 0.12);
+}
+
+/* Custom Sleek Scrollbar */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #090d14;
+  background: #080b12;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #1e293b;
+  background: #1e2638;
   border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #00f0ff;
-  box-shadow: 0 0 10px #00f0ff;
-}
-
-/* Glassmorphism Flutter Card */
-.glass-flutter {
-  background: rgba(15, 20, 30, 0.75);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.07);
-}
-
-.glass-nav {
-  background: rgba(10, 14, 23, 0.82);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(0, 240, 255, 0.18);
-  box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.8), 0 0 20px -2px rgba(0, 240, 255, 0.12);
-}
-
-.glass-card {
-  background: linear-gradient(145deg, rgba(22, 28, 42, 0.8) 0%, rgba(13, 17, 26, 0.9) 100%);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  transition: all 0.28s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.glass-card:hover {
-  border-color: rgba(0, 240, 255, 0.45);
-  transform: translateY(-4px);
-  box-shadow: 0 14px 35px -8px rgba(0, 0, 0, 0.7), 0 0 22px rgba(0, 240, 255, 0.2);
+  background: #384561;
 }
 
 /* Shimmer Loading Skeleton */
 .skeleton-shimmer {
-  background: linear-gradient(90deg, #121824 0%, #1e2738 50%, #121824 100%);
+  background: linear-gradient(90deg, #101522 0%, #1c2438 50%, #101522 100%);
   background-size: 200% 100%;
   animation: shimmer 1.8s infinite;
 }
@@ -93,27 +139,7 @@ body {
   }
 }
 
-/* Flutter Ripple Effect */
-.flutter-button {
-  position: relative;
-  overflow: hidden;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.flutter-button:active {
-  transform: scale(0.96);
-}
-
-/* Neon Text Glow */
-.text-glow-cyan {
-  text-shadow: 0 0 12px rgba(0, 240, 255, 0.6);
-}
-
-.text-glow-purple {
-  text-shadow: 0 0 12px rgba(168, 85, 247, 0.6);
-}
-
 /* Safe area for mobile devices */
-.safe-bottom {
-  padding-bottom: max(5.5rem, env(safe-area-inset-bottom, 5.5rem));
+.safe-dock-padding {
+  padding-bottom: max(6.5rem, calc(env(safe-area-inset-bottom, 20px) + 5.5rem));
 }

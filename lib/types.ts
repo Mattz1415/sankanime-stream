@@ -9,6 +9,7 @@ export interface AnimeListItem {
   otakudesuUrl?: string;
   score?: string;
   status?: string;
+  slug?: string;
   genreList?: {
     title: string;
     genreId: string;
@@ -109,13 +110,19 @@ export interface EpisodeDetail {
   };
 }
 
+export interface ScheduleItem {
+  title: string;
+  animeId: string;
+  slug?: string;
+  href?: string;
+  url?: string;
+  poster?: string;
+}
+
 export interface ScheduleDay {
   day: string;
-  animeList: {
-    title: string;
-    animeId: string;
-    href: string;
-  }[];
+  animeList?: ScheduleItem[];
+  anime_list?: ScheduleItem[];
 }
 
 export interface WatchHistoryItem {
@@ -124,6 +131,9 @@ export interface WatchHistoryItem {
   animeTitle: string;
   episodeTitle: string;
   poster: string;
+  progressPercent?: number;
+  currentEpisodeNumber?: number | string;
+  totalEpisodes?: number | string;
   timestamp: number;
 }
 

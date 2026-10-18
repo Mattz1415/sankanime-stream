@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, Suspense } from 'react';
 import Link from 'next/link';
-import { useParams, useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import {
   Play,
   SkipBack,
@@ -21,11 +21,14 @@ import {
 import { getEpisodeDetail, getServerStreamUrl } from '@/lib/clientApi';
 import { saveWatchHistory } from '@/lib/storage';
 import { EpisodeDetail, QualityGroup, QualityServer } from '@/lib/types';
+import FloatingGlassDock from '@/components/FloatingGlassDock';
+import { useTheme } from '@/lib/themeContext';
 
-export default function WatchPage() {
-  const params = useParams();
+function WatchContent() {
   const router = useRouter();
-  const episodeId = params?.id as string;
+  const searchParams = useSearchParams();
+  const episodeId = searchParams.get('id') || '';
+  const { accentColor } = useTheme();
 
   const [detail, setDetail] = useState<EpisodeDetail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -36,7 +39,11 @@ export default function WatchPage() {
   const [theaterMode, setTheaterMode] = useState(false);
 
   useEffect(() => {
-    if (!episodeId) return;
+    if (!episodeId) {
+      setLoading(false);
+      setError('ID episode tidak ditemukan');
+      return;
+    }
 
     async function loadEpisode() {
       try {
@@ -55,6 +62,9 @@ export default function WatchPage() {
             animeTitle: data.info?.title || data.title.split(' Episode')[0] || data.title,
             episodeTitle: data.title,
             poster: data.info?.poster || 'https://images.unsplash.com/photo-1578632767115-351597cf2477?w=500',
+            progressPercent: 75,
+            currentEpisodeNumber: data.title.match(/Episode\s*(\d+)/i)?.[1] || 1,
+            totalEpisodes: data.info?.episodeList?.length || 12,
           });
         }
       } catch (err: any) {
@@ -84,9 +94,9 @@ export default function WatchPage() {
 
   if (loading) {
     return (
-      <div className="space-y-6 animate-pulse">
+      <div className="space-y-6 animate-pulse max-w-5xl mx-auto py-8">
         <div className="aspect-video w-full rounded-3xl skeleton-shimmer" />
-        <div className="h-10 w-3/4 rounded-xl skeleton-shimmer" />
+        <div className="h-8 w-2/3 rounded-xl skeleton-shimmer" />
         <div className="h-24 w-full rounded-2xl skeleton-shimmer" />
       </div>
     );
@@ -94,44 +104,44 @@ export default function WatchPage() {
 
   if (error || !detail) {
     return (
-      <div className="p-8 rounded-3xl glass-card border-red-500/30 text-center space-y-4 max-w-md mx-auto my-12">
-        <h2 className="text-lg font-bold text-white">Gagal Memutar Episode</h2>
-        <p className="text-xs text-slate-400">{error || 'Episode tidak ditemukan'}</p>
-        <button
-          onClick={() => router.back()}
-          className="px-5 py-2 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-black font-bold text-xs"
+      <div className="p-8 rounded-3xl glass-fluent border border-red-500/30 text-center space-y-4 max-w-md mx-auto my-16">
+        <h2 className="font-cinematic font-bold text-lg text-white">Gagal Memutar Episode</h2>
+        <p className="text-xs text-zinc-400">{error || 'Episode tidak ditemukan'}</p>
+        <Link
+          href="/"
+          className="inline-block px-6 py-2.5 rounded-full bg-white text-black font-extrabold text-xs hover:bg-zinc-200 transition-all shadow-md"
         >
-          Kembali
-        </button>
+          Kembali ke Beranda
+        </Link>
       </div>
     );
   }
 
   return (
-    <div className={`space-y-6 ${theaterMode ? 'max-w-none' : ''}`}>
-      {/* Top Breadcrumb & Controls */}
+    <div className={`space-y-6 ${theaterMode ? 'max-w-none' : 'max-w-5xl'} mx-auto pb-24`}>
+      {/* Top Breadcrumb Navigation */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           {detail.animeId ? (
             <Link
-              href={`/anime/${detail.animeId}`}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-cyan-400 hover:text-cyan-300 text-xs font-semibold transition-all flutter-button"
+              href={`/anime?id=${detail.animeId}`}
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-white/[0.06] hover:bg-white/[0.12] border border-white/10 text-zinc-300 hover:text-white text-xs font-semibold transition-all active:scale-95"
             >
               <ChevronLeft className="w-4 h-4" />
               Kembali ke Seri
             </Link>
           ) : (
-            <button
-              onClick={() => router.back()}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-cyan-400 hover:text-cyan-300 text-xs font-semibold transition-all flutter-button"
+            <Link
+              href="/"
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-white/[0.06] hover:bg-white/[0.12] border border-white/10 text-zinc-300 hover:text-white text-xs font-semibold transition-all active:scale-95"
             >
               <ChevronLeft className="w-4 h-4" />
-              Kembali
-            </button>
+              Beranda
+            </Link>
           )}
 
-          <span className="hidden sm:inline-block text-xs text-slate-400">|</span>
-          <span className="text-xs text-slate-300 truncate max-w-xs sm:max-w-md">
+          <span className="hidden sm:inline-block text-xs text-zinc-500">|</span>
+          <span className="text-xs text-zinc-300 font-cinematic font-bold truncate max-w-xs sm:max-w-md">
             {detail.title}
           </span>
         </div>
@@ -139,7 +149,7 @@ export default function WatchPage() {
         {/* Theater mode toggle */}
         <button
           onClick={() => setTheaterMode(!theaterMode)}
-          className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl glass-card border border-white/10 text-xs text-slate-300 hover:text-white transition-all flutter-button"
+          className="hidden sm:inline-flex items-center gap-1.5 px-4 py-2 rounded-full glass-fluent border border-white/10 text-xs text-zinc-300 hover:text-white transition-all active:scale-95"
           title="Toggle Mode Bioskop"
         >
           {theaterMode ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
@@ -147,14 +157,14 @@ export default function WatchPage() {
         </button>
       </div>
 
-      {/* Cyber HUD Video Player Box */}
-      <div className="relative rounded-3xl overflow-hidden glass-flutter border border-cyan-500/30 shadow-2xl bg-black">
+      {/* Video Player Box with Glassmorphism Frame */}
+      <div className="relative rounded-3xl overflow-hidden glass-fluent border border-white/15 shadow-2xl bg-black">
         {/* HUD Frame Top Bar */}
-        <div className="px-4 py-2.5 bg-[#0a0e17] border-b border-cyan-500/20 flex items-center justify-between text-xs text-slate-300">
+        <div className="px-4 py-3 bg-[#0a0d14] border-b border-white/10 flex items-center justify-between text-xs text-zinc-300">
           <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-cyan-400 animate-ping" />
-            <span className="font-semibold text-white">NEXUS HUD PLAYER</span>
-            <span className="text-[10px] px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+            <span className="font-cinematic font-bold text-white">NEXUS PLAYER</span>
+            <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-white/10 text-white border border-white/20 font-semibold">
               {activeServerTitle}
             </span>
           </div>
@@ -164,18 +174,18 @@ export default function WatchPage() {
               href={streamUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-[11px] text-slate-400 hover:text-cyan-300 flex items-center gap-1 transition-colors"
+              className="text-[11px] text-zinc-400 hover:text-white flex items-center gap-1 transition-colors"
             >
-              Buka di Tab Baru <ExternalLink className="w-3 h-3" />
+              Buka Tab Baru <ExternalLink className="w-3 h-3" />
             </a>
           )}
         </div>
 
-        {/* Video Iframe Container (16:9 Aspect Ratio) */}
+        {/* Video Iframe Container */}
         <div className="relative aspect-video w-full bg-black flex items-center justify-center">
           {switchingServer ? (
-            <div className="flex flex-col items-center gap-3 text-cyan-400">
-              <RefreshCw className="w-8 h-8 animate-spin text-cyan-400" />
+            <div className="flex flex-col items-center gap-3 text-white">
+              <RefreshCw className="w-8 h-8 animate-spin text-white" />
               <p className="text-xs font-semibold">Menghubungkan ke Server...</p>
             </div>
           ) : streamUrl ? (
@@ -187,21 +197,20 @@ export default function WatchPage() {
               title={detail.title}
             />
           ) : (
-            <div className="text-center p-6 text-slate-400 text-xs space-y-2">
-              <Tv className="w-10 h-10 mx-auto text-slate-600 mb-2" />
+            <div className="text-center p-6 text-zinc-400 text-xs space-y-2">
+              <Tv className="w-10 h-10 mx-auto text-zinc-600 mb-2" />
               <p>Tautan streaming langsung tidak tersedia.</p>
-              <p className="text-[11px] text-slate-500">Silakan pilih salah satu opsi server di bawah ini.</p>
+              <p className="text-[11px] text-zinc-500">Silakan pilih salah satu opsi server di bawah.</p>
             </div>
           )}
         </div>
 
         {/* HUD Frame Bottom Navigation Controls */}
-        <div className="p-3 sm:p-4 bg-[#0d121c] border-t border-cyan-500/20 flex flex-wrap items-center justify-between gap-3">
-          {/* Prev Episode */}
+        <div className="p-4 bg-[#0a0d14] border-t border-white/10 flex flex-wrap items-center justify-between gap-3">
           {detail.hasPrevEpisode && detail.prevEpisode ? (
             <Link
-              href={`/watch/${detail.prevEpisode.episodeId}`}
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white/5 hover:bg-cyan-500/20 border border-white/10 hover:border-cyan-500/40 text-xs font-semibold text-slate-200 hover:text-cyan-300 transition-all flutter-button"
+              href={`/watch?id=${detail.prevEpisode.episodeId}`}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/[0.06] hover:bg-white/[0.12] border border-white/10 text-xs font-semibold text-zinc-200 hover:text-white transition-all active:scale-95"
             >
               <SkipBack className="w-4 h-4" />
               Episode Sebelumnya
@@ -210,11 +219,10 @@ export default function WatchPage() {
             <div />
           )}
 
-          {/* Next Episode */}
           {detail.hasNextEpisode && detail.nextEpisode && (
             <Link
-              href={`/watch/${detail.nextEpisode.episodeId}`}
-              className="inline-flex items-center gap-1.5 px-5 py-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-xs font-bold text-white shadow-neon-cyan transition-all flutter-button"
+              href={`/watch?id=${detail.nextEpisode.episodeId}`}
+              className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-white text-black font-extrabold text-xs hover:bg-zinc-200 shadow-lg transition-all active:scale-95"
             >
               Episode Selanjutnya
               <SkipForward className="w-4 h-4" />
@@ -223,23 +231,23 @@ export default function WatchPage() {
         </div>
       </div>
 
-      {/* Server & Quality Selection Matrix */}
+      {/* Multi-Quality & Multi-Server Matrix */}
       {detail.server?.qualities && detail.server.qualities.length > 0 && (
-        <div className="p-5 sm:p-6 rounded-3xl glass-card border border-white/10 space-y-4">
+        <div className="p-6 rounded-3xl glass-fluent border border-white/10 space-y-4">
           <div className="flex items-center gap-2">
-            <Server className="w-4 h-4 text-cyan-400" />
-            <h3 className="text-sm font-bold text-white uppercase tracking-wider">
+            <Server className="w-4 h-4 text-white" />
+            <h3 className="font-cinematic font-bold text-sm text-white uppercase tracking-wider">
               Pilihan Server & Resolusi Video
             </h3>
           </div>
-          <p className="text-xs text-slate-400">
-            Jika video buffering atau tidak dapat diputar, silakan ganti server/kualitas di bawah ini:
+          <p className="text-xs text-zinc-400">
+            Jika video mengalami kendala atau buffering, ganti resolusi dan server penyedia di bawah ini:
           </p>
 
-          <div className="space-y-3">
+          <div className="space-y-3 pt-1">
             {detail.server.qualities.map((group: QualityGroup, idx: number) => (
               <div key={idx} className="flex flex-col sm:flex-row sm:items-center gap-2">
-                <span className="text-xs font-bold px-2.5 py-1 rounded-lg bg-cyan-950/70 text-cyan-300 border border-cyan-500/30 w-fit">
+                <span className="text-xs font-bold px-3 py-1 rounded-full bg-white/10 text-white border border-white/15 w-fit">
                   {group.title}
                 </span>
 
@@ -250,10 +258,10 @@ export default function WatchPage() {
                       <button
                         key={srv.serverId}
                         onClick={() => handleSelectServer(srv, group.title)}
-                        className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-all flutter-button ${
+                        className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all active:scale-95 ${
                           isSelected
-                            ? 'bg-cyan-500 text-black font-bold shadow-neon-cyan'
-                            : 'bg-[#151c28] hover:bg-[#1f2838] text-slate-300 hover:text-white border border-white/5'
+                            ? 'bg-white text-black font-bold shadow-md'
+                            : 'bg-white/[0.05] hover:bg-white/[0.1] text-zinc-300 hover:text-white border border-white/10'
                         }`}
                       >
                         {srv.title.toUpperCase()}
@@ -267,22 +275,22 @@ export default function WatchPage() {
         </div>
       )}
 
-      {/* Episode Drawer / List from Same Anime */}
+      {/* Episode Drawer from Same Anime */}
       {detail.info?.episodeList && detail.info.episodeList.length > 0 && (
-        <div className="p-5 sm:p-6 rounded-3xl glass-card border border-white/10 space-y-4">
+        <div className="p-6 rounded-3xl glass-fluent border border-white/10 space-y-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <List className="w-4 h-4 text-purple-400" />
-              <h3 className="text-sm font-bold text-white uppercase tracking-wider">
-                Episode Lainnya
+              <List className="w-4 h-4 text-white" />
+              <h3 className="font-cinematic font-bold text-sm text-white uppercase tracking-wider">
+                Daftar Episode Seri
               </h3>
             </div>
             {detail.animeId && (
               <Link
-                href={`/anime/${detail.animeId}`}
-                className="text-xs text-cyan-400 hover:text-cyan-300 font-semibold"
+                href={`/anime?id=${detail.animeId}`}
+                className="text-xs text-zinc-300 hover:text-white font-semibold underline"
               >
-                Halaman Seri Lengkap
+                Halaman Seri
               </Link>
             )}
           </div>
@@ -293,11 +301,11 @@ export default function WatchPage() {
               return (
                 <Link
                   key={ep.episodeId}
-                  href={`/watch/${ep.episodeId}`}
-                  className={`p-2.5 rounded-xl text-center text-xs font-semibold transition-all flutter-button ${
+                  href={`/watch?id=${ep.episodeId}`}
+                  className={`p-2.5 rounded-xl text-center text-xs font-bold transition-all active:scale-95 ${
                     isCurrent
-                      ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-neon-cyan border border-cyan-400/50'
-                      : 'bg-[#121824] hover:bg-[#1a2335] text-slate-300 hover:text-white border border-white/5'
+                      ? 'bg-white text-black shadow-md'
+                      : 'bg-white/[0.04] hover:bg-white/[0.09] text-zinc-300 hover:text-white border border-white/5'
                   }`}
                 >
                   Ep {ep.eps}
@@ -308,5 +316,23 @@ export default function WatchPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function WatchPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center text-white text-xs">
+          <RefreshCw className="w-6 h-6 animate-spin mr-2" />
+          Memuat pemutar video...
+        </div>
+      }
+    >
+      <div className="min-h-screen px-4 sm:px-6 lg:px-8 py-6">
+        <WatchContent />
+        <FloatingGlassDock />
+      </div>
+    </Suspense>
   );
 }

@@ -2,9 +2,9 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { CalendarDays, Tv, ChevronRight, Play } from 'lucide-react';
+import { CalendarDays, ChevronLeft, Play, RefreshCw } from 'lucide-react';
 import { getSchedule } from '@/lib/clientApi';
-import { ScheduleDay } from '@/lib/types';
+import FloatingGlassDock from '@/components/FloatingGlassDock';
 
 export default function SchedulePage() {
   const [scheduleData, setScheduleData] = useState<any[]>([]);
@@ -30,38 +30,40 @@ export default function SchedulePage() {
   const currentSchedule = scheduleData[selectedDayIndex];
 
   return (
-    <div className="space-y-6">
+    <div className="min-h-screen px-4 sm:px-6 lg:px-8 py-6 pb-24 space-y-6 max-w-7xl mx-auto">
+      <Link
+        href="/"
+        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-white/[0.06] hover:bg-white/[0.12] border border-white/10 text-zinc-300 hover:text-white text-xs font-semibold transition-all active:scale-95"
+      >
+        <ChevronLeft className="w-4 h-4" />
+        Beranda
+      </Link>
+
       {/* Header */}
-      <div className="p-6 sm:p-8 rounded-3xl glass-flutter border border-cyan-500/20 relative overflow-hidden">
+      <div className="p-6 sm:p-8 rounded-3xl glass-fluent border border-white/10 relative overflow-hidden">
         <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded-2xl bg-cyan-500/20 border border-cyan-400/40 text-cyan-400 shadow-neon-cyan">
-            <CalendarDays className="w-6 h-6" />
+          <div className="p-3 rounded-2xl bg-white/10 border border-white/20 text-white">
+            <CalendarDays className="w-6 h-6 text-amber-400" />
           </div>
           <div>
-            <h1 className="text-xl sm:text-2xl font-black text-white">Jadwal Rilis Anime</h1>
-            <p className="text-xs sm:text-sm text-slate-400">
-              Waktu tayang episode baru setiap harinya (WIB)
+            <h1 className="font-cinematic font-black text-xl sm:text-2xl text-white">
+              Jadwal Rilis Anime
+            </h1>
+            <p className="text-xs sm:text-sm text-zinc-400">
+              Waktu penayangan episode baru setiap minggunya (WIB)
             </p>
           </div>
         </div>
       </div>
 
       {loading ? (
-        <div className="space-y-4">
-          <div className="flex gap-2 overflow-x-auto pb-2">
-            {Array.from({ length: 7 }).map((_, i) => (
-              <div key={i} className="h-10 w-24 rounded-2xl skeleton-shimmer flex-shrink-0" />
-            ))}
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="h-20 rounded-2xl skeleton-shimmer" />
-            ))}
-          </div>
+        <div className="py-20 flex flex-col items-center justify-center gap-3 text-zinc-400">
+          <RefreshCw className="w-8 h-8 animate-spin text-white" />
+          <p className="text-xs">Memuat jadwal rilis...</p>
         </div>
       ) : error ? (
-        <div className="p-8 rounded-3xl glass-card border-red-500/30 text-center space-y-4 max-w-md mx-auto my-12">
-          <p className="text-sm text-red-400">{error}</p>
+        <div className="p-8 rounded-3xl glass-fluent border border-red-500/30 text-center space-y-4 max-w-md mx-auto my-12">
+          <p className="text-sm text-red-300">{error}</p>
         </div>
       ) : (
         <div className="space-y-6">
@@ -73,10 +75,10 @@ export default function SchedulePage() {
                 <button
                   key={item.day || idx}
                   onClick={() => setSelectedDayIndex(idx)}
-                  className={`px-5 py-2.5 rounded-2xl text-xs font-bold whitespace-nowrap transition-all duration-300 flutter-button ${
+                  className={`px-5 py-2.5 rounded-full text-xs font-bold whitespace-nowrap transition-all duration-300 ${
                     isActive
-                      ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-neon-cyan border border-cyan-400/50 scale-105'
-                      : 'glass-card text-slate-400 hover:text-white border-white/5 hover:border-white/20'
+                      ? 'bg-white text-black shadow-lg scale-105'
+                      : 'glass-fluent text-zinc-400 hover:text-white border-white/10'
                   }`}
                 >
                   {item.day}
@@ -91,8 +93,8 @@ export default function SchedulePage() {
           {/* Anime List for Selected Day */}
           {currentSchedule && (
             <div className="space-y-3">
-              <h2 className="text-base font-bold text-slate-200 flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
+              <h2 className="font-cinematic font-bold text-base text-white flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
                 Hari {currentSchedule.day}
               </h2>
 
@@ -103,8 +105,8 @@ export default function SchedulePage() {
                     return (
                       <Link
                         key={slug || i}
-                        href={`/anime/${slug}`}
-                        className="flex items-center justify-between p-3.5 rounded-2xl glass-card hover:border-cyan-500/40 group transition-all flutter-button"
+                        href={`/anime?id=${slug}`}
+                        className="flex items-center justify-between p-3.5 rounded-2xl glass-fluent-card group transition-all"
                       >
                         <div className="flex items-center gap-3 min-w-0">
                           {anime.poster && (
@@ -115,17 +117,17 @@ export default function SchedulePage() {
                             />
                           )}
                           <div className="min-w-0">
-                            <h3 className="text-xs font-semibold text-slate-100 group-hover:text-cyan-300 truncate">
+                            <h3 className="font-cinematic font-bold text-xs text-white group-hover:text-zinc-200 truncate">
                               {anime.title}
                             </h3>
-                            <span className="text-[10px] text-cyan-400/80 font-medium">
+                            <span className="text-[10px] text-zinc-400 font-medium">
                               Rilis Tiap {currentSchedule.day}
                             </span>
                           </div>
                         </div>
 
-                        <div className="w-8 h-8 rounded-full bg-white/5 group-hover:bg-cyan-500/20 text-slate-400 group-hover:text-cyan-300 flex items-center justify-center flex-shrink-0 transition-colors">
-                          <Play className="w-3.5 h-3.5 fill-current" />
+                        <div className="w-8 h-8 rounded-full bg-white text-black flex items-center justify-center flex-shrink-0 shadow-md group-hover:scale-105 transition-transform">
+                          <Play className="w-3.5 h-3.5 fill-black ml-0.5" />
                         </div>
                       </Link>
                     );
@@ -136,6 +138,8 @@ export default function SchedulePage() {
           )}
         </div>
       )}
+
+      <FloatingGlassDock activeTab="list" />
     </div>
   );
 }

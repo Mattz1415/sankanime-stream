@@ -1,25 +1,26 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { Search, Sparkles, X, Flame } from 'lucide-react';
-import AnimeCard from '@/components/AnimeCard';
-import { GridSkeleton } from '@/components/LoadingSkeleton';
+import React, { useState, Suspense } from 'react';
+import Link from 'next/link';
+import { Search, Sparkles, X, Flame, ChevronLeft, RefreshCw } from 'lucide-react';
+import AnimeGlassCard from '@/components/AnimeGlassCard';
+import FloatingGlassDock from '@/components/FloatingGlassDock';
 import { searchAnime } from '@/lib/clientApi';
 import { AnimeListItem } from '@/lib/types';
 
 const POPULAR_SUGGESTIONS = [
-  'One Piece',
   'Solo Leveling',
+  'One Piece',
   'Jujutsu Kaisen',
-  'Bleach',
   'Naruto',
   'Kimetsu no Yaiba',
-  'Hunter x Hunter',
-  'Black Clover',
+  'Bleach',
   'Chainsaw Man',
+  'Isekai',
+  'Tensei',
 ];
 
-export default function SearchPage() {
+function SearchContent() {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<AnimeListItem[]>([]);
   const [loading, setLoading] = useState(false);
@@ -63,35 +64,44 @@ export default function SearchPage() {
   };
 
   return (
-    <div className="space-y-6 max-w-5xl mx-auto">
+    <div className="space-y-6 max-w-5xl mx-auto pb-24">
+      {/* Top Back Button */}
+      <Link
+        href="/"
+        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-white/[0.06] hover:bg-white/[0.12] border border-white/10 text-zinc-300 hover:text-white text-xs font-semibold transition-all active:scale-95"
+      >
+        <ChevronLeft className="w-4 h-4" />
+        Beranda
+      </Link>
+
       {/* Search Header Banner */}
-      <div className="p-6 sm:p-8 rounded-3xl glass-flutter border border-cyan-500/20 text-center space-y-4">
-        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-cyan-500/20 text-cyan-300 text-xs font-semibold tracking-wider uppercase shadow-neon-cyan">
-          <Sparkles className="w-3.5 h-3.5" />
-          Pencarian Cepat Sanka API
+      <div className="p-6 sm:p-10 rounded-3xl glass-fluent border border-white/10 text-center space-y-4 shadow-2xl">
+        <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-white/10 text-white text-[11px] font-bold tracking-wider uppercase border border-white/15">
+          <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+          Pencarian Instan Sanka Vollerei
         </div>
 
-        <h1 className="text-2xl sm:text-3xl font-black text-white">
-          Cari Anime Favoritmu
+        <h1 className="font-cinematic font-black text-2xl sm:text-4xl text-white">
+          Cari Ribuan Judul Anime
         </h1>
 
-        {/* Futuristic Search Form */}
+        {/* Fluent Search Input */}
         <form onSubmit={onSubmit} className="max-w-2xl mx-auto relative">
           <div className="relative flex items-center">
-            <Search className="w-5 h-5 absolute left-4 text-cyan-400 pointer-events-none" />
+            <Search className="w-5 h-5 absolute left-4 text-zinc-400 pointer-events-none" />
             <input
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Ketik judul anime (cth: Solo Leveling, Naruto, One Piece)..."
-              className="w-full pl-12 pr-24 py-3.5 rounded-2xl bg-[#0e131d] border border-cyan-500/30 focus:border-cyan-400 focus:shadow-neon-cyan text-sm text-slate-100 placeholder-slate-500 outline-none transition-all"
+              className="w-full pl-12 pr-24 py-3.5 rounded-full bg-white/[0.06] border border-white/15 focus:border-white/40 text-sm text-white placeholder-zinc-500 outline-none transition-all shadow-inner"
               autoFocus
             />
             {query && (
               <button
                 type="button"
                 onClick={handleClear}
-                className="absolute right-20 p-1.5 text-slate-400 hover:text-white"
+                className="absolute right-24 p-1.5 text-zinc-400 hover:text-white"
                 title="Hapus"
               >
                 <X className="w-4 h-4" />
@@ -99,7 +109,7 @@ export default function SearchPage() {
             )}
             <button
               type="submit"
-              className="absolute right-2 px-4 py-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-xs font-bold text-white shadow-neon-cyan transition-all flutter-button"
+              className="absolute right-2 px-5 py-2 rounded-full bg-white text-black font-extrabold text-xs hover:bg-zinc-200 transition-all shadow-md active:scale-95"
             >
               Cari
             </button>
@@ -108,15 +118,15 @@ export default function SearchPage() {
 
         {/* Quick Suggestion Pills */}
         <div className="flex flex-wrap items-center justify-center gap-1.5 pt-2">
-          <span className="text-xs text-slate-400 flex items-center gap-1 mr-1">
-            <Flame className="w-3.5 h-3.5 text-pink-500" />
+          <span className="text-xs text-zinc-400 flex items-center gap-1 mr-1">
+            <Flame className="w-3.5 h-3.5 text-amber-400" />
             Populer:
           </span>
           {POPULAR_SUGGESTIONS.map((tag) => (
             <button
               key={tag}
               onClick={() => handleTagClick(tag)}
-              className="text-xs px-2.5 py-1 rounded-xl bg-white/5 hover:bg-cyan-500/20 text-slate-300 hover:text-cyan-300 border border-white/5 hover:border-cyan-500/30 transition-all flutter-button"
+              className="text-xs px-3 py-1 rounded-full bg-white/[0.05] hover:bg-white/[0.12] text-zinc-300 hover:text-white border border-white/10 transition-all active:scale-95"
             >
               {tag}
             </button>
@@ -126,36 +136,36 @@ export default function SearchPage() {
 
       {/* Results Section */}
       {loading ? (
-        <div className="space-y-3">
-          <div className="h-5 w-40 rounded skeleton-shimmer" />
-          <GridSkeleton count={8} />
+        <div className="py-12 flex flex-col items-center justify-center gap-3 text-zinc-400">
+          <RefreshCw className="w-8 h-8 animate-spin text-white" />
+          <p className="text-xs">Mencari di database Sanka Vollerei...</p>
         </div>
       ) : error ? (
-        <div className="p-8 text-center glass-card rounded-2xl text-red-400 text-xs">
+        <div className="p-8 text-center glass-fluent border border-red-500/30 rounded-3xl text-red-300 text-xs">
           {error}
         </div>
       ) : searched ? (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-sm font-bold text-slate-200 uppercase tracking-wider">
-              Hasil Pencarian: <span className="text-cyan-400">"{query}"</span>
+            <h2 className="font-cinematic font-bold text-sm text-white uppercase tracking-wider">
+              Hasil Pencarian: <span className="text-white underline">"{query}"</span>
             </h2>
-            <span className="text-xs text-slate-400">
+            <span className="text-xs text-zinc-400">
               {results.length} Judul Ditemukan
             </span>
           </div>
 
           {results.length > 0 ? (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4 md:gap-5">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4">
               {results.map((anime) => (
-                <AnimeCard key={anime.animeId || anime.title} anime={anime} />
+                <AnimeGlassCard key={anime.animeId || anime.title} anime={anime} />
               ))}
             </div>
           ) : (
-            <div className="p-12 text-center glass-card rounded-3xl space-y-3">
-              <Search className="w-10 h-10 mx-auto text-slate-600" />
-              <h3 className="text-base font-bold text-slate-200">Tidak ada hasil ditemukan</h3>
-              <p className="text-xs text-slate-400 max-w-sm mx-auto">
+            <div className="p-12 text-center glass-fluent rounded-3xl space-y-3 border border-white/10">
+              <Search className="w-10 h-10 mx-auto text-zinc-600" />
+              <h3 className="font-cinematic font-bold text-base text-white">Tidak ada hasil ditemukan</h3>
+              <p className="text-xs text-zinc-400 max-w-sm mx-auto">
                 Coba gunakan kata kunci lain atau periksa ejaan judul anime kamu.
               </p>
             </div>
@@ -163,5 +173,23 @@ export default function SearchPage() {
         </div>
       ) : null}
     </div>
+  );
+}
+
+export default function SearchPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center text-white text-xs">
+          <RefreshCw className="w-6 h-6 animate-spin mr-2" />
+          Memuat pencarian...
+        </div>
+      }
+    >
+      <div className="min-h-screen px-4 sm:px-6 lg:px-8 py-6">
+        <SearchContent />
+        <FloatingGlassDock />
+      </div>
+    </Suspense>
   );
 }

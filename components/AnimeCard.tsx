@@ -19,7 +19,7 @@ export default function AnimeCard({ anime, showStatus = true }: AnimeCardProps) 
 
   return (
     <Link
-      href={`/anime/${animeId}`}
+      href={`/anime?id=${animeId}`}
       className="group relative flex flex-col rounded-2xl glass-card overflow-hidden transition-all duration-300 flutter-button"
     >
       {/* Poster Image Container */}
