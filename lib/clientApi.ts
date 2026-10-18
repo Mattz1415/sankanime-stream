@@ -177,12 +177,25 @@ export async function getAnimeDetail(animeId: string): Promise<AnimeDetail> {
 
 export async function getEpisodeDetail(episodeId: string): Promise<EpisodeDetail> {
   const data = await fetchWithFallback<any>(`/episode/${episodeId}`, 600000);
+  if (data && data.defaultStreamingUrl) {
+    let clean = data.defaultStreamingUrl.trim();
+    if (clean.startsWith('//')) {
+      data.defaultStreamingUrl = `https:${clean}`;
+    }
+  }
   return data;
 }
 
 export async function getServerStreamUrl(serverId: string): Promise<string> {
   const data = await fetchWithFallback<any>(`/server/${serverId}`, 600000);
-  return data.url || '';
+  let url = data.url || '';
+  if (url) {
+    url = url.trim();
+    if (url.startsWith('//')) {
+      url = `https:${url}`;
+    }
+  }
+  return url;
 }
 
 export async function searchAnime(query: string): Promise<AnimeListItem[]> {

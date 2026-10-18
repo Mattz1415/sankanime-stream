@@ -16,13 +16,23 @@ import {
   ExternalLink,
   RefreshCw,
   Sparkles,
-  Info
+  Info,
+  Shield
 } from 'lucide-react';
 import { getEpisodeDetail, getServerStreamUrl } from '@/lib/clientApi';
 import { saveWatchHistory } from '@/lib/storage';
 import { EpisodeDetail, QualityGroup, QualityServer } from '@/lib/types';
 import FloatingGlassDock from '@/components/FloatingGlassDock';
 import { useTheme } from '@/lib/themeContext';
+
+const normalizeUrl = (url: string): string => {
+  if (!url) return '';
+  let clean = url.trim();
+  if (clean.startsWith('//')) {
+    clean = `https:${clean}`;
+  }
+  return clean;
+};
 
 function WatchContent() {
   const router = useRouter();
@@ -37,6 +47,7 @@ function WatchContent() {
   const [activeServerTitle, setActiveServerTitle] = useState<string>('Default Server');
   const [switchingServer, setSwitchingServer] = useState(false);
   const [theaterMode, setTheaterMode] = useState(false);
+  const [adBlockSandbox, setAdBlockSandbox] = useState<boolean>(true);
 
   useEffect(() => {
     if (!episodeId) {
@@ -51,7 +62,8 @@ function WatchContent() {
         setError(null);
         const data = await getEpisodeDetail(episodeId);
         setDetail(data);
-        setStreamUrl(data.defaultStreamingUrl || '');
+        const resolvedUrl = normalizeUrl(data.defaultStreamingUrl || '');
+        setStreamUrl(resolvedUrl);
         setActiveServerTitle('Default Server');
 
         // Save to watch history
@@ -82,7 +94,7 @@ function WatchContent() {
       setSwitchingServer(true);
       const url = await getServerStreamUrl(server.serverId);
       if (url) {
-        setStreamUrl(url);
+        setStreamUrl(normalizeUrl(url));
         setActiveServerTitle(`${server.title} (${quality})`);
       }
     } catch (err) {
@@ -160,7 +172,7 @@ function WatchContent() {
       {/* Video Player Box with Glassmorphism Frame */}
       <div className="relative rounded-3xl overflow-hidden glass-fluent border border-white/15 shadow-2xl bg-black">
         {/* HUD Frame Top Bar */}
-        <div className="px-4 py-3 bg-[#0a0d14] border-b border-white/10 flex items-center justify-between text-xs text-zinc-300">
+        <div className="px-4 py-3 bg-[#0a0d14] border-b border-white/10 flex flex-wrap items-center justify-between gap-2 text-xs text-zinc-300">
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
             <span className="font-cinematic font-bold text-white">NEXUS PLAYER</span>
@@ -169,16 +181,37 @@ function WatchContent() {
             </span>
           </div>
 
-          {streamUrl && (
-            <a
-              href={streamUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-[11px] text-zinc-400 hover:text-white flex items-center gap-1 transition-colors"
+          <div className="flex items-center gap-2">
+            {/* AdBlock Sandbox Toggle Button */}
+            <button
+              type="button"
+              onClick={() => setAdBlockSandbox(!adBlockSandbox)}
+              className={`px-3 py-1 rounded-full text-[11px] font-bold flex items-center gap-1.5 transition-all active:scale-95 border ${
+                adBlockSandbox
+                  ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 shadow-[0_0_12px_rgba(16,185,129,0.3)]'
+                  : 'bg-white/5 text-zinc-400 border-white/10 hover:text-white'
+              }`}
+              title={
+                adBlockSandbox
+                  ? 'AdBlock Sandbox Aktif: Mencegah pop-up iklan dan redirect vidhide/ondesuhd'
+                  : 'AdBlock Sandbox Nonaktif: Klik untuk aktifkan proteksi anti-iklan'
+              }
             >
-              Buka Tab Baru <ExternalLink className="w-3 h-3" />
-            </a>
-          )}
+              <Shield className={`w-3.5 h-3.5 ${adBlockSandbox ? 'text-emerald-400' : 'text-zinc-400'}`} />
+              <span>AdBlock Sandbox: {adBlockSandbox ? 'ON' : 'OFF'}</span>
+            </button>
+
+            {streamUrl && (
+              <a
+                href={normalizeUrl(streamUrl)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[11px] text-zinc-400 hover:text-white flex items-center gap-1 transition-colors px-2 py-1 rounded-lg hover:bg-white/5"
+              >
+                Buka Tab Baru <ExternalLink className="w-3 h-3" />
+              </a>
+            )}
+          </div>
         </div>
 
         {/* Video Iframe Container */}
@@ -190,10 +223,16 @@ function WatchContent() {
             </div>
           ) : streamUrl ? (
             <iframe
-              src={streamUrl}
+              src={normalizeUrl(streamUrl)}
               className="w-full h-full border-0"
+              referrerPolicy="no-referrer"
+              allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
               allowFullScreen
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              sandbox={
+                adBlockSandbox
+                  ? 'allow-scripts allow-same-origin allow-forms allow-presentation'
+                  : undefined
+              }
               title={detail.title}
             />
           ) : (
@@ -237,7 +276,7 @@ function WatchContent() {
           <div className="flex items-center gap-2">
             <Server className="w-4 h-4 text-white" />
             <h3 className="font-cinematic font-bold text-sm text-white uppercase tracking-wider">
-              Pilihan Server & Resolusi Video
+              Pilihan Server & Resolusi Video (Vidhide, Ondesuhd, Desustream, Odstream, Odcdn, Mega)
             </h3>
           </div>
           <p className="text-xs text-zinc-400">
