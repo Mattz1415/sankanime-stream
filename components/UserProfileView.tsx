@@ -51,13 +51,16 @@ export default function UserProfileView() {
 
           <div className="space-y-2 flex-1">
             <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
-              <h2 className="font-cinematic font-black text-2xl text-white">Pengguna Nexus</h2>
+              <h2 className="font-cinematic font-black text-2xl text-white">Kepiskepsi</h2>
+              <span className="px-2.5 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 text-[10px] font-bold tracking-wider uppercase border border-cyan-500/40">
+                VIP KAIJINBO
+              </span>
               <span className="px-2.5 py-0.5 rounded-full bg-white/10 text-white text-[10px] font-bold tracking-wider uppercase border border-white/20">
                 OLED PASS
               </span>
             </div>
             <p className="text-xs text-zinc-400 max-w-md">
-              Penikmat anime dengan dukungan pemutar Sanka Vollerei multi-server tanpa batasan iklan.
+              Penikmat anime KPanime Stream • Sanka Vollerei Ultra-Dark OLED & Minigame Champion.
             </p>
 
             {/* Quick Stats Badges */}

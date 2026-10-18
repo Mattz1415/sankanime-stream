@@ -103,6 +103,28 @@ function WatchContent() {
     }
   };
 
+  const handlePlayNative = () => {
+    if (!streamUrl) return;
+    const clean = normalizeUrl(streamUrl);
+    window.open(clean, '_blank');
+  };
+
+  const handleNextFallbackServer = async () => {
+    if (!detail?.server?.qualities) return;
+    const allServers: { server: QualityServer; quality: string }[] = [];
+    for (const q of detail.server.qualities) {
+      for (const srv of q.serverList) {
+        allServers.push({ server: srv, quality: q.title });
+      }
+    }
+    if (allServers.length === 0) return;
+
+    const currentIdx = allServers.findIndex((s) => activeServerTitle.includes(s.server.title));
+    const nextIdx = (currentIdx + 1) % allServers.length;
+    const nextChoice = allServers[nextIdx];
+    await handleSelectServer(nextChoice.server, nextChoice.quality);
+  };
+
   if (loading) {
     return (
       <div className="space-y-6 max-w-5xl mx-auto py-8 animate-fade-in-up">
@@ -180,28 +202,27 @@ function WatchContent() {
             </span>
           </div>
 
-          <div className="flex items-center gap-2">
-            {/* Mode Tanpa Iklan (Sandbox) Toggle Button */}
+          <div className="flex flex-wrap items-center gap-2">
+            {/* Tombol Putar Mode Native */}
             <button
               type="button"
-              onClick={() => setAdBlockSandbox(!adBlockSandbox)}
-              className={`px-3 py-1 rounded-full text-[11px] font-bold flex items-center gap-1.5 spring-press border ${
-                adBlockSandbox
-                  ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 shadow-[0_0_12px_rgba(16,185,129,0.3)]'
-                  : 'bg-white/5 text-zinc-400 border-white/10 hover:text-white'
-              }`}
-              title={
-                adBlockSandbox
-                  ? 'Mode Tanpa Iklan (Sandbox) Aktif: Pop-up dan redirect vidhide ditahan'
-                  : 'Mode Tanpa Iklan (Sandbox) Nonaktif: Klik untuk aktifkan perlindungan'
-              }
+              onClick={handlePlayNative}
+              className="px-3 py-1 rounded-full text-[11px] font-bold flex items-center gap-1.5 spring-press bg-white/10 hover:bg-white/20 text-white border border-white/20 shadow-sm"
+              title="Putar langsung di webview native atau browser external"
             >
-              {adBlockSandbox ? (
-                <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-              ) : (
-                <ShieldAlert className="w-3.5 h-3.5 text-zinc-400" />
-              )}
-              <span>Mode Tanpa Iklan: {adBlockSandbox ? 'Aktif' : 'Nonaktif'}</span>
+              <Tv className="w-3.5 h-3.5 text-cyan-400" />
+              <span>Putar Mode Native</span>
+            </button>
+
+            {/* Tombol Fallback Otomatis Server */}
+            <button
+              type="button"
+              onClick={handleNextFallbackServer}
+              className="px-2.5 py-1 rounded-full text-[11px] font-semibold flex items-center gap-1 spring-press bg-white/5 hover:bg-white/10 text-zinc-300 hover:text-white border border-white/10"
+              title="Ganti ke server alternatif secara otomatis"
+            >
+              <RefreshCw className="w-3 h-3 text-zinc-400" />
+              <span className="hidden sm:inline">Ganti Server</span>
             </button>
 
             {streamUrl && (
@@ -217,7 +238,7 @@ function WatchContent() {
           </div>
         </div>
 
-        {/* Video Iframe Container */}
+        {/* Video Iframe Container (Vidhide, Odstream, Ondesuhd, Desustream compatible without sandbox/no-referrer) */}
         <div className="relative aspect-video w-full bg-black flex items-center justify-center">
           {switchingServer ? (
             <div className="flex flex-col items-center gap-3 text-white">
@@ -226,16 +247,11 @@ function WatchContent() {
             </div>
           ) : streamUrl ? (
             <iframe
+              key={streamUrl}
               src={normalizeUrl(streamUrl)}
               className="w-full h-full border-0"
-              referrerPolicy="no-referrer"
               allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
               allowFullScreen
-              sandbox={
-                adBlockSandbox
-                  ? 'allow-scripts allow-same-origin allow-forms allow-presentation'
-                  : undefined
-              }
               title={detail.title}
             />
           ) : (

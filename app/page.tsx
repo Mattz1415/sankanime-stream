@@ -12,6 +12,9 @@ import AnimeListView from '@/components/AnimeListView';
 import HistoryBookmarksView from '@/components/HistoryBookmarksView';
 import AnimeAiChat from '@/components/AnimeAiChat';
 import UserProfileView from '@/components/UserProfileView';
+import PixelFightingBanner from '@/components/PixelFightingBanner';
+import CodingOnboardingModal from '@/components/CodingOnboardingModal';
+import RezeAiCompanionModal from '@/components/RezeAiCompanionModal';
 import { getHomeData } from '@/lib/clientApi';
 import { getWatchHistory } from '@/lib/storage';
 import { HomeData, WatchHistoryItem } from '@/lib/types';
@@ -24,6 +27,7 @@ export default function HomePage() {
   const [history, setHistory] = useState<WatchHistoryItem[]>([]);
   const [activeCategory, setActiveCategory] = useState<'Anime' | 'Komik' | 'Donghua'>('Anime');
   const [activeTab, setActiveTab] = useState<DockTab>('jelajah');
+  const [showOnboarding, setShowOnboarding] = useState(false);
   const { accentColor } = useTheme();
 
   const loadData = async () => {
@@ -43,15 +47,24 @@ export default function HomePage() {
   useEffect(() => {
     loadData();
     setHistory(getWatchHistory());
+
+    // Check if onboarding was previously shown
+    if (typeof window !== 'undefined') {
+      const seen = localStorage.getItem('kpanime_onboarding_done');
+      if (!seen) {
+        setShowOnboarding(true);
+      }
+    }
   }, []);
 
   return (
     <div className="min-h-screen flex flex-col bg-[#020205] text-zinc-100 selection:bg-white selection:text-black">
-      {/* Top Header with Pill Switcher ("Anime", "Komik", "Donghua"), Search & Avatar */}
+      {/* Top Header with Pill Switcher, Replay Intro, Search & Avatar */}
       <FluentHeader
         activeCategory={activeCategory}
         onSelectCategory={(cat) => setActiveCategory(cat)}
         onOpenProfile={() => setActiveTab('profil')}
+        onReplayIntro={() => setShowOnboarding(true)}
       />
 
       {/* Main Container */}
@@ -80,6 +93,9 @@ export default function HomePage() {
         {/* Tab 1: JELAJAH (Main Home Feed) */}
         {activeTab === 'jelajah' && activeCategory === 'Anime' && (
           <div className="space-y-8 animate-fade-in-up">
+            {/* Pixel-Art Fighting Minigame Banner (Zabuza vs Kepong) */}
+            <PixelFightingBanner />
+
             {/* Loading State */}
             {loading && (
               <div className="space-y-6">
@@ -208,17 +224,26 @@ export default function HomePage() {
         {/* Tab 3: RIWAYAT (History & Bookmarks) */}
         {activeTab === 'riwayat' && <HistoryBookmarksView />}
 
-        {/* Tab 4: CHAT (Anime AI Assistant) */}
+        {/* Tab 4: CHAT (Global Chat Room & Nexus AI) */}
         {activeTab === 'chat' && <AnimeAiChat />}
 
-        {/* Tab 5: PROFIL (User Profile) */}
+        {/* Tab 5: PROFIL (User Profile - Kepiskepsi) */}
         {activeTab === 'profil' && <UserProfileView />}
       </main>
+
+      {/* Floating Reze AI Companion Modal (Bottom-Left) */}
+      <RezeAiCompanionModal />
 
       {/* Floating Glass Dock (Bottom Navigation: Jelajah, List, Riwayat, Chat, Profil) */}
       <FloatingGlassDock
         activeTab={activeTab}
         onTabChange={(tab) => setActiveTab(tab)}
+      />
+
+      {/* Interactive Coding Onboarding Modal (kpanime.py) */}
+      <CodingOnboardingModal
+        isOpen={showOnboarding}
+        onClose={() => setShowOnboarding(false)}
       />
     </div>
   );

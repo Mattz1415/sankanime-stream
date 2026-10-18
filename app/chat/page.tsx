@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { ChevronLeft } from 'lucide-react';
 import AnimeAiChat from '@/components/AnimeAiChat';
 import FloatingGlassDock from '@/components/FloatingGlassDock';
+import RezeAiCompanionModal from '@/components/RezeAiCompanionModal';
 
 export default function ChatPage() {
   return (
@@ -18,6 +19,7 @@ export default function ChatPage() {
       </Link>
 
       <AnimeAiChat />
+      <RezeAiCompanionModal />
       <FloatingGlassDock activeTab="chat" />
     </div>
   );
