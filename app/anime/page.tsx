@@ -16,23 +16,43 @@ import {
   Search,
   CheckCircle2,
   Film,
-  RefreshCw
+  RefreshCw,
+  ArrowUpDown,
+  ChevronDown,
+  Check
 } from 'lucide-react';
 import { getAnimeDetail } from '@/lib/clientApi';
-import { isAnimeBookmarked, toggleBookmark, getWatchHistory } from '@/lib/storage';
-import { AnimeDetail } from '@/lib/types';
+import {
+  isAnimeBookmarked,
+  getAnimeBookmark,
+  saveBookmarkWithCategory,
+  deleteBookmark,
+  getWatchHistory
+} from '@/lib/storage';
+import { AnimeDetail, WatchlistCategory } from '@/lib/types';
 import FloatingGlassDock from '@/components/FloatingGlassDock';
+import { useTheme } from '@/lib/themeContext';
+
+const WATCHLIST_CATEGORIES: WatchlistCategory[] = [
+  'Sedang Ditonton',
+  'Ingin Ditonton',
+  'Selesai',
+  'Favorit',
+];
 
 function AnimeDetailContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const animeId = searchParams.get('id') || '';
+  const { accentColor } = useTheme();
 
   const [detail, setDetail] = useState<AnimeDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [bookmarked, setBookmarked] = useState(false);
+  const [bookmarkedCategory, setBookmarkedCategory] = useState<WatchlistCategory | null>(null);
+  const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
   const [searchEps, setSearchEps] = useState('');
+  const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc'); // desc = newest first
   const [watchedEpisodes, setWatchedEpisodes] = useState<string[]>([]);
   const [showFullSynopsis, setShowFullSynopsis] = useState(false);
 
@@ -49,7 +69,13 @@ function AnimeDetailContent() {
         setError(null);
         const data = await getAnimeDetail(animeId);
         setDetail(data);
-        setBookmarked(isAnimeBookmarked(animeId));
+
+        const currentBm = getAnimeBookmark(animeId);
+        if (currentBm) {
+          setBookmarkedCategory(currentBm.category || 'Favorit');
+        } else {
+          setBookmarkedCategory(null);
+        }
 
         // Get watched episodes
         const history = getWatchHistory();
@@ -67,23 +93,34 @@ function AnimeDetailContent() {
     loadDetail();
   }, [animeId]);
 
-  const handleBookmarkToggle = () => {
+  const handleSelectCategory = (cat: WatchlistCategory) => {
     if (!detail) return;
-    const newState = toggleBookmark({
-      animeId,
-      title: detail.title,
-      poster: detail.poster,
-      score: detail.score,
-      status: detail.status,
-    });
-    setBookmarked(newState);
+    if (bookmarkedCategory === cat) {
+      // Toggle off
+      deleteBookmark(animeId);
+      setBookmarkedCategory(null);
+    } else {
+      saveBookmarkWithCategory(
+        {
+          animeId,
+          title: detail.title,
+          poster: detail.poster,
+          score: detail.score,
+          status: detail.status,
+          genres: detail.genreList?.map((g) => g.title),
+        },
+        cat
+      );
+      setBookmarkedCategory(cat);
+    }
+    setShowCategoryDropdown(false);
   };
 
   const handleShare = () => {
     if (typeof window !== 'undefined' && navigator.share) {
       navigator.share({
         title: detail?.title,
-        text: `Nonton anime ${detail?.title} gratis di NexusAnime`,
+        text: `Nonton anime ${detail?.title} gratis subtitle Indonesia di NexusAnime`,
         url: window.location.href,
       }).catch(() => {});
     } else {
@@ -109,7 +146,7 @@ function AnimeDetailContent() {
 
   if (error || !detail) {
     return (
-      <div className="p-8 rounded-3xl glass-obsidian border border-red-500/30 text-center space-y-4 max-w-md mx-auto my-16 animate-fade-in-up">
+      <div className="p-8 rounded-3xl card-frosted-obsidian border border-red-500/30 text-center space-y-4 max-w-md mx-auto my-16 animate-fade-in-up">
         <h2 className="font-cinematic font-bold text-lg text-white">Detail Tidak Ditemukan</h2>
         <p className="text-xs text-zinc-400">{error || 'Data anime tidak dapat diambil'}</p>
         <Link
@@ -122,17 +159,29 @@ function AnimeDetailContent() {
     );
   }
 
-  // Filter episodes
-  const filteredEpisodes = (detail.episodeList || []).filter((ep) =>
-    ep.title.toLowerCase().includes(searchEps.toLowerCase()) ||
-    String(ep.eps).includes(searchEps)
-  );
+  // Filter and sort episodes
+  const filteredEpisodes = (detail.episodeList || [])
+    .filter((ep) =>
+      ep.title.toLowerCase().includes(searchEps.toLowerCase()) ||
+      String(ep.eps).includes(searchEps)
+    )
+    .sort((a, b) => {
+      const numA = Number(a.eps) || 0;
+      const numB = Number(b.eps) || 0;
+      return sortOrder === 'desc' ? numB - numA : numA - numB;
+    });
 
   const firstEpisode = detail.episodeList?.[detail.episodeList.length - 1];
   const latestEpisode = detail.episodeList?.[0];
 
   return (
-    <div className="space-y-8 max-w-5xl mx-auto pb-24 animate-fade-in-up">
+    <div className="space-y-8 max-w-5xl mx-auto pb-24 animate-fade-in-up relative">
+      {/* Ambient Dynamic Glow radiating poster colors */}
+      <div
+        className="ambient-glow -top-20 -left-20 w-[480px] h-[480px] opacity-25"
+        style={{ backgroundColor: accentColor }}
+      />
+
       {/* Back button */}
       <Link
         href="/"
@@ -143,7 +192,7 @@ function AnimeDetailContent() {
       </Link>
 
       {/* Hero Header Card */}
-      <div className="relative rounded-3xl glass-obsidian border border-white/[0.06] overflow-hidden shadow-[0_24px_70px_rgba(0,0,0,0.95)] p-6 sm:p-10">
+      <div className="relative rounded-3xl card-frosted-obsidian border border-white/[0.08] overflow-hidden shadow-[0_24px_70px_rgba(0,0,0,0.95)] p-6 sm:p-10">
         {/* Background poster blur with Ken Burns */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
           <img
@@ -152,7 +201,7 @@ function AnimeDetailContent() {
             loading="lazy"
             className="w-full h-full object-cover filter blur-3xl opacity-20 scale-125 animate-ken-burns"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#020205] via-[#020205]/85 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#020204] via-[#020204]/85 to-transparent" />
         </div>
 
         <div className="relative z-10 flex flex-col md:flex-row gap-6 md:gap-8 items-start">
@@ -217,21 +266,22 @@ function AnimeDetailContent() {
               )}
             </div>
 
-            {/* Genre Chips */}
+            {/* Clickable Genre Tags */}
             {detail.genreList && detail.genreList.length > 0 && (
               <div className="flex flex-wrap items-center justify-center md:justify-start gap-1.5 pt-1">
                 {detail.genreList.map((genre) => (
-                  <span
+                  <Link
                     key={genre.genreId || genre.title}
-                    className="text-xs px-3 py-1 rounded-full bg-white/[0.05] border border-white/[0.08] text-zinc-300"
+                    href={`/search?q=${encodeURIComponent(genre.title)}`}
+                    className="text-xs px-3 py-1 rounded-full bg-white/[0.05] hover:bg-white/[0.12] border border-white/[0.08] hover:border-white/25 text-zinc-300 hover:text-white transition-all spring-press"
                   >
                     {genre.title}
-                  </span>
+                  </Link>
                 ))}
               </div>
             )}
 
-            {/* Action Buttons: Watch Latest, Bookmark, Share */}
+            {/* Action Buttons: Watch Latest, Watchlist Dropdown, Share */}
             <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 pt-3">
               {latestEpisode && (
                 <Link
@@ -239,7 +289,7 @@ function AnimeDetailContent() {
                   className="inline-flex items-center gap-2 px-7 py-3 rounded-full bg-white text-black font-extrabold text-xs sm:text-sm hover:bg-zinc-200 shadow-[0_4px_30px_rgba(255,255,255,0.35)] spring-press"
                 >
                   <Play className="w-4 h-4 fill-black" />
-                  Tonton Episode Terbaru
+                  Tonton Sekarang
                 </Link>
               )}
 
@@ -252,26 +302,56 @@ function AnimeDetailContent() {
                 </Link>
               )}
 
-              <button
-                onClick={handleBookmarkToggle}
-                className={`px-5 py-3 rounded-full border spring-press flex items-center gap-2 text-xs font-semibold ${
-                  bookmarked
-                    ? 'bg-white/20 border-white/40 text-white shadow-lg'
-                    : 'bg-white/10 hover:bg-white/20 border-white/15 text-white'
-                }`}
-              >
-                {bookmarked ? (
-                  <>
-                    <BookmarkCheck className="w-4 h-4 text-emerald-400" />
-                    <span>Tersimpan</span>
-                  </>
-                ) : (
-                  <>
-                    <Bookmark className="w-4 h-4" />
-                    <span>+ Simpan</span>
-                  </>
+              {/* Watchlist with Categories Dropdown */}
+              <div className="relative">
+                <button
+                  onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
+                  className={`px-5 py-3 rounded-full border spring-press flex items-center gap-2 text-xs font-semibold ${
+                    bookmarkedCategory
+                      ? 'bg-white/20 border-white/40 text-white shadow-lg'
+                      : 'bg-white/10 hover:bg-white/20 border-white/15 text-white'
+                  }`}
+                >
+                  {bookmarkedCategory ? (
+                    <>
+                      <BookmarkCheck className="w-4 h-4 text-emerald-400" />
+                      <span>{bookmarkedCategory}</span>
+                    </>
+                  ) : (
+                    <>
+                      <Bookmark className="w-4 h-4" />
+                      <span>+ Watchlist</span>
+                    </>
+                  )}
+                  <ChevronDown className="w-3.5 h-3.5 opacity-60" />
+                </button>
+
+                {/* Dropdown Menu */}
+                {showCategoryDropdown && (
+                  <div className="absolute top-full mt-2 left-0 z-30 w-48 rounded-2xl card-frosted-obsidian border border-white/15 p-1.5 shadow-2xl space-y-1 animate-fade-in-up">
+                    <div className="px-3 py-1.5 text-[10px] font-bold text-zinc-400 uppercase tracking-wider">
+                      Simpan ke Kategori
+                    </div>
+                    {WATCHLIST_CATEGORIES.map((cat) => {
+                      const isSelected = bookmarkedCategory === cat;
+                      return (
+                        <button
+                          key={cat}
+                          onClick={() => handleSelectCategory(cat)}
+                          className={`w-full text-left px-3 py-2 rounded-xl text-xs font-medium flex items-center justify-between transition-colors ${
+                            isSelected
+                              ? 'bg-white/20 text-white font-bold'
+                              : 'text-zinc-300 hover:bg-white/10 hover:text-white'
+                          }`}
+                        >
+                          <span>{cat}</span>
+                          {isSelected && <Check className="w-3.5 h-3.5 text-emerald-400" />}
+                        </button>
+                      );
+                    })}
+                  </div>
                 )}
-              </button>
+              </div>
 
               <button
                 onClick={handleShare}
@@ -284,7 +364,7 @@ function AnimeDetailContent() {
           </div>
         </div>
 
-        {/* Synopsis Section */}
+        {/* Synopsis Section (Expandable) */}
         {detail.synopsis?.paragraphs && detail.synopsis.paragraphs.length > 0 && (
           <div className="mt-8 pt-6 border-t border-white/[0.08] space-y-2">
             <h3 className="font-cinematic font-bold text-sm text-white uppercase tracking-wider">
@@ -306,7 +386,7 @@ function AnimeDetailContent() {
                 onClick={() => setShowFullSynopsis(!showFullSynopsis)}
                 className="text-xs text-white font-bold underline pt-1 block spring-press"
               >
-                {showFullSynopsis ? 'Tutup Sebagian' : 'Baca Selengkapnya...'}
+                {showFullSynopsis ? 'Ciutkan Sinopsis' : 'Baca Selengkapnya...'}
               </button>
             )}
           </div>
@@ -328,16 +408,28 @@ function AnimeDetailContent() {
             </div>
           </div>
 
-          {/* Search Episode Filter */}
-          <div className="relative max-w-xs w-full">
-            <Search className="w-3.5 h-3.5 absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400" />
-            <input
-              type="text"
-              value={searchEps}
-              onChange={(e) => setSearchEps(e.target.value)}
-              placeholder="Cari episode (cth: 1, 12)..."
-              className="w-full pl-9 pr-4 py-2 rounded-full bg-white/[0.05] border border-white/10 focus:border-white/30 text-xs text-white placeholder-zinc-500 outline-none"
-            />
+          <div className="flex items-center gap-2">
+            {/* Tombol Urutkan Episode (Terbaru / Terlama) */}
+            <button
+              onClick={() => setSortOrder(sortOrder === 'desc' ? 'asc' : 'desc')}
+              className="px-3.5 py-2 rounded-full card-frosted-obsidian hover:border-white/20 text-xs font-semibold text-zinc-300 hover:text-white flex items-center gap-1.5 spring-press"
+              title="Urutkan Episode"
+            >
+              <ArrowUpDown className="w-3.5 h-3.5" />
+              <span>{sortOrder === 'desc' ? 'Terbaru' : 'Terlama'}</span>
+            </button>
+
+            {/* Search Episode Filter */}
+            <div className="relative max-w-xs w-full">
+              <Search className="w-3.5 h-3.5 absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400" />
+              <input
+                type="text"
+                value={searchEps}
+                onChange={(e) => setSearchEps(e.target.value)}
+                placeholder="Cari nomor episode..."
+                className="w-full pl-9 pr-4 py-2 rounded-full bg-white/[0.05] border border-white/10 focus:border-white/30 text-xs text-white placeholder-zinc-500 outline-none"
+              />
+            </div>
           </div>
         </div>
 
@@ -350,8 +442,8 @@ function AnimeDetailContent() {
               <Link
                 key={ep.episodeId}
                 href={`/watch?id=${ep.episodeId}`}
-                className={`p-4 rounded-2xl glass-obsidian-card flex items-center justify-between gap-3 group spring-press animate-fade-in-up stagger-${(idx % 12) + 1} ${
-                  isWatched ? 'border-emerald-500/30' : ''
+                className={`p-4 rounded-2xl card-frosted-obsidian flex items-center justify-between gap-3 group spring-press animate-fade-in-up stagger-${(idx % 12) + 1} ${
+                  isWatched ? 'border-emerald-500/40 bg-emerald-950/[0.08]' : ''
                 }`}
               >
                 <div className="min-w-0">
@@ -360,17 +452,17 @@ function AnimeDetailContent() {
                       EPS {ep.eps}
                     </span>
                     {isWatched && (
-                      <span className="flex items-center gap-0.5 text-[10px] text-emerald-400 font-semibold">
+                      <span className="flex items-center gap-0.5 text-[10px] text-emerald-400 font-bold bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
                         <CheckCircle2 className="w-3 h-3" />
-                        Ditonton
+                        Sudah Ditonton
                       </span>
                     )}
                   </div>
-                  <h4 className="font-cinematic font-bold text-xs text-white group-hover:text-zinc-200 truncate mt-1">
+                  <h4 className="font-cinematic font-bold text-xs text-white group-hover:text-zinc-200 truncate mt-1.5">
                     {ep.title}
                   </h4>
                   {ep.date && (
-                    <span className="text-[10px] text-zinc-400 block">{ep.date}</span>
+                    <span className="text-[10px] text-zinc-400 block mt-0.5">{ep.date}</span>
                   )}
                 </div>
 
@@ -383,7 +475,7 @@ function AnimeDetailContent() {
         </div>
 
         {filteredEpisodes.length === 0 && (
-          <div className="p-8 text-center glass-obsidian rounded-3xl text-zinc-400 text-xs border border-white/[0.06]">
+          <div className="p-8 text-center card-frosted-obsidian rounded-3xl text-zinc-400 text-xs border border-white/[0.06]">
             Tidak ada episode yang cocok dengan pencarian "{searchEps}"
           </div>
         )}

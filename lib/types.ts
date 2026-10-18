@@ -1,3 +1,5 @@
+export type WatchlistCategory = 'Sedang Ditonton' | 'Ingin Ditonton' | 'Selesai' | 'Favorit';
+
 export interface AnimeListItem {
   title: string;
   poster: string;
@@ -143,5 +145,13 @@ export interface BookmarkItem {
   poster: string;
   score?: string;
   status?: string;
+  category?: WatchlistCategory;
+  genres?: string[];
   addedAt: number;
+}
+
+export interface ServerStreamResult {
+  url: string;
+  isDirectVideo: boolean;
+  rawHtml?: string;
 }

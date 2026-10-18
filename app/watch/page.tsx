@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState, Suspense } from 'react';
+import React, { useEffect, useState, useRef, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
@@ -15,23 +15,19 @@ import {
   List,
   ExternalLink,
   RefreshCw,
-  ShieldCheck,
-  ShieldAlert
+  Sun,
+  Moon,
+  Sparkles,
+  ShieldAlert,
+  CheckCircle2,
+  ToggleLeft,
+  ToggleRight
 } from 'lucide-react';
-import { getEpisodeDetail, getServerStreamUrl } from '@/lib/clientApi';
-import { saveWatchHistory } from '@/lib/storage';
+import { getEpisodeDetail, resolveServerStream, ResolvedStream } from '@/lib/clientApi';
+import { saveWatchHistory, getWatchHistory } from '@/lib/storage';
 import { EpisodeDetail, QualityGroup, QualityServer } from '@/lib/types';
 import FloatingGlassDock from '@/components/FloatingGlassDock';
 import { useTheme } from '@/lib/themeContext';
-
-const normalizeUrl = (url: string): string => {
-  if (!url) return '';
-  let clean = url.trim();
-  if (clean.startsWith('//')) {
-    clean = `https:${clean}`;
-  }
-  return clean;
-};
 
 function WatchContent() {
   const router = useRouter();
@@ -42,11 +38,23 @@ function WatchContent() {
   const [detail, setDetail] = useState<EpisodeDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Player state
   const [streamUrl, setStreamUrl] = useState<string>('');
-  const [activeServerTitle, setActiveServerTitle] = useState<string>('Default Server');
+  const [isDirectVideo, setIsDirectVideo] = useState(false);
+  const [activeServerTitle, setActiveServerTitle] = useState<string>('Memilih Server Terbaik...');
+  const [activeQuality, setActiveQuality] = useState<string>('720p');
   const [switchingServer, setSwitchingServer] = useState(false);
-  const [theaterMode, setTheaterMode] = useState(false);
-  const [adBlockSandbox, setAdBlockSandbox] = useState<boolean>(true);
+  const [iframeLoaded, setIframeLoaded] = useState(false);
+  const [xframeBlocked, setXframeBlocked] = useState(false);
+
+  // Features
+  const [lightsOff, setLightsOff] = useState(false); // Mode Bioskop (Lights Off)
+  const [autoNext, setAutoNext] = useState(true);
+  const [watchedEpisodes, setWatchedEpisodes] = useState<string[]>([]);
+
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const iframeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     if (!episodeId) {
@@ -59,25 +67,30 @@ function WatchContent() {
       try {
         setLoading(true);
         setError(null);
+        setXframeBlocked(false);
+        setIframeLoaded(false);
+
         const data = await getEpisodeDetail(episodeId);
         setDetail(data);
-        const resolvedUrl = normalizeUrl(data.defaultStreamingUrl || '');
-        setStreamUrl(resolvedUrl);
-        setActiveServerTitle('Default Server');
+
+        // Fetch watch history to mark watched episodes
+        const history = getWatchHistory();
+        setWatchedEpisodes(history.map((h) => h.episodeId));
 
         // Save to watch history
-        if (data) {
-          saveWatchHistory({
-            animeId: data.animeId || '',
-            episodeId: episodeId,
-            animeTitle: data.info?.title || data.title.split(' Episode')[0] || data.title,
-            episodeTitle: data.title,
-            poster: data.info?.poster || 'https://images.unsplash.com/photo-1578632767115-351597cf2477?w=500',
-            progressPercent: 75,
-            currentEpisodeNumber: data.title.match(/Episode\s*(\d+)/i)?.[1] || 1,
-            totalEpisodes: data.info?.episodeList?.length || 12,
-          });
-        }
+        saveWatchHistory({
+          animeId: data.animeId || '',
+          episodeId: episodeId,
+          animeTitle: data.info?.title || data.title.split(' Episode')[0] || data.title,
+          episodeTitle: data.title,
+          poster: data.info?.poster || '',
+          progressPercent: 85,
+          currentEpisodeNumber: data.title.match(/Episode\s*(\d+)/i)?.[1] || 1,
+          totalEpisodes: data.info?.episodeList?.length || 12,
+        });
+
+        // 1. Prioritize vidhide, odcdn, mega over desustream/ondesuhd
+        await pickBestServer(data);
       } catch (err: any) {
         setError(err.message || 'Gagal memuat video episode');
       } finally {
@@ -88,41 +101,130 @@ function WatchContent() {
     loadEpisode();
   }, [episodeId]);
 
+  // Clean up timer on unmount
+  useEffect(() => {
+    return () => {
+      if (iframeTimeoutRef.current) clearTimeout(iframeTimeoutRef.current);
+    };
+  }, []);
+
+  // Server selection prioritizing vidhide (720p/480p) -> odcdn -> mega
+  const pickBestServer = async (episodeData: EpisodeDetail) => {
+    const qualities = episodeData.server?.qualities || [];
+    const allServers: { server: QualityServer; quality: string }[] = [];
+
+    qualities.forEach((q) => {
+      q.serverList?.forEach((srv) => {
+        allServers.push({ server: srv, quality: q.title });
+      });
+    });
+
+    // Check if defaultStreamingUrl exists and is NOT desustream / ondesuhd
+    const defaultUrl = (episodeData.defaultStreamingUrl || '').trim();
+    const isProblematicDefault =
+      !defaultUrl ||
+      /desustream/i.test(defaultUrl) ||
+      /ondesuhd/i.test(defaultUrl) ||
+      /odstream/i.test(defaultUrl);
+
+    let chosenServer = allServers.find(
+      (s) => /vidhide/i.test(s.server.title) && /720/i.test(s.quality)
+    );
+
+    if (!chosenServer) {
+      chosenServer = allServers.find(
+        (s) => /vidhide/i.test(s.server.title) && /480/i.test(s.quality)
+      );
+    }
+    if (!chosenServer) {
+      chosenServer = allServers.find((s) => /vidhide/i.test(s.server.title));
+    }
+    if (!chosenServer) {
+      chosenServer = allServers.find((s) => /odcdn/i.test(s.server.title));
+    }
+    if (!chosenServer) {
+      chosenServer = allServers.find((s) => /mega/i.test(s.server.title));
+    }
+    if (!chosenServer && allServers.length > 0) {
+      chosenServer = allServers[0];
+    }
+
+    if (chosenServer) {
+      await handleSelectServer(chosenServer.server, chosenServer.quality);
+    } else if (!isProblematicDefault && defaultUrl) {
+      setStreamUrl(defaultUrl);
+      setIsDirectVideo(
+        defaultUrl.includes('.mp4') || defaultUrl.includes('.m3u8')
+      );
+      setActiveServerTitle('Default Server');
+      setIframeLoaded(true);
+    } else if (allServers.length > 0) {
+      await handleSelectServer(allServers[0].server, allServers[0].quality);
+    }
+  };
+
   const handleSelectServer = async (server: QualityServer, quality: string) => {
     try {
       setSwitchingServer(true);
-      const url = await getServerStreamUrl(server.serverId);
-      if (url) {
-        setStreamUrl(normalizeUrl(url));
+      setXframeBlocked(false);
+      setIframeLoaded(false);
+
+      if (iframeTimeoutRef.current) clearTimeout(iframeTimeoutRef.current);
+
+      const resolved = await resolveServerStream(server.serverId);
+      if (resolved && resolved.url) {
+        setStreamUrl(resolved.url);
+        setIsDirectVideo(resolved.isDirectVideo);
         setActiveServerTitle(`${server.title} (${quality})`);
+        setActiveQuality(quality);
+
+        // If direct video, loading is ready immediately
+        if (resolved.isDirectVideo) {
+          setIframeLoaded(true);
+          setSwitchingServer(false);
+        } else {
+          // Detect possible X-Frame blocking timeout after 8s for problematic hosts
+          if (
+            /ondesuhd/i.test(server.title) ||
+            /desustream/i.test(server.title) ||
+            /odstream/i.test(server.title)
+          ) {
+            iframeTimeoutRef.current = setTimeout(() => {
+              setXframeBlocked(true);
+            }, 8000);
+          }
+        }
+      } else {
+        alert('Gagal mengambil url dari server ini, mencoba server lain...');
       }
     } catch (err) {
-      alert('Server ini sedang tidak dapat dijangkau, mencoba server lain...');
+      alert('Server sedang sibuk, silakan pilih server alternatif di bawah.');
     } finally {
-      setSwitchingServer(false);
+      // Keep switching spinner until iframe or video loaded
+      setTimeout(() => setSwitchingServer(false), 500);
+    }
+  };
+
+  const handleSwitchToVidhide = () => {
+    if (!detail?.server?.qualities) return;
+    const allServers: { server: QualityServer; quality: string }[] = [];
+    detail.server.qualities.forEach((q) => {
+      q.serverList?.forEach((srv) => {
+        allServers.push({ server: srv, quality: q.title });
+      });
+    });
+
+    const vidhide = allServers.find((s) => /vidhide/i.test(s.server.title));
+    if (vidhide) {
+      handleSelectServer(vidhide.server, vidhide.quality);
+    } else {
+      alert('Server Vidhide tidak tersedia untuk episode ini.');
     }
   };
 
   const handlePlayNative = () => {
     if (!streamUrl) return;
-    const clean = normalizeUrl(streamUrl);
-    window.open(clean, '_blank');
-  };
-
-  const handleNextFallbackServer = async () => {
-    if (!detail?.server?.qualities) return;
-    const allServers: { server: QualityServer; quality: string }[] = [];
-    for (const q of detail.server.qualities) {
-      for (const srv of q.serverList) {
-        allServers.push({ server: srv, quality: q.title });
-      }
-    }
-    if (allServers.length === 0) return;
-
-    const currentIdx = allServers.findIndex((s) => activeServerTitle.includes(s.server.title));
-    const nextIdx = (currentIdx + 1) % allServers.length;
-    const nextChoice = allServers[nextIdx];
-    await handleSelectServer(nextChoice.server, nextChoice.quality);
+    window.open(streamUrl, '_blank');
   };
 
   if (loading) {
@@ -137,7 +239,7 @@ function WatchContent() {
 
   if (error || !detail) {
     return (
-      <div className="p-8 rounded-3xl glass-obsidian border border-red-500/30 text-center space-y-4 max-w-md mx-auto my-16 animate-fade-in-up">
+      <div className="p-8 rounded-3xl card-frosted-obsidian border border-red-500/30 text-center space-y-4 max-w-md mx-auto my-16 animate-fade-in-up">
         <h2 className="font-cinematic font-bold text-lg text-white">Gagal Memutar Episode</h2>
         <p className="text-xs text-zinc-400">{error || 'Episode tidak ditemukan'}</p>
         <Link
@@ -151,14 +253,23 @@ function WatchContent() {
   }
 
   return (
-    <div className={`space-y-6 ${theaterMode ? 'max-w-none' : 'max-w-5xl'} mx-auto pb-24 animate-fade-in-up`}>
-      {/* Top Breadcrumb Navigation */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
+    <div className="space-y-6 max-w-5xl mx-auto pb-24 animate-fade-in-up relative">
+      {/* Lights Off Cinema Dimmer Overlay */}
+      {lightsOff && (
+        <div
+          onClick={() => setLightsOff(false)}
+          className="fixed inset-0 z-40 bg-black/92 backdrop-blur-md transition-opacity duration-500 cursor-pointer pointer-events-auto"
+          title="Klik di mana saja untuk menyalakan lampu bioskop"
+        />
+      )}
+
+      {/* Top Breadcrumb Navigation & Controls */}
+      <div className="flex flex-wrap items-center justify-between gap-3 relative z-50">
         <div className="flex items-center gap-2">
           {detail.animeId ? (
             <Link
               href={`/anime?id=${detail.animeId}`}
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-white/[0.05] hover:bg-white/[0.1] border border-white/[0.08] text-zinc-300 hover:text-white text-xs font-semibold spring-press"
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full card-frosted-obsidian hover:border-white/20 text-zinc-300 hover:text-white text-xs font-semibold spring-press"
             >
               <ChevronLeft className="w-4 h-4" />
               Kembali ke Seri
@@ -166,7 +277,7 @@ function WatchContent() {
           ) : (
             <Link
               href="/"
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-white/[0.05] hover:bg-white/[0.1] border border-white/[0.08] text-zinc-300 hover:text-white text-xs font-semibold spring-press"
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full card-frosted-obsidian hover:border-white/20 text-zinc-300 hover:text-white text-xs font-semibold spring-press"
             >
               <ChevronLeft className="w-4 h-4" />
               Beranda
@@ -179,21 +290,46 @@ function WatchContent() {
           </span>
         </div>
 
-        {/* Theater mode toggle */}
-        <button
-          onClick={() => setTheaterMode(!theaterMode)}
-          className="hidden sm:inline-flex items-center gap-1.5 px-4 py-2 rounded-full glass-obsidian border border-white/[0.08] text-xs text-zinc-300 hover:text-white spring-press"
-          title="Toggle Mode Bioskop"
-        >
-          {theaterMode ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
-          <span>{theaterMode ? 'Normal' : 'Bioskop'}</span>
-        </button>
+        {/* Action Controls: Mode Bioskop & Auto-Next */}
+        <div className="flex items-center gap-2">
+          {/* Auto-Next Toggle */}
+          <button
+            onClick={() => setAutoNext(!autoNext)}
+            className={`hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold border transition-all spring-press ${
+              autoNext
+                ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40 shadow-sm'
+                : 'card-frosted-obsidian text-zinc-400 hover:text-white'
+            }`}
+            title="Auto-Next Episode"
+          >
+            {autoNext ? <ToggleRight className="w-4 h-4 text-cyan-400" /> : <ToggleLeft className="w-4 h-4 text-zinc-500" />}
+            <span>Auto-Next</span>
+          </button>
+
+          {/* Mode Bioskop (Lights Off) Toggle */}
+          <button
+            onClick={() => setLightsOff(!lightsOff)}
+            className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold border transition-all spring-press ${
+              lightsOff
+                ? 'bg-amber-400 text-black shadow-lg shadow-amber-400/30'
+                : 'card-frosted-obsidian text-zinc-300 hover:text-white'
+            }`}
+            title="Mode Bioskop: Padamkan lampu di sekitar video"
+          >
+            {lightsOff ? <Sun className="w-3.5 h-3.5 fill-black" /> : <Moon className="w-3.5 h-3.5" />}
+            <span>{lightsOff ? 'Nyalakan Lampu' : 'Mode Bioskop'}</span>
+          </button>
+        </div>
       </div>
 
-      {/* Video Player Box with Obsidian Glass Frame */}
-      <div className="relative rounded-3xl overflow-hidden glass-obsidian border border-white/[0.08] shadow-[0_24px_70px_rgba(0,0,0,0.98)] bg-black">
+      {/* Video Player Box with Frosted Obsidian Frame */}
+      <div
+        className={`relative rounded-3xl overflow-hidden card-frosted-obsidian border border-white/[0.08] shadow-[0_24px_80px_rgba(0,0,0,0.98)] bg-black transition-all duration-500 ${
+          lightsOff ? 'relative z-50 ring-2 ring-white/30 scale-[1.01]' : ''
+        }`}
+      >
         {/* HUD Frame Top Bar */}
-        <div className="px-4 py-3 bg-[#040508] border-b border-white/[0.08] flex flex-wrap items-center justify-between gap-2 text-xs text-zinc-300">
+        <div className="px-4 py-3 bg-[#040408] border-b border-white/[0.08] flex flex-wrap items-center justify-between gap-2 text-xs text-zinc-300">
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
             <span className="font-cinematic font-bold text-white tracking-wide">NEXUS PLAYER</span>
@@ -203,57 +339,114 @@ function WatchContent() {
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
-            {/* Tombol Putar Mode Native */}
             <button
               type="button"
               onClick={handlePlayNative}
               className="px-3 py-1 rounded-full text-[11px] font-bold flex items-center gap-1.5 spring-press bg-white/10 hover:bg-white/20 text-white border border-white/20 shadow-sm"
-              title="Putar langsung di webview native atau browser external"
+              title="Putar langsung di browser/player native"
             >
               <Tv className="w-3.5 h-3.5 text-cyan-400" />
-              <span>Putar Mode Native</span>
-            </button>
-
-            {/* Tombol Fallback Otomatis Server */}
-            <button
-              type="button"
-              onClick={handleNextFallbackServer}
-              className="px-2.5 py-1 rounded-full text-[11px] font-semibold flex items-center gap-1 spring-press bg-white/5 hover:bg-white/10 text-zinc-300 hover:text-white border border-white/10"
-              title="Ganti ke server alternatif secara otomatis"
-            >
-              <RefreshCw className="w-3 h-3 text-zinc-400" />
-              <span className="hidden sm:inline">Ganti Server</span>
+              <span>Putar Eksternal</span>
             </button>
 
             {streamUrl && (
               <a
-                href={normalizeUrl(streamUrl)}
+                href={streamUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-[11px] text-zinc-400 hover:text-white flex items-center gap-1 spring-press px-2.5 py-1 rounded-lg hover:bg-white/5"
               >
-                Buka Tab Baru <ExternalLink className="w-3 h-3" />
+                Tab Baru <ExternalLink className="w-3 h-3" />
               </a>
             )}
           </div>
         </div>
 
-        {/* Video Iframe Container (Vidhide, Odstream, Ondesuhd, Desustream compatible without sandbox/no-referrer) */}
-        <div className="relative aspect-video w-full bg-black flex items-center justify-center">
-          {switchingServer ? (
-            <div className="flex flex-col items-center gap-3 text-white">
-              <RefreshCw className="w-8 h-8 animate-spin text-white" />
-              <p className="text-xs font-semibold">Menghubungkan ke Server...</p>
+        {/* Video Player Canvas Container */}
+        <div className="relative aspect-video w-full bg-black flex items-center justify-center overflow-hidden">
+          {/* Loading / Switching Screen with Neon Spinner */}
+          {(switchingServer || (!iframeLoaded && !xframeBlocked)) && (
+            <div className="absolute inset-0 z-20 bg-black flex flex-col items-center justify-center gap-3 text-white">
+              <div className="relative w-12 h-12 flex items-center justify-center">
+                <RefreshCw className="w-8 h-8 animate-spin text-cyan-400 drop-shadow-[0_0_12px_rgba(0,240,255,0.7)]" />
+              </div>
+              <div className="text-center space-y-1">
+                <p className="text-xs font-bold tracking-wide">Menghubungkan ke Pemutar...</p>
+                <p className="text-[11px] text-zinc-500 font-medium">{activeServerTitle}</p>
+              </div>
             </div>
-          ) : streamUrl ? (
-            <iframe
-              key={streamUrl}
-              src={normalizeUrl(streamUrl)}
-              className="w-full h-full border-0"
-              allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
-              allowFullScreen
-              title={detail.title}
-            />
+          )}
+
+          {/* X-Frame Blocked Warning Overlay */}
+          {xframeBlocked && (
+            <div className="absolute inset-0 z-30 bg-black/90 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center space-y-3 animate-fade-in-up">
+              <div className="w-12 h-12 rounded-2xl bg-amber-500/20 border border-amber-500/40 text-amber-400 flex items-center justify-center shadow-lg">
+                <ShieldAlert className="w-6 h-6" />
+              </div>
+              <div className="max-w-md space-y-1">
+                <h3 className="font-cinematic font-bold text-base text-white">
+                  Server Membatasi Pemutaran Tersemat
+                </h3>
+                <p className="text-xs text-zinc-400">
+                  Server ini membatasi iframe langsung. Beralih ke server Vidhide atau putar di tab baru:
+                </p>
+              </div>
+
+              <div className="flex flex-wrap items-center justify-center gap-2 pt-2">
+                <button
+                  onClick={handleSwitchToVidhide}
+                  className="px-5 py-2 rounded-full bg-white text-black font-extrabold text-xs hover:bg-zinc-200 shadow-md spring-press flex items-center gap-1.5"
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                  Ganti ke Server Vidhide (Rekomendasi)
+                </button>
+
+                <button
+                  onClick={handlePlayNative}
+                  className="px-4 py-2 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-white font-semibold text-xs spring-press flex items-center gap-1.5"
+                >
+                  <ExternalLink className="w-3.5 h-3.5" />
+                  Buka Tab Baru
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Stream Player: Direct HTML5 Video or Hidden Iframe until onLoad */}
+          {streamUrl ? (
+            isDirectVideo ? (
+              <video
+                ref={videoRef}
+                src={streamUrl}
+                controls
+                autoPlay
+                playsInline
+                className="w-full h-full object-contain bg-black"
+                onEnded={() => {
+                  if (autoNext && detail.hasNextEpisode && detail.nextEpisode) {
+                    router.push(`/watch?id=${detail.nextEpisode.episodeId}`);
+                  }
+                }}
+              />
+            ) : (
+              <iframe
+                key={streamUrl}
+                src={streamUrl}
+                className={`w-full h-full border-0 transition-opacity duration-500 ${
+                  iframeLoaded ? 'opacity-100' : 'opacity-0 pointer-events-none'
+                }`}
+                onLoad={() => {
+                  setIframeLoaded(true);
+                  setSwitchingServer(false);
+                }}
+                onError={() => {
+                  setXframeBlocked(true);
+                }}
+                allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
+                allowFullScreen
+                title={detail.title}
+              />
+            )
           ) : (
             <div className="text-center p-6 text-zinc-400 text-xs space-y-2">
               <Tv className="w-10 h-10 mx-auto text-zinc-700 mb-2" />
@@ -264,11 +457,11 @@ function WatchContent() {
         </div>
 
         {/* HUD Frame Bottom Navigation Controls */}
-        <div className="p-4 bg-[#040508] border-t border-white/[0.08] flex flex-wrap items-center justify-between gap-3">
+        <div className="p-4 bg-[#040408] border-t border-white/[0.08] flex flex-wrap items-center justify-between gap-3">
           {detail.hasPrevEpisode && detail.prevEpisode ? (
             <Link
               href={`/watch?id=${detail.prevEpisode.episodeId}`}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/[0.05] hover:bg-white/[0.1] border border-white/[0.08] text-xs font-semibold text-zinc-200 hover:text-white spring-press"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full card-frosted-obsidian hover:border-white/20 text-xs font-semibold text-zinc-200 hover:text-white spring-press"
             >
               <SkipBack className="w-4 h-4" />
               Episode Sebelumnya
@@ -289,40 +482,47 @@ function WatchContent() {
         </div>
       </div>
 
-      {/* Multi-Quality & Multi-Server Matrix */}
+      {/* Multi-Quality & Multi-Server Matrix (360p, 480p, 720p, 1080p) */}
       {detail.server?.qualities && detail.server.qualities.length > 0 && (
-        <div className="p-6 rounded-3xl glass-obsidian border border-white/[0.06] space-y-4 shadow-[0_20px_50px_rgba(0,0,0,0.95)]">
+        <div className="p-6 rounded-3xl card-frosted-obsidian border border-white/[0.08] space-y-4 shadow-[0_20px_50px_rgba(0,0,0,0.95)]">
           <div className="flex items-center gap-2">
-            <Server className="w-4 h-4 text-white" />
+            <Server className="w-4 h-4 text-cyan-400" />
             <h3 className="font-cinematic font-bold text-sm text-white uppercase tracking-wider">
-              Pilihan Server & Resolusi Video (Vidhide, Ondesuhd, Desustream, Odstream, Odcdn, Mega)
+              Pilihan Resolusi & Server Video (Vidhide, Ondesuhd, Desustream, Odstream, Odcdn, Mega)
             </h3>
           </div>
           <p className="text-xs text-zinc-400">
-            Jika video mengalami kendala atau buffering, ganti resolusi dan server penyedia di bawah ini:
+            Pilih resolusi dan penyedia server cadangan di bawah jika mengalami kendala pemutaran:
           </p>
 
           <div className="space-y-3 pt-1">
             {detail.server.qualities.map((group: QualityGroup, idx: number) => (
               <div key={idx} className="flex flex-col sm:flex-row sm:items-center gap-2">
-                <span className="text-xs font-bold px-3 py-1 rounded-full bg-white/10 text-white border border-white/15 w-fit">
+                <span className="text-xs font-black px-3.5 py-1 rounded-full bg-white/10 text-white border border-white/20 w-fit">
                   {group.title}
                 </span>
 
                 <div className="flex flex-wrap gap-2">
                   {group.serverList.map((srv: QualityServer) => {
-                    const isSelected = activeServerTitle.includes(srv.title) && activeServerTitle.includes(group.title);
+                    const isSelected =
+                      activeServerTitle.includes(srv.title) &&
+                      activeServerTitle.includes(group.title);
+                    const isVidhide = /vidhide/i.test(srv.title);
+
                     return (
                       <button
                         key={srv.serverId}
                         onClick={() => handleSelectServer(srv, group.title)}
-                        className={`px-3.5 py-1.5 rounded-full text-xs font-semibold spring-press ${
+                        className={`px-3.5 py-1.5 rounded-full text-xs font-semibold spring-press transition-all ${
                           isSelected
-                            ? 'bg-white text-black font-bold shadow-md'
+                            ? 'bg-white text-black font-bold shadow-md scale-105'
+                            : isVidhide
+                            ? 'bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-300 border border-cyan-500/30'
                             : 'bg-white/[0.04] hover:bg-white/[0.1] text-zinc-300 hover:text-white border border-white/[0.06]'
                         }`}
                       >
                         {srv.title.toUpperCase()}
+                        {isVidhide && <span className="ml-1 text-[10px] text-cyan-400 font-bold">★</span>}
                       </button>
                     );
                   })}
@@ -333,14 +533,14 @@ function WatchContent() {
         </div>
       )}
 
-      {/* Episode Drawer from Same Anime */}
+      {/* Episode Drawer Directly Below Player */}
       {detail.info?.episodeList && detail.info.episodeList.length > 0 && (
-        <div className="p-6 rounded-3xl glass-obsidian border border-white/[0.06] space-y-4 shadow-[0_20px_50px_rgba(0,0,0,0.95)]">
+        <div className="p-6 rounded-3xl card-frosted-obsidian border border-white/[0.08] space-y-4 shadow-[0_20px_50px_rgba(0,0,0,0.95)]">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <List className="w-4 h-4 text-white" />
               <h3 className="font-cinematic font-bold text-sm text-white uppercase tracking-wider">
-                Daftar Episode Seri
+                Daftar Episode Seri ({detail.info.episodeList.length} Episode)
               </h3>
             </div>
             {detail.animeId && (
@@ -348,7 +548,7 @@ function WatchContent() {
                 href={`/anime?id=${detail.animeId}`}
                 className="text-xs text-zinc-300 hover:text-white font-semibold underline spring-press"
               >
-                Halaman Seri
+                Halaman Detail Seri
               </Link>
             )}
           </div>
@@ -356,17 +556,26 @@ function WatchContent() {
           <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-2">
             {detail.info.episodeList.map((ep, epIdx) => {
               const isCurrent = ep.episodeId === episodeId;
+              const isWatched = watchedEpisodes.includes(ep.episodeId);
+
               return (
                 <Link
                   key={ep.episodeId}
                   href={`/watch?id=${ep.episodeId}`}
-                  className={`p-2.5 rounded-xl text-center text-xs font-bold spring-press animate-fade-in-up stagger-${(epIdx % 12) + 1} ${
+                  className={`p-2.5 rounded-xl text-center text-xs font-bold spring-press transition-all flex flex-col items-center justify-center gap-1 ${
                     isCurrent
-                      ? 'bg-white text-black shadow-md'
+                      ? 'bg-white text-black shadow-lg scale-105'
+                      : isWatched
+                      ? 'bg-emerald-950/20 border border-emerald-500/30 text-emerald-300 hover:bg-emerald-900/30'
                       : 'bg-white/[0.04] hover:bg-white/[0.09] text-zinc-300 hover:text-white border border-white/[0.06]'
                   }`}
                 >
-                  Ep {ep.eps}
+                  <span className="truncate w-full">Ep {ep.eps}</span>
+                  {isWatched && !isCurrent && (
+                    <span className="text-[9px] text-emerald-400 flex items-center gap-0.5">
+                      <CheckCircle2 className="w-2.5 h-2.5" /> Ditonton
+                    </span>
+                  )}
                 </Link>
               );
             })}
@@ -382,7 +591,7 @@ export default function WatchPage() {
     <Suspense
       fallback={
         <div className="min-h-screen flex items-center justify-center text-white text-xs">
-          <RefreshCw className="w-6 h-6 animate-spin mr-2" />
+          <RefreshCw className="w-6 h-6 animate-spin mr-2 text-cyan-400" />
           Memuat pemutar video...
         </div>
       }

@@ -186,16 +186,75 @@ export async function getEpisodeDetail(episodeId: string): Promise<EpisodeDetail
   return data;
 }
 
-export async function getServerStreamUrl(serverId: string): Promise<string> {
-  const data = await fetchWithFallback<any>(`/server/${serverId}`, 600000);
-  let url = data.url || '';
-  if (url) {
-    url = url.trim();
-    if (url.startsWith('//')) {
-      url = `https:${url}`;
+export interface ResolvedStream {
+  url: string;
+  isDirectVideo: boolean;
+  rawHtml?: string;
+}
+
+export function parseStreamData(data: any): ResolvedStream {
+  let url = '';
+  let rawHtml = '';
+  let isDirectVideo = false;
+
+  if (typeof data === 'string') {
+    url = data.trim();
+  } else if (data && typeof data === 'object') {
+    url = data.url || data.streamUrl || data.streamingUrl || '';
+    rawHtml = data.html || data.iframe || '';
+  }
+
+  // If url is empty but rawHtml contains iframe
+  if (!url && rawHtml) {
+    const iframeSrcMatch = rawHtml.match(/src=["']([^"']+)["']/i);
+    if (iframeSrcMatch && iframeSrcMatch[1]) {
+      url = iframeSrcMatch[1];
     }
   }
-  return url;
+
+  // Check if url is base64 encoded
+  if (url && !url.startsWith('http') && !url.startsWith('//')) {
+    try {
+      const decoded = atob(url);
+      if (decoded.startsWith('http') || decoded.startsWith('//')) {
+        url = decoded;
+      } else {
+        const decodedIframeMatch = decoded.match(/src=["']([^"']+)["']/i);
+        if (decodedIframeMatch && decodedIframeMatch[1]) {
+          url = decodedIframeMatch[1];
+        }
+      }
+    } catch {
+      // Not base64
+    }
+  }
+
+  if (url.startsWith('//')) {
+    url = `https:${url}`;
+  }
+
+  // Check if direct video (.mp4, .m3u8, .webm)
+  const cleanUrl = url.toLowerCase();
+  if (
+    cleanUrl.includes('.mp4') ||
+    cleanUrl.includes('.m3u8') ||
+    cleanUrl.includes('/video/mp4') ||
+    cleanUrl.includes('.webm')
+  ) {
+    isDirectVideo = true;
+  }
+
+  return { url, isDirectVideo, rawHtml };
+}
+
+export async function resolveServerStream(serverId: string): Promise<ResolvedStream> {
+  const data = await fetchWithFallback<any>(`/server/${serverId}`, 600000);
+  return parseStreamData(data);
+}
+
+export async function getServerStreamUrl(serverId: string): Promise<string> {
+  const resolved = await resolveServerStream(serverId);
+  return resolved.url;
 }
 
 export async function searchAnime(query: string): Promise<AnimeListItem[]> {

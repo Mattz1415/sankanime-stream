@@ -3,13 +3,10 @@
 @tailwind utilities;
 
 :root {
-  --bg-oled: #020205;
-  --bg-card: #08080c;
-  --accent-cyan: #00f0ff;
-  --accent-purple: #a855f7;
-  --accent-crimson: #f43f5e;
-  --accent-emerald: #10b981;
-  --accent-amber: #f59e0b;
+  --bg-oled: #020204;
+  --bg-card: #06060a;
+  --theme-accent: #00f0ff;
+  --theme-glow: rgba(0, 240, 255, 0.45);
 }
 
 * {
@@ -17,13 +14,13 @@
 }
 
 body {
-  background-color: #020205;
+  background-color: #020204;
   color: #f8fafc;
   font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
   overflow-x: hidden;
   min-height: 100vh;
   /* Ultra-Dark OLED Dot-Matrix Pattern */
-  background-image: radial-gradient(rgba(255, 255, 255, 0.06) 1.1px, transparent 1.1px);
+  background-image: radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px);
   background-size: 20px 20px;
   background-attachment: fixed;
 }
@@ -33,72 +30,91 @@ body {
   font-family: 'Georgia', 'Playfair Display', 'Merriweather', 'Noto Serif', serif;
 }
 
-/* Obsidian Glassmorphism Panels */
-.glass-obsidian {
-  background: rgba(8, 8, 12, 0.72);
+/* Multi-Layer Frosted Obsidian Card */
+.card-frosted-obsidian {
+  background: rgba(255, 255, 255, 0.03);
   backdrop-filter: blur(28px);
   -webkit-backdrop-filter: blur(28px);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 16px 45px rgba(0, 0, 0, 0.9);
+}
+
+/* Obsidian Glassmorphism Panels */
+.glass-obsidian {
+  background: rgba(6, 6, 10, 0.78);
+  backdrop-filter: blur(32px);
+  -webkit-backdrop-filter: blur(32px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.95), 0 0 1px rgba(255, 255, 255, 0.08);
 }
 
 .glass-obsidian-card {
-  background: linear-gradient(145deg, rgba(14, 16, 24, 0.65) 0%, rgba(6, 7, 11, 0.85) 100%);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.01) 100%);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   will-change: transform, box-shadow;
 }
 
 .glass-obsidian-card:hover {
-  background: linear-gradient(145deg, rgba(20, 24, 36, 0.8) 0%, rgba(9, 11, 18, 0.95) 100%);
-  border-color: rgba(255, 255, 255, 0.2);
-  transform: translateY(-4px) scale(1.01);
-  box-shadow: 0 24px 48px -12px rgba(0, 0, 0, 0.95), 0 0 24px -6px rgba(255, 255, 255, 0.08);
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.03) 100%);
+  border-color: rgba(255, 255, 255, 0.22);
+  transform: translateY(-4px) scale(1.015);
+  box-shadow: 0 24px 50px -10px rgba(0, 0, 0, 0.98), 0 0 24px -4px var(--theme-glow, rgba(0, 240, 255, 0.3));
 }
 
 /* Floating Glass Dock (Bottom Nav) */
 .glass-dock {
-  background: rgba(4, 5, 8, 0.85);
-  backdrop-filter: blur(32px);
-  -webkit-backdrop-filter: blur(32px);
+  background: rgba(4, 4, 8, 0.88);
+  backdrop-filter: blur(36px);
+  -webkit-backdrop-filter: blur(36px);
   border: 1px solid rgba(255, 255, 255, 0.12);
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.98), 0 0 30px rgba(0, 0, 0, 0.8);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.98), 0 0 30px rgba(0, 0, 0, 0.9);
 }
 
 /* Glass Pill Switcher */
 .glass-pill-container {
-  background: rgba(10, 12, 18, 0.75);
+  background: rgba(8, 8, 14, 0.8);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
+/* Ambient Dynamic Glow */
+.ambient-glow {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(95px);
+  opacity: 0.32;
+  pointer-events: none;
+  transition: all 0.8s ease-in-out;
+}
+
 /* Dynamic Theme Accents */
 .theme-cyan {
   --theme-accent: #00f0ff;
-  --theme-glow: rgba(0, 240, 255, 0.4);
-}
-
-.theme-purple {
-  --theme-accent: #c084fc;
-  --theme-glow: rgba(192, 132, 252, 0.4);
+  --theme-glow: rgba(0, 240, 255, 0.45);
 }
 
 .theme-crimson {
-  --theme-accent: #fb7185;
-  --theme-glow: rgba(251, 113, 133, 0.4);
+  --theme-accent: #ef4444;
+  --theme-glow: rgba(239, 68, 68, 0.45);
+}
+
+.theme-purple {
+  --theme-accent: #a855f7;
+  --theme-glow: rgba(168, 85, 247, 0.45);
 }
 
 .theme-emerald {
-  --theme-accent: #34d399;
-  --theme-glow: rgba(52, 211, 153, 0.4);
+  --theme-accent: #10b981;
+  --theme-glow: rgba(16, 185, 129, 0.45);
 }
 
-.theme-amber {
-  --theme-accent: #fbbf24;
-  --theme-glow: rgba(251, 191, 36, 0.4);
+.theme-white {
+  --theme-accent: #ffffff;
+  --theme-glow: rgba(255, 255, 255, 0.45);
 }
 
 /* Ken Burns Effect (Slow Cinematic Zoom) */
@@ -176,7 +192,7 @@ body {
 
 .skeleton-shimmer,
 .oled-shimmer {
-  background: linear-gradient(90deg, #05060a 0%, #121520 50%, #05060a 100%);
+  background: linear-gradient(90deg, #040407 0%, #10121a 50%, #040407 100%);
   background-size: 200% 100%;
   animation: oledShimmer 1.8s infinite;
 }
@@ -188,16 +204,16 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: #020205;
+  background: #020204;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #161a26;
+  background: #141620;
   border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #2b334a;
+  background: #252b3d;
 }
 
 /* Safe area for mobile devices */

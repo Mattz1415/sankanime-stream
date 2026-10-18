@@ -19,7 +19,7 @@ const PINNED_MESSAGE: GlobalChatMessage = {
   sender: 'loerdturet',
   badge: 'OWNER',
   badgeColor: '#ef4444',
-  text: 'Selamat datang di KPanime Stream! Server player Vidhide & Odstream sudah dipulihkan 100%. Jangan lupa gunakan fitur bookmark & laporkan jika ada episode yang rusak. Have fun streaming! 🍿🔥',
+  text: 'Selamat datang di NexusAnime! Pemutar video telah dioptimalkan dengan prioritas server Vidhide & Odcdn, bebas iklan dan loading instan. Jangan lupa simpan anime ke Watchlist kamu! 🍿🔥',
   time: 'Hari ini • Pinned',
   isOwner: true,
 };
@@ -38,7 +38,7 @@ const DEFAULT_GLOBAL_MESSAGES: GlobalChatMessage[] = [
     sender: 'kage_ninja',
     badge: 'VIP',
     badgeColor: '#8b5cf6',
-    text: 'Minigame Zabuza vs Kepong di atas seru banget wkwkwk, pas ketuk bulan merah langsung bisa joystick!',
+    text: 'Fitur Watchlist baru rapi banget, episode yang sudah ditonton juga langsung ketahuan!',
     time: '02:22',
   },
   {
