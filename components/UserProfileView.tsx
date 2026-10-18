@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { User, Shield, Sparkles, Trash2, Heart, Clock, HardDrive, Palette, Check } from 'lucide-react';
+import { User, HardDrive, Palette, Check, Trash2, Heart, Clock } from 'lucide-react';
 import { useTheme, ThemePalette } from '@/lib/themeContext';
 import { getBookmarks, getWatchHistory } from '@/lib/storage';
 
@@ -14,7 +14,7 @@ const PALETTES_LIST: { id: ThemePalette; name: string; color: string }[] = [
 ];
 
 export default function UserProfileView() {
-  const { palette, setPalette, accentColor } = useTheme();
+  const { palette, setPalette } = useTheme();
   const [historyCount, setHistoryCount] = useState(0);
   const [bookmarkCount, setBookmarkCount] = useState(0);
 
@@ -34,15 +34,16 @@ export default function UserProfileView() {
   };
 
   return (
-    <div className="w-full max-w-4xl mx-auto space-y-6">
+    <div className="w-full max-w-4xl mx-auto space-y-6 animate-fade-in-up">
       {/* Profile Header Glass Card */}
-      <div className="p-6 sm:p-8 rounded-3xl glass-fluent border border-white/10 shadow-xl relative overflow-hidden">
+      <div className="p-6 sm:p-8 rounded-3xl glass-obsidian border border-white/[0.06] shadow-[0_20px_50px_rgba(0,0,0,0.95)] relative overflow-hidden">
         <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 text-center sm:text-left">
           {/* Avatar with Glow Border */}
-          <div className="relative w-24 h-24 rounded-full p-1 bg-gradient-to-tr from-white/40 via-white/10 to-transparent shadow-2xl flex-shrink-0">
+          <div className="relative w-24 h-24 rounded-full p-1 bg-gradient-to-tr from-white/30 via-white/10 to-transparent shadow-2xl flex-shrink-0 spring-press">
             <img
               src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80"
               alt="Avatar"
+              loading="lazy"
               className="w-full h-full rounded-full object-cover"
             />
             <span className="absolute bottom-1 right-1 w-4 h-4 rounded-full bg-emerald-400 border-2 border-black" />
@@ -52,22 +53,22 @@ export default function UserProfileView() {
             <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
               <h2 className="font-cinematic font-black text-2xl text-white">Pengguna Nexus</h2>
               <span className="px-2.5 py-0.5 rounded-full bg-white/10 text-white text-[10px] font-bold tracking-wider uppercase border border-white/20">
-                PRO PASS
+                OLED PASS
               </span>
             </div>
             <p className="text-xs text-zinc-400 max-w-md">
-              Penikmat anime garis keras dengan dukungan pemutar Sanka Vollerei multi-server tanpa batasan.
+              Penikmat anime dengan dukungan pemutar Sanka Vollerei multi-server tanpa batasan iklan.
             </p>
 
             {/* Quick Stats Badges */}
             <div className="flex flex-wrap items-center justify-center sm:justify-start gap-4 pt-3">
-              <div className="px-4 py-2 rounded-2xl bg-white/[0.05] border border-white/10 flex items-center gap-2">
+              <div className="px-4 py-2 rounded-2xl bg-white/[0.04] border border-white/[0.08] flex items-center gap-2">
                 <Clock className="w-4 h-4 text-zinc-400" />
                 <span className="text-xs font-bold text-white">{historyCount}</span>
                 <span className="text-[11px] text-zinc-400">Episode Ditonton</span>
               </div>
 
-              <div className="px-4 py-2 rounded-2xl bg-white/[0.05] border border-white/10 flex items-center gap-2">
+              <div className="px-4 py-2 rounded-2xl bg-white/[0.04] border border-white/[0.08] flex items-center gap-2">
                 <Heart className="w-4 h-4 text-pink-400" />
                 <span className="text-xs font-bold text-white">{bookmarkCount}</span>
                 <span className="text-[11px] text-zinc-400">Favorit</span>
@@ -78,7 +79,7 @@ export default function UserProfileView() {
       </div>
 
       {/* Theme Accent Palette Customizer */}
-      <div className="p-6 rounded-3xl glass-fluent border border-white/10 shadow-lg space-y-4">
+      <div className="p-6 rounded-3xl glass-obsidian border border-white/[0.06] shadow-[0_20px_50px_rgba(0,0,0,0.95)] space-y-4">
         <div className="flex items-center gap-2">
           <Palette className="w-5 h-5 text-white" />
           <div>
@@ -94,10 +95,10 @@ export default function UserProfileView() {
               <button
                 key={p.id}
                 onClick={() => setPalette(p.id)}
-                className={`p-3 rounded-2xl border transition-all flex flex-col items-center gap-2 active:scale-95 ${
+                className={`p-3 rounded-2xl border transition-all flex flex-col items-center gap-2 spring-press ${
                   isSelected
                     ? 'bg-white/15 border-white shadow-lg'
-                    : 'bg-white/[0.03] border-white/10 hover:border-white/25 hover:bg-white/[0.07]'
+                    : 'bg-white/[0.03] border-white/[0.06] hover:border-white/20 hover:bg-white/[0.07]'
                 }`}
               >
                 <div
@@ -114,7 +115,7 @@ export default function UserProfileView() {
       </div>
 
       {/* Storage & Cache Management */}
-      <div className="p-6 rounded-3xl glass-fluent border border-white/10 shadow-lg space-y-4">
+      <div className="p-6 rounded-3xl glass-obsidian border border-white/[0.06] shadow-[0_20px_50px_rgba(0,0,0,0.95)] space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <HardDrive className="w-5 h-5 text-zinc-300" />
@@ -126,7 +127,7 @@ export default function UserProfileView() {
 
           <button
             onClick={handleClearCache}
-            className="px-4 py-2 rounded-xl bg-red-500/20 hover:bg-red-500/30 text-red-300 border border-red-500/30 text-xs font-bold transition-all active:scale-95 flex items-center gap-1.5"
+            className="px-4 py-2 rounded-xl bg-red-500/20 hover:bg-red-500/30 text-red-300 border border-red-500/30 text-xs font-bold spring-press flex items-center gap-1.5"
           >
             <Trash2 className="w-3.5 h-3.5" />
             Hapus Cache
@@ -135,11 +136,11 @@ export default function UserProfileView() {
       </div>
 
       {/* App Information */}
-      <div className="p-6 rounded-3xl glass-fluent border border-white/10 text-center space-y-2 text-xs text-zinc-400">
+      <div className="p-6 rounded-3xl glass-obsidian border border-white/[0.06] text-center space-y-2 text-xs text-zinc-400 shadow-[0_20px_50px_rgba(0,0,0,0.95)]">
         <p className="font-cinematic font-bold text-sm text-zinc-200">
-          NexusFLUX Stream v1.0.0
+          NexusAnime Ultra-Dark OLED v1.2.0
         </p>
-        <p>Bertenaga Sanka Vollerei REST API • Desain Fluent Glassmorphism Gelap</p>
+        <p>Bertenaga Sanka Vollerei REST API • Obsidian Glassmorphism Desain</p>
         <p className="text-[11px] text-zinc-500">
           Built for Android APK via Capacitor 8 & Next.js Static Export
         </p>

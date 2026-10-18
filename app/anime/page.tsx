@@ -94,13 +94,13 @@ function AnimeDetailContent() {
 
   if (loading) {
     return (
-      <div className="space-y-6 max-w-5xl mx-auto py-8">
-        <div className="w-full h-80 rounded-3xl skeleton-shimmer" />
+      <div className="space-y-6 max-w-5xl mx-auto py-8 animate-fade-in-up">
+        <div className="w-full h-80 rounded-3xl oled-shimmer" />
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <div className="h-64 rounded-2xl skeleton-shimmer" />
+          <div className="h-64 rounded-2xl oled-shimmer" />
           <div className="md:col-span-3 space-y-4">
-            <div className="h-8 w-3/4 rounded-xl skeleton-shimmer" />
-            <div className="h-20 w-full rounded-xl skeleton-shimmer" />
+            <div className="h-8 w-3/4 rounded-xl oled-shimmer" />
+            <div className="h-20 w-full rounded-xl oled-shimmer" />
           </div>
         </div>
       </div>
@@ -109,12 +109,12 @@ function AnimeDetailContent() {
 
   if (error || !detail) {
     return (
-      <div className="p-8 rounded-3xl glass-fluent border border-red-500/30 text-center space-y-4 max-w-md mx-auto my-16">
+      <div className="p-8 rounded-3xl glass-obsidian border border-red-500/30 text-center space-y-4 max-w-md mx-auto my-16 animate-fade-in-up">
         <h2 className="font-cinematic font-bold text-lg text-white">Detail Tidak Ditemukan</h2>
         <p className="text-xs text-zinc-400">{error || 'Data anime tidak dapat diambil'}</p>
         <Link
           href="/"
-          className="inline-block px-6 py-2.5 rounded-full bg-white text-black font-extrabold text-xs hover:bg-zinc-200 transition-all shadow-md"
+          className="inline-block px-6 py-2.5 rounded-full bg-white text-black font-extrabold text-xs hover:bg-zinc-200 transition-all shadow-md spring-press"
         >
           Kembali ke Beranda
         </Link>
@@ -132,38 +132,40 @@ function AnimeDetailContent() {
   const latestEpisode = detail.episodeList?.[0];
 
   return (
-    <div className="space-y-8 max-w-5xl mx-auto pb-24">
+    <div className="space-y-8 max-w-5xl mx-auto pb-24 animate-fade-in-up">
       {/* Back button */}
       <Link
         href="/"
-        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-white/[0.06] hover:bg-white/[0.12] border border-white/10 text-zinc-300 hover:text-white text-xs font-semibold transition-all active:scale-95"
+        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-white/[0.05] hover:bg-white/[0.1] border border-white/[0.08] text-zinc-300 hover:text-white text-xs font-semibold spring-press"
       >
         <ChevronLeft className="w-4 h-4" />
         Beranda
       </Link>
 
       {/* Hero Header Card */}
-      <div className="relative rounded-3xl glass-fluent border border-white/15 overflow-hidden shadow-2xl p-6 sm:p-10">
-        {/* Background poster blur */}
-        <div className="absolute inset-0 pointer-events-none">
+      <div className="relative rounded-3xl glass-obsidian border border-white/[0.06] overflow-hidden shadow-[0_24px_70px_rgba(0,0,0,0.95)] p-6 sm:p-10">
+        {/* Background poster blur with Ken Burns */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
           <img
             src={detail.poster}
             alt={detail.title}
-            className="w-full h-full object-cover filter blur-3xl opacity-20 scale-125"
+            loading="lazy"
+            className="w-full h-full object-cover filter blur-3xl opacity-20 scale-125 animate-ken-burns"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#06080e] via-[#06080e]/80 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#020205] via-[#020205]/85 to-transparent" />
         </div>
 
         <div className="relative z-10 flex flex-col md:flex-row gap-6 md:gap-8 items-start">
           {/* Poster Image */}
-          <div className="relative w-44 sm:w-56 aspect-[3/4] flex-shrink-0 mx-auto md:mx-0 rounded-2xl overflow-hidden border border-white/20 shadow-2xl group">
+          <div className="relative w-44 sm:w-56 aspect-[3/4] flex-shrink-0 mx-auto md:mx-0 rounded-2xl overflow-hidden border border-white/20 shadow-2xl group spring-press">
             <img
               src={detail.poster}
               alt={detail.title}
+              loading="lazy"
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
             />
             {detail.score && (
-              <div className="absolute top-2.5 right-2.5 flex items-center gap-1 px-2.5 py-1 rounded-full bg-black/70 backdrop-blur-md border border-amber-400/30 text-amber-300 font-bold text-xs">
+              <div className="absolute top-2.5 right-2.5 flex items-center gap-1 px-2.5 py-1 rounded-full bg-black/75 backdrop-blur-md border border-amber-400/30 text-amber-300 font-bold text-xs shadow-md">
                 <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
                 {detail.score}
               </div>
@@ -173,7 +175,7 @@ function AnimeDetailContent() {
           {/* Details & Actions */}
           <div className="flex-1 space-y-4 text-center md:text-left">
             <div>
-              <h1 className="font-cinematic font-black text-2xl sm:text-3xl md:text-4xl text-white leading-tight">
+              <h1 className="font-cinematic font-black text-2xl sm:text-3xl md:text-4xl text-white leading-tight drop-shadow-[0_4px_16px_rgba(0,0,0,0.9)]">
                 {detail.title}
               </h1>
               {detail.japanese && (
@@ -221,7 +223,7 @@ function AnimeDetailContent() {
                 {detail.genreList.map((genre) => (
                   <span
                     key={genre.genreId || genre.title}
-                    className="text-xs px-3 py-1 rounded-full bg-white/[0.06] border border-white/10 text-zinc-300"
+                    className="text-xs px-3 py-1 rounded-full bg-white/[0.05] border border-white/[0.08] text-zinc-300"
                   >
                     {genre.title}
                   </span>
@@ -234,7 +236,7 @@ function AnimeDetailContent() {
               {latestEpisode && (
                 <Link
                   href={`/watch?id=${latestEpisode.episodeId}`}
-                  className="inline-flex items-center gap-2 px-7 py-3 rounded-full bg-white text-black font-extrabold text-xs sm:text-sm hover:bg-zinc-200 transition-all shadow-[0_4px_30px_rgba(255,255,255,0.35)] active:scale-95"
+                  className="inline-flex items-center gap-2 px-7 py-3 rounded-full bg-white text-black font-extrabold text-xs sm:text-sm hover:bg-zinc-200 shadow-[0_4px_30px_rgba(255,255,255,0.35)] spring-press"
                 >
                   <Play className="w-4 h-4 fill-black" />
                   Tonton Episode Terbaru
@@ -244,7 +246,7 @@ function AnimeDetailContent() {
               {firstEpisode && firstEpisode !== latestEpisode && (
                 <Link
                   href={`/watch?id=${firstEpisode.episodeId}`}
-                  className="inline-flex items-center gap-2 px-5 py-3 rounded-full bg-white/10 hover:bg-white/20 border border-white/15 text-white text-xs sm:text-sm font-semibold transition-all active:scale-95"
+                  className="inline-flex items-center gap-2 px-5 py-3 rounded-full bg-white/10 hover:bg-white/20 border border-white/15 text-white text-xs sm:text-sm font-semibold spring-press"
                 >
                   Episode 1
                 </Link>
@@ -252,7 +254,7 @@ function AnimeDetailContent() {
 
               <button
                 onClick={handleBookmarkToggle}
-                className={`px-5 py-3 rounded-full border transition-all active:scale-95 flex items-center gap-2 text-xs font-semibold ${
+                className={`px-5 py-3 rounded-full border spring-press flex items-center gap-2 text-xs font-semibold ${
                   bookmarked
                     ? 'bg-white/20 border-white/40 text-white shadow-lg'
                     : 'bg-white/10 hover:bg-white/20 border-white/15 text-white'
@@ -273,7 +275,7 @@ function AnimeDetailContent() {
 
               <button
                 onClick={handleShare}
-                className="p-3 rounded-full bg-white/10 hover:bg-white/20 border border-white/15 text-white transition-all active:scale-95"
+                className="p-3 rounded-full bg-white/10 hover:bg-white/20 border border-white/15 text-white spring-press"
                 title="Bagikan"
               >
                 <Share2 className="w-4 h-4" />
@@ -284,7 +286,7 @@ function AnimeDetailContent() {
 
         {/* Synopsis Section */}
         {detail.synopsis?.paragraphs && detail.synopsis.paragraphs.length > 0 && (
-          <div className="mt-8 pt-6 border-t border-white/10 space-y-2">
+          <div className="mt-8 pt-6 border-t border-white/[0.08] space-y-2">
             <h3 className="font-cinematic font-bold text-sm text-white uppercase tracking-wider">
               Sinopsis
             </h3>
@@ -302,7 +304,7 @@ function AnimeDetailContent() {
             {detail.synopsis.paragraphs.length > 2 && (
               <button
                 onClick={() => setShowFullSynopsis(!showFullSynopsis)}
-                className="text-xs text-white font-bold underline pt-1 block"
+                className="text-xs text-white font-bold underline pt-1 block spring-press"
               >
                 {showFullSynopsis ? 'Tutup Sebagian' : 'Baca Selengkapnya...'}
               </button>
@@ -339,16 +341,16 @@ function AnimeDetailContent() {
           </div>
         </div>
 
-        {/* Episode Grid */}
+        {/* Episode Grid with Staggered Entrance */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-          {filteredEpisodes.map((ep) => {
+          {filteredEpisodes.map((ep, idx) => {
             const isWatched = watchedEpisodes.includes(ep.episodeId);
 
             return (
               <Link
                 key={ep.episodeId}
                 href={`/watch?id=${ep.episodeId}`}
-                className={`p-4 rounded-2xl glass-fluent-card flex items-center justify-between gap-3 group transition-all ${
+                className={`p-4 rounded-2xl glass-obsidian-card flex items-center justify-between gap-3 group spring-press animate-fade-in-up stagger-${(idx % 12) + 1} ${
                   isWatched ? 'border-emerald-500/30' : ''
                 }`}
               >
@@ -381,7 +383,7 @@ function AnimeDetailContent() {
         </div>
 
         {filteredEpisodes.length === 0 && (
-          <div className="p-8 text-center glass-fluent rounded-3xl text-zinc-400 text-xs">
+          <div className="p-8 text-center glass-obsidian rounded-3xl text-zinc-400 text-xs border border-white/[0.06]">
             Tidak ada episode yang cocok dengan pencarian "{searchEps}"
           </div>
         )}

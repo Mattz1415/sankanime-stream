@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Flame, CheckCircle, Calendar, RefreshCw } from 'lucide-react';
+import { Calendar, RefreshCw } from 'lucide-react';
 import AnimeGlassCard from './AnimeGlassCard';
 import { getOngoingAnime, getCompleteAnime, getSchedule } from '@/lib/clientApi';
 import { AnimeListItem, ScheduleDay } from '@/lib/types';
@@ -40,13 +40,13 @@ export default function AnimeListView() {
   }, [activeSubtab]);
 
   return (
-    <div className="w-full max-w-7xl mx-auto space-y-6">
+    <div className="w-full max-w-7xl mx-auto space-y-6 animate-fade-in-up">
       {/* Subtab Pill Navigation */}
       <div className="flex items-center justify-center">
-        <div className="glass-pill-container p-1 rounded-full inline-flex items-center shadow-lg">
+        <div className="glass-pill-container p-1 rounded-full inline-flex items-center shadow-lg border border-white/[0.06]">
           <button
             onClick={() => setActiveSubtab('ongoing')}
-            className={`px-4 sm:px-6 py-2 rounded-full text-xs sm:text-sm font-bold transition-all ${
+            className={`px-4 sm:px-6 py-2 rounded-full text-xs sm:text-sm font-bold transition-all spring-press ${
               activeSubtab === 'ongoing'
                 ? 'bg-white text-black shadow-md'
                 : 'text-zinc-400 hover:text-white'
@@ -56,7 +56,7 @@ export default function AnimeListView() {
           </button>
           <button
             onClick={() => setActiveSubtab('complete')}
-            className={`px-4 sm:px-6 py-2 rounded-full text-xs sm:text-sm font-bold transition-all ${
+            className={`px-4 sm:px-6 py-2 rounded-full text-xs sm:text-sm font-bold transition-all spring-press ${
               activeSubtab === 'complete'
                 ? 'bg-white text-black shadow-md'
                 : 'text-zinc-400 hover:text-white'
@@ -66,7 +66,7 @@ export default function AnimeListView() {
           </button>
           <button
             onClick={() => setActiveSubtab('schedule')}
-            className={`px-4 sm:px-6 py-2 rounded-full text-xs sm:text-sm font-bold transition-all ${
+            className={`px-4 sm:px-6 py-2 rounded-full text-xs sm:text-sm font-bold transition-all spring-press ${
               activeSubtab === 'schedule'
                 ? 'bg-white text-black shadow-md'
                 : 'text-zinc-400 hover:text-white'
@@ -87,11 +87,11 @@ export default function AnimeListView() {
 
       {/* Error Message */}
       {error && !loading && (
-        <div className="p-6 rounded-3xl glass-fluent border-red-500/30 text-center max-w-md mx-auto space-y-2">
+        <div className="p-6 rounded-3xl glass-obsidian border-red-500/30 text-center max-w-md mx-auto space-y-2">
           <p className="text-xs text-red-300">{error}</p>
           <button
             onClick={() => setActiveSubtab(activeSubtab)}
-            className="px-4 py-2 rounded-xl bg-white text-black font-bold text-xs"
+            className="px-5 py-2 rounded-full bg-white text-black font-bold text-xs spring-press"
           >
             Coba Lagi
           </button>
@@ -101,8 +101,8 @@ export default function AnimeListView() {
       {/* Ongoing Anime List */}
       {!loading && activeSubtab === 'ongoing' && (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4">
-          {ongoingList.map((anime) => (
-            <AnimeGlassCard key={anime.animeId || anime.title} anime={anime} />
+          {ongoingList.map((anime, i) => (
+            <AnimeGlassCard key={anime.animeId || anime.title} anime={anime} index={i} />
           ))}
         </div>
       )}
@@ -110,8 +110,8 @@ export default function AnimeListView() {
       {/* Completed Anime List */}
       {!loading && activeSubtab === 'complete' && (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4">
-          {completeList.map((anime) => (
-            <AnimeGlassCard key={anime.animeId || anime.title} anime={anime} />
+          {completeList.map((anime, i) => (
+            <AnimeGlassCard key={anime.animeId || anime.title} anime={anime} index={i} />
           ))}
         </div>
       )}
@@ -120,7 +120,7 @@ export default function AnimeListView() {
       {!loading && activeSubtab === 'schedule' && (
         <div className="space-y-6">
           {scheduleList.map((dayItem, idx) => (
-            <div key={idx} className="p-5 sm:p-6 rounded-3xl glass-fluent border border-white/10 space-y-4">
+            <div key={idx} className="p-5 sm:p-6 rounded-3xl glass-obsidian border border-white/[0.06] space-y-4 shadow-[0_20px_50px_rgba(0,0,0,0.9)] animate-fade-in-up">
               <div className="flex items-center gap-2">
                 <Calendar className="w-5 h-5 text-white" />
                 <h3 className="font-cinematic font-bold text-base sm:text-lg text-white">
@@ -135,6 +135,7 @@ export default function AnimeListView() {
                 {(dayItem.animeList || []).map((anime, aIdx) => (
                   <AnimeGlassCard
                     key={aIdx}
+                    index={aIdx}
                     anime={{
                       title: anime.title,
                       animeId: anime.animeId,

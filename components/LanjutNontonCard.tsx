@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { Play, Sparkles, Clock, ChevronRight } from 'lucide-react';
+import { Play, Clock, ChevronRight } from 'lucide-react';
 import { WatchHistoryItem, AnimeListItem } from '@/lib/types';
 import { useTheme } from '@/lib/themeContext';
 
@@ -28,7 +28,7 @@ export default function LanjutNontonCard({
     : `Episode 4 / 12 • Tersisa 8 Menit`;
 
   return (
-    <div className="relative w-full rounded-3xl p-4 sm:p-6 glass-fluent border border-white/10 shadow-[0_12px_40px_rgba(0,0,0,0.5)] overflow-hidden group">
+    <div className="relative w-full rounded-3xl p-4 sm:p-6 glass-obsidian border border-white/[0.06] shadow-[0_20px_50px_rgba(0,0,0,0.95)] overflow-hidden group animate-fade-in-up">
       {/* Background soft ambient blur */}
       <div className="absolute top-0 right-0 w-72 h-72 rounded-full bg-white/[0.02] filter blur-3xl pointer-events-none" />
 
@@ -43,7 +43,7 @@ export default function LanjutNontonCard({
         </div>
         <Link
           href="/history"
-          className="text-xs text-zinc-400 hover:text-white transition-colors flex items-center gap-0.5"
+          className="text-xs text-zinc-400 hover:text-white transition-colors flex items-center gap-0.5 spring-press"
         >
           Riwayat Lengkap <ChevronRight className="w-3.5 h-3.5" />
         </Link>
@@ -56,14 +56,15 @@ export default function LanjutNontonCard({
           {/* Thumbnail Poster */}
           <Link
             href={`/watch?id=${episodeId}`}
-            className="relative w-16 h-20 sm:w-20 sm:h-24 rounded-2xl overflow-hidden flex-shrink-0 bg-zinc-900 border border-white/10 shadow-lg group-hover:border-white/30 transition-all block"
+            className="relative w-16 h-20 sm:w-20 sm:h-24 rounded-2xl overflow-hidden flex-shrink-0 bg-[#05060a] border border-white/[0.08] shadow-lg group-hover:border-white/30 spring-press block"
           >
             <img
               src={poster}
               alt={title}
+              loading="lazy"
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
             />
-            <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+            <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
               <div className="w-8 h-8 rounded-full bg-white text-black flex items-center justify-center shadow-md">
                 <Play className="w-4 h-4 fill-black ml-0.5" />
               </div>
@@ -105,7 +106,7 @@ export default function LanjutNontonCard({
         <div className="w-full sm:w-auto flex sm:justify-end flex-shrink-0 pt-2 sm:pt-0">
           <Link
             href={`/watch?id=${episodeId}`}
-            className="w-full sm:w-auto px-6 py-2.5 rounded-full bg-white text-black font-extrabold text-xs sm:text-sm hover:bg-zinc-200 transition-all shadow-[0_4px_20px_rgba(255,255,255,0.25)] active:scale-95 flex items-center justify-center gap-2"
+            className="w-full sm:w-auto px-6 py-2.5 rounded-full bg-white text-black font-extrabold text-xs sm:text-sm hover:bg-zinc-200 shadow-[0_4px_20px_rgba(255,255,255,0.25)] spring-press flex items-center justify-center gap-2"
           >
             <Play className="w-3.5 h-3.5 fill-black" />
             Lanjut

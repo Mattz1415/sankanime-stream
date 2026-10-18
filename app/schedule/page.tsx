@@ -30,17 +30,17 @@ export default function SchedulePage() {
   const currentSchedule = scheduleData[selectedDayIndex];
 
   return (
-    <div className="min-h-screen px-4 sm:px-6 lg:px-8 py-6 pb-24 space-y-6 max-w-7xl mx-auto">
+    <div className="min-h-screen px-4 sm:px-6 lg:px-8 py-6 pb-24 space-y-6 max-w-7xl mx-auto animate-fade-in-up">
       <Link
         href="/"
-        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-white/[0.06] hover:bg-white/[0.12] border border-white/10 text-zinc-300 hover:text-white text-xs font-semibold transition-all active:scale-95"
+        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-white/[0.05] hover:bg-white/[0.1] border border-white/[0.08] text-zinc-300 hover:text-white text-xs font-semibold spring-press"
       >
         <ChevronLeft className="w-4 h-4" />
         Beranda
       </Link>
 
       {/* Header */}
-      <div className="p-6 sm:p-8 rounded-3xl glass-fluent border border-white/10 relative overflow-hidden">
+      <div className="p-6 sm:p-8 rounded-3xl glass-obsidian border border-white/[0.06] shadow-[0_20px_50px_rgba(0,0,0,0.95)] relative overflow-hidden">
         <div className="flex items-center gap-3">
           <div className="p-3 rounded-2xl bg-white/10 border border-white/20 text-white">
             <CalendarDays className="w-6 h-6 text-amber-400" />
@@ -62,7 +62,7 @@ export default function SchedulePage() {
           <p className="text-xs">Memuat jadwal rilis...</p>
         </div>
       ) : error ? (
-        <div className="p-8 rounded-3xl glass-fluent border border-red-500/30 text-center space-y-4 max-w-md mx-auto my-12">
+        <div className="p-8 rounded-3xl glass-obsidian border border-red-500/30 text-center space-y-4 max-w-md mx-auto my-12">
           <p className="text-sm text-red-300">{error}</p>
         </div>
       ) : (
@@ -75,10 +75,10 @@ export default function SchedulePage() {
                 <button
                   key={item.day || idx}
                   onClick={() => setSelectedDayIndex(idx)}
-                  className={`px-5 py-2.5 rounded-full text-xs font-bold whitespace-nowrap transition-all duration-300 ${
+                  className={`px-5 py-2.5 rounded-full text-xs font-bold whitespace-nowrap transition-all duration-300 spring-press ${
                     isActive
                       ? 'bg-white text-black shadow-lg scale-105'
-                      : 'glass-fluent text-zinc-400 hover:text-white border-white/10'
+                      : 'glass-obsidian text-zinc-400 hover:text-white border-white/[0.08]'
                   }`}
                 >
                   {item.day}
@@ -106,13 +106,14 @@ export default function SchedulePage() {
                       <Link
                         key={slug || i}
                         href={`/anime?id=${slug}`}
-                        className="flex items-center justify-between p-3.5 rounded-2xl glass-fluent-card group transition-all"
+                        className={`flex items-center justify-between p-3.5 rounded-2xl glass-obsidian-card group spring-press border border-white/[0.06] animate-fade-in-up stagger-${(i % 12) + 1}`}
                       >
                         <div className="flex items-center gap-3 min-w-0">
                           {anime.poster && (
                             <img
                               src={anime.poster}
                               alt={anime.title}
+                              loading="lazy"
                               className="w-12 h-14 rounded-xl object-cover flex-shrink-0"
                             />
                           )}

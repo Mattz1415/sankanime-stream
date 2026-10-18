@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Flame, CheckCircle, ChevronRight, RefreshCw, Sparkles, BookOpen, Film } from 'lucide-react';
+import { Flame, CheckCircle, ChevronRight, RefreshCw, BookOpen, Film } from 'lucide-react';
 import FluentHeader from '@/components/FluentHeader';
 import HeroCarousel from '@/components/HeroCarousel';
 import LanjutNontonCard from '@/components/LanjutNontonCard';
@@ -46,7 +46,7 @@ export default function HomePage() {
   }, []);
 
   return (
-    <div className="min-h-screen flex flex-col selection:bg-white selection:text-black">
+    <div className="min-h-screen flex flex-col bg-[#020205] text-zinc-100 selection:bg-white selection:text-black">
       {/* Top Header with Pill Switcher ("Anime", "Komik", "Donghua"), Search & Avatar */}
       <FluentHeader
         activeCategory={activeCategory}
@@ -58,7 +58,7 @@ export default function HomePage() {
       <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 safe-dock-padding space-y-8">
         {/* If Active Category is not Anime (e.g. Komik or Donghua), show contextual banner */}
         {activeCategory !== 'Anime' && (
-          <div className="p-8 rounded-3xl glass-fluent border border-white/10 text-center space-y-4">
+          <div className="p-8 rounded-3xl glass-obsidian border border-white/[0.06] text-center space-y-4 shadow-[0_20px_50px_rgba(0,0,0,0.95)] animate-fade-in-up">
             <div className="w-14 h-14 rounded-2xl bg-white/10 border border-white/20 flex items-center justify-center mx-auto text-white">
               {activeCategory === 'Komik' ? <BookOpen className="w-7 h-7" /> : <Film className="w-7 h-7" />}
             </div>
@@ -66,11 +66,11 @@ export default function HomePage() {
               Katalog {activeCategory} Segera Hadir
             </h2>
             <p className="text-xs text-zinc-400 max-w-md mx-auto">
-              Fitur integrasi pembaca {activeCategory} sedang dikembangkan. Kamu tetap dapat menikmati ribuan judul anime subtitle Indonesia melalui tab Anime!
+              Fitur integrasi pembaca {activeCategory} sedang dikembangkan. Nikmati ribuan judul anime subtitle Indonesia melalui tab Anime!
             </p>
             <button
               onClick={() => setActiveCategory('Anime')}
-              className="px-6 py-2.5 rounded-full bg-white text-black font-extrabold text-xs hover:bg-zinc-200 transition-all shadow-md active:scale-95"
+              className="px-6 py-2.5 rounded-full bg-white text-black font-extrabold text-xs hover:bg-zinc-200 transition-all shadow-md spring-press"
             >
               Kembali ke Anime
             </button>
@@ -79,15 +79,15 @@ export default function HomePage() {
 
         {/* Tab 1: JELAJAH (Main Home Feed) */}
         {activeTab === 'jelajah' && activeCategory === 'Anime' && (
-          <div className="space-y-8 animate-fade-in">
+          <div className="space-y-8 animate-fade-in-up">
             {/* Loading State */}
             {loading && (
               <div className="space-y-6">
-                <div className="w-full h-[400px] sm:h-[480px] rounded-3xl skeleton-shimmer" />
-                <div className="w-full h-32 rounded-3xl skeleton-shimmer" />
+                <div className="w-full h-[420px] sm:h-[490px] rounded-3xl oled-shimmer" />
+                <div className="w-full h-32 rounded-3xl oled-shimmer" />
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4">
                   {[...Array(6)].map((_, i) => (
-                    <div key={i} className="aspect-[3/4] rounded-2xl skeleton-shimmer" />
+                    <div key={i} className="aspect-[3/4] rounded-2xl oled-shimmer" />
                   ))}
                 </div>
               </div>
@@ -95,7 +95,7 @@ export default function HomePage() {
 
             {/* Error State */}
             {error && !loading && (
-              <div className="p-8 rounded-3xl glass-fluent border border-red-500/30 text-center space-y-4 max-w-lg mx-auto my-12">
+              <div className="p-8 rounded-3xl glass-obsidian border border-red-500/30 text-center space-y-4 max-w-lg mx-auto my-12 animate-fade-in-up">
                 <div className="w-12 h-12 rounded-full bg-red-500/20 text-red-400 mx-auto flex items-center justify-center">
                   <RefreshCw className="w-6 h-6 animate-spin" />
                 </div>
@@ -105,7 +105,7 @@ export default function HomePage() {
                 <p className="text-xs text-zinc-400">{error}</p>
                 <button
                   onClick={loadData}
-                  className="px-6 py-2.5 rounded-full bg-white text-black font-bold text-xs hover:bg-zinc-200 transition-all shadow-md"
+                  className="px-6 py-2.5 rounded-full bg-white text-black font-bold text-xs hover:bg-zinc-200 shadow-md spring-press"
                 >
                   Coba Lagi
                 </button>
@@ -144,17 +144,18 @@ export default function HomePage() {
 
                       <button
                         onClick={() => setActiveTab('list')}
-                        className="px-4 py-1.5 rounded-full bg-white/[0.06] hover:bg-white/[0.12] border border-white/10 text-xs font-semibold text-zinc-300 hover:text-white transition-all flex items-center gap-1"
+                        className="px-4 py-1.5 rounded-full bg-white/[0.05] hover:bg-white/[0.12] border border-white/[0.08] text-xs font-semibold text-zinc-300 hover:text-white spring-press flex items-center gap-1"
                       >
                         Lihat Semua <ChevronRight className="w-3.5 h-3.5" />
                       </button>
                     </div>
 
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4">
-                      {data.ongoing.animeList.slice(0, 12).map((anime) => (
+                      {data.ongoing.animeList.slice(0, 12).map((anime, i) => (
                         <AnimeGlassCard
                           key={anime.animeId || anime.title}
                           anime={anime}
+                          index={i}
                         />
                       ))}
                     </div>
@@ -179,17 +180,18 @@ export default function HomePage() {
 
                       <button
                         onClick={() => setActiveTab('list')}
-                        className="px-4 py-1.5 rounded-full bg-white/[0.06] hover:bg-white/[0.12] border border-white/10 text-xs font-semibold text-zinc-300 hover:text-white transition-all flex items-center gap-1"
+                        className="px-4 py-1.5 rounded-full bg-white/[0.05] hover:bg-white/[0.12] border border-white/[0.08] text-xs font-semibold text-zinc-300 hover:text-white spring-press flex items-center gap-1"
                       >
                         Lihat Semua <ChevronRight className="w-3.5 h-3.5" />
                       </button>
                     </div>
 
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4">
-                      {data.complete.animeList.slice(0, 12).map((anime) => (
+                      {data.complete.animeList.slice(0, 12).map((anime, i) => (
                         <AnimeGlassCard
                           key={anime.animeId || anime.title}
                           anime={anime}
+                          index={i}
                         />
                       ))}
                     </div>

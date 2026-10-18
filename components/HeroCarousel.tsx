@@ -23,7 +23,7 @@ export default function HeroCarousel({ featuredList }: HeroCarouselProps) {
     if (!items.length) return;
     const timer = setInterval(() => {
       setCurrentIndex((prev) => (prev + 1) % items.length);
-    }, 6000);
+    }, 6500);
     return () => clearInterval(timer);
   }, [items.length]);
 
@@ -48,24 +48,24 @@ export default function HeroCarousel({ featuredList }: HeroCarouselProps) {
   if (!items.length || !currentAnime) return null;
 
   return (
-    <div className="relative w-full rounded-3xl overflow-hidden glass-fluent border border-white/10 shadow-[0_20px_60px_rgba(0,0,0,0.7)] group">
-      {/* Background Poster Artwork with Cinematic Dark Gradients */}
-      <div className="relative w-full h-[400px] sm:h-[480px] lg:h-[540px] overflow-hidden bg-black">
+    <div className="relative w-full rounded-3xl overflow-hidden glass-obsidian border border-white/[0.06] shadow-[0_24px_70px_rgba(0,0,0,0.95)] group">
+      {/* Background Poster Artwork with Ken Burns Effect */}
+      <div className="relative w-full h-[420px] sm:h-[490px] lg:h-[550px] overflow-hidden bg-black">
         <img
           key={currentAnime.animeId}
           src={currentAnime.poster}
           alt={currentAnime.title}
-          className="w-full h-full object-cover object-center filter blur-[1.5px] brightness-[0.72] scale-105 transition-all duration-1000 ease-out"
+          loading="lazy"
+          className="w-full h-full object-cover object-center filter blur-[1px] brightness-[0.68] animate-ken-burns"
         />
 
-        {/* Multi-layered Vignette & Dark Gradients */}
-        <div className="absolute inset-0 bg-gradient-to-t from-[#06080e] via-[#06080e]/60 to-transparent" />
-        <div className="absolute inset-0 bg-gradient-to-r from-[#06080e]/95 via-[#06080e]/40 to-transparent" />
-        <div className="absolute inset-0 bg-radial-gradient pointer-events-none" />
+        {/* Ultra-Dark OLED Multi-layered Vignette */}
+        <div className="absolute inset-0 bg-gradient-to-t from-[#020205] via-[#020205]/75 to-transparent pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#020205]/95 via-[#020205]/50 to-transparent pointer-events-none" />
 
         {/* Dynamic Theme Radial Glow Accent */}
         <div
-          className="absolute -top-24 -left-24 w-96 h-96 rounded-full opacity-30 filter blur-[100px] pointer-events-none transition-all duration-700"
+          className="absolute -top-24 -left-24 w-96 h-96 rounded-full opacity-25 filter blur-[100px] pointer-events-none transition-all duration-700"
           style={{ backgroundColor: accentColor }}
         />
       </div>
@@ -74,7 +74,7 @@ export default function HeroCarousel({ featuredList }: HeroCarouselProps) {
       <div className="absolute top-4 right-4 sm:top-6 sm:right-6 z-20 flex items-center gap-2">
         <button
           onClick={cyclePalette}
-          className="flex items-center gap-2 px-3.5 py-2 rounded-full bg-black/40 hover:bg-black/70 backdrop-blur-2xl border border-white/20 text-white text-xs font-semibold shadow-lg hover:border-white/40 transition-all active:scale-95 group/palette"
+          className="flex items-center gap-2 px-3.5 py-2 rounded-full bg-black/60 hover:bg-black/85 backdrop-blur-2xl border border-white/15 text-white text-xs font-semibold shadow-lg hover:border-white/30 spring-press group/palette"
           title={`Tema: ${palette} (Klik untuk ganti warna)`}
         >
           <Palette className="w-4 h-4 transition-transform group-hover/palette:rotate-45" style={{ color: accentColor }} />
@@ -94,12 +94,12 @@ export default function HeroCarousel({ featuredList }: HeroCarouselProps) {
             </span>
 
             {/* Episode Count & Meta */}
-            <span className="px-3 py-1 rounded-full bg-black/40 backdrop-blur-md border border-white/10 text-[11px] font-semibold text-zinc-300">
+            <span className="px-3 py-1 rounded-full bg-black/60 backdrop-blur-md border border-white/10 text-[11px] font-semibold text-zinc-300">
               {currentAnime.episodes ? `Episode ${currentAnime.episodes} Baru` : 'Episode Terbaru'}
             </span>
 
             {currentAnime.score && (
-              <span className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-black/40 backdrop-blur-md border border-amber-400/30 text-[11px] font-bold text-amber-300">
+              <span className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md border border-amber-400/30 text-[11px] font-bold text-amber-300">
                 <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
                 {currentAnime.score}
               </span>
@@ -110,8 +110,8 @@ export default function HeroCarousel({ featuredList }: HeroCarouselProps) {
             </span>
           </div>
 
-          {/* Cinematic Serif Title */}
-          <h1 className="font-cinematic font-black text-2xl sm:text-4xl lg:text-5xl text-white leading-tight drop-shadow-xl line-clamp-2">
+          {/* Cinematic Serif Title with High Contrast */}
+          <h1 className="font-cinematic font-black text-2xl sm:text-4xl lg:text-5xl text-white leading-tight drop-shadow-[0_4px_16px_rgba(0,0,0,0.9)] line-clamp-2">
             {currentAnime.title}
           </h1>
 
@@ -127,7 +127,7 @@ export default function HeroCarousel({ featuredList }: HeroCarouselProps) {
             {/* White Capsule Button: "▶ Tonton Sekarang" */}
             <Link
               href={`/anime?id=${currentAnime.animeId}`}
-              className="inline-flex items-center gap-2.5 px-7 py-3 rounded-full bg-white text-black font-extrabold text-xs sm:text-sm hover:bg-zinc-200 transition-all shadow-[0_4px_30px_rgba(255,255,255,0.35)] active:scale-95"
+              className="inline-flex items-center gap-2.5 px-7 py-3 rounded-full bg-white text-black font-extrabold text-xs sm:text-sm hover:bg-zinc-200 shadow-[0_4px_30px_rgba(255,255,255,0.35)] spring-press"
             >
               <Play className="w-4 h-4 fill-black" />
               <span>Tonton Sekarang</span>
@@ -136,7 +136,7 @@ export default function HeroCarousel({ featuredList }: HeroCarouselProps) {
             {/* Glass Button: "+ Simpan" */}
             <button
               onClick={handleToggleSave}
-              className={`inline-flex items-center gap-2 px-6 py-3 rounded-full backdrop-blur-xl border text-xs sm:text-sm font-semibold transition-all active:scale-95 ${
+              className={`inline-flex items-center gap-2 px-6 py-3 rounded-full backdrop-blur-xl border text-xs sm:text-sm font-semibold spring-press ${
                 isSaved
                   ? 'bg-white/20 border-white/40 text-white shadow-lg'
                   : 'bg-white/10 hover:bg-white/20 border-white/20 text-white'
@@ -158,13 +158,13 @@ export default function HeroCarousel({ featuredList }: HeroCarouselProps) {
         </div>
 
         {/* Carousel Bottom Indicator Dots & Arrows */}
-        <div className="flex items-center justify-between pt-6 mt-4 border-t border-white/10">
+        <div className="flex items-center justify-between pt-6 mt-4 border-t border-white/[0.08]">
           <div className="flex items-center gap-2">
             {items.map((_, idx) => (
               <button
                 key={idx}
                 onClick={() => setCurrentIndex(idx)}
-                className={`h-1.5 rounded-full transition-all duration-300 ${
+                className={`h-1.5 rounded-full transition-all duration-300 spring-press ${
                   currentIndex === idx ? 'w-8 bg-white' : 'w-2 bg-white/30 hover:bg-white/60'
                 }`}
                 aria-label={`Slide ${idx + 1}`}
@@ -175,14 +175,14 @@ export default function HeroCarousel({ featuredList }: HeroCarouselProps) {
           <div className="flex items-center gap-2">
             <button
               onClick={() => setCurrentIndex((prev) => (prev - 1 + items.length) % items.length)}
-              className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 border border-white/15 flex items-center justify-center text-white transition-all active:scale-95"
+              className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 border border-white/15 flex items-center justify-center text-white spring-press"
               aria-label="Previous Slide"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
             <button
               onClick={() => setCurrentIndex((prev) => (prev + 1) % items.length)}
-              className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 border border-white/15 flex items-center justify-center text-white transition-all active:scale-95"
+              className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 border border-white/15 flex items-center justify-center text-white spring-press"
               aria-label="Next Slide"
             >
               <ChevronRight className="w-4 h-4" />

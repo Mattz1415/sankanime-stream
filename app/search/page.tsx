@@ -64,18 +64,18 @@ function SearchContent() {
   };
 
   return (
-    <div className="space-y-6 max-w-5xl mx-auto pb-24">
+    <div className="space-y-6 max-w-5xl mx-auto pb-24 animate-fade-in-up">
       {/* Top Back Button */}
       <Link
         href="/"
-        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-white/[0.06] hover:bg-white/[0.12] border border-white/10 text-zinc-300 hover:text-white text-xs font-semibold transition-all active:scale-95"
+        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-white/[0.05] hover:bg-white/[0.1] border border-white/[0.08] text-zinc-300 hover:text-white text-xs font-semibold spring-press"
       >
         <ChevronLeft className="w-4 h-4" />
         Beranda
       </Link>
 
       {/* Search Header Banner */}
-      <div className="p-6 sm:p-10 rounded-3xl glass-fluent border border-white/10 text-center space-y-4 shadow-2xl">
+      <div className="p-6 sm:p-10 rounded-3xl glass-obsidian border border-white/[0.06] text-center space-y-4 shadow-[0_24px_70px_rgba(0,0,0,0.95)]">
         <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-white/10 text-white text-[11px] font-bold tracking-wider uppercase border border-white/15">
           <Sparkles className="w-3.5 h-3.5 text-amber-300" />
           Pencarian Instan Sanka Vollerei
@@ -94,14 +94,14 @@ function SearchContent() {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Ketik judul anime (cth: Solo Leveling, Naruto, One Piece)..."
-              className="w-full pl-12 pr-24 py-3.5 rounded-full bg-white/[0.06] border border-white/15 focus:border-white/40 text-sm text-white placeholder-zinc-500 outline-none transition-all shadow-inner"
+              className="w-full pl-12 pr-24 py-3.5 rounded-full bg-[#05060a] border border-white/15 focus:border-white/40 text-sm text-white placeholder-zinc-500 outline-none transition-all shadow-inner"
               autoFocus
             />
             {query && (
               <button
                 type="button"
                 onClick={handleClear}
-                className="absolute right-24 p-1.5 text-zinc-400 hover:text-white"
+                className="absolute right-24 p-1.5 text-zinc-400 hover:text-white spring-press"
                 title="Hapus"
               >
                 <X className="w-4 h-4" />
@@ -109,7 +109,7 @@ function SearchContent() {
             )}
             <button
               type="submit"
-              className="absolute right-2 px-5 py-2 rounded-full bg-white text-black font-extrabold text-xs hover:bg-zinc-200 transition-all shadow-md active:scale-95"
+              className="absolute right-2 px-5 py-2 rounded-full bg-white text-black font-extrabold text-xs hover:bg-zinc-200 spring-press shadow-md"
             >
               Cari
             </button>
@@ -126,7 +126,7 @@ function SearchContent() {
             <button
               key={tag}
               onClick={() => handleTagClick(tag)}
-              className="text-xs px-3 py-1 rounded-full bg-white/[0.05] hover:bg-white/[0.12] text-zinc-300 hover:text-white border border-white/10 transition-all active:scale-95"
+              className="text-xs px-3.5 py-1 rounded-full bg-white/[0.05] hover:bg-white/[0.12] text-zinc-300 hover:text-white border border-white/[0.08] transition-all spring-press"
             >
               {tag}
             </button>
@@ -141,7 +141,7 @@ function SearchContent() {
           <p className="text-xs">Mencari di database Sanka Vollerei...</p>
         </div>
       ) : error ? (
-        <div className="p-8 text-center glass-fluent border border-red-500/30 rounded-3xl text-red-300 text-xs">
+        <div className="p-8 text-center glass-obsidian border border-red-500/30 rounded-3xl text-red-300 text-xs">
           {error}
         </div>
       ) : searched ? (
@@ -157,13 +157,13 @@ function SearchContent() {
 
           {results.length > 0 ? (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4">
-              {results.map((anime) => (
-                <AnimeGlassCard key={anime.animeId || anime.title} anime={anime} />
+              {results.map((anime, i) => (
+                <AnimeGlassCard key={anime.animeId || anime.title} anime={anime} index={i} />
               ))}
             </div>
           ) : (
-            <div className="p-12 text-center glass-fluent rounded-3xl space-y-3 border border-white/10">
-              <Search className="w-10 h-10 mx-auto text-zinc-600" />
+            <div className="p-12 text-center glass-obsidian rounded-3xl space-y-3 border border-white/[0.06] shadow-[0_20px_50px_rgba(0,0,0,0.95)]">
+              <Search className="w-10 h-10 mx-auto text-zinc-700" />
               <h3 className="font-cinematic font-bold text-base text-white">Tidak ada hasil ditemukan</h3>
               <p className="text-xs text-zinc-400 max-w-sm mx-auto">
                 Coba gunakan kata kunci lain atau periksa ejaan judul anime kamu.

@@ -15,9 +15,8 @@ import {
   List,
   ExternalLink,
   RefreshCw,
-  Sparkles,
-  Info,
-  Shield
+  ShieldCheck,
+  ShieldAlert
 } from 'lucide-react';
 import { getEpisodeDetail, getServerStreamUrl } from '@/lib/clientApi';
 import { saveWatchHistory } from '@/lib/storage';
@@ -106,22 +105,22 @@ function WatchContent() {
 
   if (loading) {
     return (
-      <div className="space-y-6 animate-pulse max-w-5xl mx-auto py-8">
-        <div className="aspect-video w-full rounded-3xl skeleton-shimmer" />
-        <div className="h-8 w-2/3 rounded-xl skeleton-shimmer" />
-        <div className="h-24 w-full rounded-2xl skeleton-shimmer" />
+      <div className="space-y-6 max-w-5xl mx-auto py-8 animate-fade-in-up">
+        <div className="aspect-video w-full rounded-3xl oled-shimmer" />
+        <div className="h-8 w-2/3 rounded-xl oled-shimmer" />
+        <div className="h-24 w-full rounded-2xl oled-shimmer" />
       </div>
     );
   }
 
   if (error || !detail) {
     return (
-      <div className="p-8 rounded-3xl glass-fluent border border-red-500/30 text-center space-y-4 max-w-md mx-auto my-16">
+      <div className="p-8 rounded-3xl glass-obsidian border border-red-500/30 text-center space-y-4 max-w-md mx-auto my-16 animate-fade-in-up">
         <h2 className="font-cinematic font-bold text-lg text-white">Gagal Memutar Episode</h2>
         <p className="text-xs text-zinc-400">{error || 'Episode tidak ditemukan'}</p>
         <Link
           href="/"
-          className="inline-block px-6 py-2.5 rounded-full bg-white text-black font-extrabold text-xs hover:bg-zinc-200 transition-all shadow-md"
+          className="inline-block px-6 py-2.5 rounded-full bg-white text-black font-extrabold text-xs hover:bg-zinc-200 transition-all shadow-md spring-press"
         >
           Kembali ke Beranda
         </Link>
@@ -130,14 +129,14 @@ function WatchContent() {
   }
 
   return (
-    <div className={`space-y-6 ${theaterMode ? 'max-w-none' : 'max-w-5xl'} mx-auto pb-24`}>
+    <div className={`space-y-6 ${theaterMode ? 'max-w-none' : 'max-w-5xl'} mx-auto pb-24 animate-fade-in-up`}>
       {/* Top Breadcrumb Navigation */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           {detail.animeId ? (
             <Link
               href={`/anime?id=${detail.animeId}`}
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-white/[0.06] hover:bg-white/[0.12] border border-white/10 text-zinc-300 hover:text-white text-xs font-semibold transition-all active:scale-95"
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-white/[0.05] hover:bg-white/[0.1] border border-white/[0.08] text-zinc-300 hover:text-white text-xs font-semibold spring-press"
             >
               <ChevronLeft className="w-4 h-4" />
               Kembali ke Seri
@@ -145,14 +144,14 @@ function WatchContent() {
           ) : (
             <Link
               href="/"
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-white/[0.06] hover:bg-white/[0.12] border border-white/10 text-zinc-300 hover:text-white text-xs font-semibold transition-all active:scale-95"
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-white/[0.05] hover:bg-white/[0.1] border border-white/[0.08] text-zinc-300 hover:text-white text-xs font-semibold spring-press"
             >
               <ChevronLeft className="w-4 h-4" />
               Beranda
             </Link>
           )}
 
-          <span className="hidden sm:inline-block text-xs text-zinc-500">|</span>
+          <span className="hidden sm:inline-block text-xs text-zinc-600">|</span>
           <span className="text-xs text-zinc-300 font-cinematic font-bold truncate max-w-xs sm:max-w-md">
             {detail.title}
           </span>
@@ -161,7 +160,7 @@ function WatchContent() {
         {/* Theater mode toggle */}
         <button
           onClick={() => setTheaterMode(!theaterMode)}
-          className="hidden sm:inline-flex items-center gap-1.5 px-4 py-2 rounded-full glass-fluent border border-white/10 text-xs text-zinc-300 hover:text-white transition-all active:scale-95"
+          className="hidden sm:inline-flex items-center gap-1.5 px-4 py-2 rounded-full glass-obsidian border border-white/[0.08] text-xs text-zinc-300 hover:text-white spring-press"
           title="Toggle Mode Bioskop"
         >
           {theaterMode ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
@@ -169,36 +168,40 @@ function WatchContent() {
         </button>
       </div>
 
-      {/* Video Player Box with Glassmorphism Frame */}
-      <div className="relative rounded-3xl overflow-hidden glass-fluent border border-white/15 shadow-2xl bg-black">
+      {/* Video Player Box with Obsidian Glass Frame */}
+      <div className="relative rounded-3xl overflow-hidden glass-obsidian border border-white/[0.08] shadow-[0_24px_70px_rgba(0,0,0,0.98)] bg-black">
         {/* HUD Frame Top Bar */}
-        <div className="px-4 py-3 bg-[#0a0d14] border-b border-white/10 flex flex-wrap items-center justify-between gap-2 text-xs text-zinc-300">
+        <div className="px-4 py-3 bg-[#040508] border-b border-white/[0.08] flex flex-wrap items-center justify-between gap-2 text-xs text-zinc-300">
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-            <span className="font-cinematic font-bold text-white">NEXUS PLAYER</span>
+            <span className="font-cinematic font-bold text-white tracking-wide">NEXUS PLAYER</span>
             <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-white/10 text-white border border-white/20 font-semibold">
               {activeServerTitle}
             </span>
           </div>
 
           <div className="flex items-center gap-2">
-            {/* AdBlock Sandbox Toggle Button */}
+            {/* Mode Tanpa Iklan (Sandbox) Toggle Button */}
             <button
               type="button"
               onClick={() => setAdBlockSandbox(!adBlockSandbox)}
-              className={`px-3 py-1 rounded-full text-[11px] font-bold flex items-center gap-1.5 transition-all active:scale-95 border ${
+              className={`px-3 py-1 rounded-full text-[11px] font-bold flex items-center gap-1.5 spring-press border ${
                 adBlockSandbox
                   ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 shadow-[0_0_12px_rgba(16,185,129,0.3)]'
                   : 'bg-white/5 text-zinc-400 border-white/10 hover:text-white'
               }`}
               title={
                 adBlockSandbox
-                  ? 'AdBlock Sandbox Aktif: Mencegah pop-up iklan dan redirect vidhide/ondesuhd'
-                  : 'AdBlock Sandbox Nonaktif: Klik untuk aktifkan proteksi anti-iklan'
+                  ? 'Mode Tanpa Iklan (Sandbox) Aktif: Pop-up dan redirect vidhide ditahan'
+                  : 'Mode Tanpa Iklan (Sandbox) Nonaktif: Klik untuk aktifkan perlindungan'
               }
             >
-              <Shield className={`w-3.5 h-3.5 ${adBlockSandbox ? 'text-emerald-400' : 'text-zinc-400'}`} />
-              <span>AdBlock Sandbox: {adBlockSandbox ? 'ON' : 'OFF'}</span>
+              {adBlockSandbox ? (
+                <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+              ) : (
+                <ShieldAlert className="w-3.5 h-3.5 text-zinc-400" />
+              )}
+              <span>Mode Tanpa Iklan: {adBlockSandbox ? 'Aktif' : 'Nonaktif'}</span>
             </button>
 
             {streamUrl && (
@@ -206,7 +209,7 @@ function WatchContent() {
                 href={normalizeUrl(streamUrl)}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-[11px] text-zinc-400 hover:text-white flex items-center gap-1 transition-colors px-2 py-1 rounded-lg hover:bg-white/5"
+                className="text-[11px] text-zinc-400 hover:text-white flex items-center gap-1 spring-press px-2.5 py-1 rounded-lg hover:bg-white/5"
               >
                 Buka Tab Baru <ExternalLink className="w-3 h-3" />
               </a>
@@ -237,7 +240,7 @@ function WatchContent() {
             />
           ) : (
             <div className="text-center p-6 text-zinc-400 text-xs space-y-2">
-              <Tv className="w-10 h-10 mx-auto text-zinc-600 mb-2" />
+              <Tv className="w-10 h-10 mx-auto text-zinc-700 mb-2" />
               <p>Tautan streaming langsung tidak tersedia.</p>
               <p className="text-[11px] text-zinc-500">Silakan pilih salah satu opsi server di bawah.</p>
             </div>
@@ -245,11 +248,11 @@ function WatchContent() {
         </div>
 
         {/* HUD Frame Bottom Navigation Controls */}
-        <div className="p-4 bg-[#0a0d14] border-t border-white/10 flex flex-wrap items-center justify-between gap-3">
+        <div className="p-4 bg-[#040508] border-t border-white/[0.08] flex flex-wrap items-center justify-between gap-3">
           {detail.hasPrevEpisode && detail.prevEpisode ? (
             <Link
               href={`/watch?id=${detail.prevEpisode.episodeId}`}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/[0.06] hover:bg-white/[0.12] border border-white/10 text-xs font-semibold text-zinc-200 hover:text-white transition-all active:scale-95"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/[0.05] hover:bg-white/[0.1] border border-white/[0.08] text-xs font-semibold text-zinc-200 hover:text-white spring-press"
             >
               <SkipBack className="w-4 h-4" />
               Episode Sebelumnya
@@ -261,7 +264,7 @@ function WatchContent() {
           {detail.hasNextEpisode && detail.nextEpisode && (
             <Link
               href={`/watch?id=${detail.nextEpisode.episodeId}`}
-              className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-white text-black font-extrabold text-xs hover:bg-zinc-200 shadow-lg transition-all active:scale-95"
+              className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-white text-black font-extrabold text-xs hover:bg-zinc-200 shadow-lg spring-press"
             >
               Episode Selanjutnya
               <SkipForward className="w-4 h-4" />
@@ -272,7 +275,7 @@ function WatchContent() {
 
       {/* Multi-Quality & Multi-Server Matrix */}
       {detail.server?.qualities && detail.server.qualities.length > 0 && (
-        <div className="p-6 rounded-3xl glass-fluent border border-white/10 space-y-4">
+        <div className="p-6 rounded-3xl glass-obsidian border border-white/[0.06] space-y-4 shadow-[0_20px_50px_rgba(0,0,0,0.95)]">
           <div className="flex items-center gap-2">
             <Server className="w-4 h-4 text-white" />
             <h3 className="font-cinematic font-bold text-sm text-white uppercase tracking-wider">
@@ -297,10 +300,10 @@ function WatchContent() {
                       <button
                         key={srv.serverId}
                         onClick={() => handleSelectServer(srv, group.title)}
-                        className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all active:scale-95 ${
+                        className={`px-3.5 py-1.5 rounded-full text-xs font-semibold spring-press ${
                           isSelected
                             ? 'bg-white text-black font-bold shadow-md'
-                            : 'bg-white/[0.05] hover:bg-white/[0.1] text-zinc-300 hover:text-white border border-white/10'
+                            : 'bg-white/[0.04] hover:bg-white/[0.1] text-zinc-300 hover:text-white border border-white/[0.06]'
                         }`}
                       >
                         {srv.title.toUpperCase()}
@@ -316,7 +319,7 @@ function WatchContent() {
 
       {/* Episode Drawer from Same Anime */}
       {detail.info?.episodeList && detail.info.episodeList.length > 0 && (
-        <div className="p-6 rounded-3xl glass-fluent border border-white/10 space-y-4">
+        <div className="p-6 rounded-3xl glass-obsidian border border-white/[0.06] space-y-4 shadow-[0_20px_50px_rgba(0,0,0,0.95)]">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <List className="w-4 h-4 text-white" />
@@ -327,7 +330,7 @@ function WatchContent() {
             {detail.animeId && (
               <Link
                 href={`/anime?id=${detail.animeId}`}
-                className="text-xs text-zinc-300 hover:text-white font-semibold underline"
+                className="text-xs text-zinc-300 hover:text-white font-semibold underline spring-press"
               >
                 Halaman Seri
               </Link>
@@ -335,16 +338,16 @@ function WatchContent() {
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-2">
-            {detail.info.episodeList.map((ep) => {
+            {detail.info.episodeList.map((ep, epIdx) => {
               const isCurrent = ep.episodeId === episodeId;
               return (
                 <Link
                   key={ep.episodeId}
                   href={`/watch?id=${ep.episodeId}`}
-                  className={`p-2.5 rounded-xl text-center text-xs font-bold transition-all active:scale-95 ${
+                  className={`p-2.5 rounded-xl text-center text-xs font-bold spring-press animate-fade-in-up stagger-${(epIdx % 12) + 1} ${
                     isCurrent
                       ? 'bg-white text-black shadow-md'
-                      : 'bg-white/[0.04] hover:bg-white/[0.09] text-zinc-300 hover:text-white border border-white/5'
+                      : 'bg-white/[0.04] hover:bg-white/[0.09] text-zinc-300 hover:text-white border border-white/[0.06]'
                   }`}
                 >
                   Ep {ep.eps}

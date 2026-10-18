@@ -34,17 +34,17 @@ export default function OngoingPage() {
   }, []);
 
   return (
-    <div className="min-h-screen px-4 sm:px-6 lg:px-8 py-6 pb-24 space-y-6 max-w-7xl mx-auto">
+    <div className="min-h-screen px-4 sm:px-6 lg:px-8 py-6 pb-24 space-y-6 max-w-7xl mx-auto animate-fade-in-up">
       <Link
         href="/"
-        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-white/[0.06] hover:bg-white/[0.12] border border-white/10 text-zinc-300 hover:text-white text-xs font-semibold transition-all active:scale-95"
+        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-white/[0.05] hover:bg-white/[0.1] border border-white/[0.08] text-zinc-300 hover:text-white text-xs font-semibold spring-press"
       >
         <ChevronLeft className="w-4 h-4" />
         Beranda
       </Link>
 
       {/* Header Banner */}
-      <div className="p-6 sm:p-8 rounded-3xl glass-fluent border border-white/10 relative overflow-hidden">
+      <div className="p-6 sm:p-8 rounded-3xl glass-obsidian border border-white/[0.06] shadow-[0_20px_50px_rgba(0,0,0,0.95)] relative overflow-hidden">
         <div className="flex items-center gap-3">
           <div className="p-3 rounded-2xl bg-white/10 border border-white/20 text-white">
             <Flame className="w-6 h-6 text-amber-400" />
@@ -67,11 +67,11 @@ export default function OngoingPage() {
           <p className="text-xs">Memuat anime ongoing...</p>
         </div>
       ) : error ? (
-        <div className="p-8 rounded-3xl glass-fluent border border-red-500/30 text-center space-y-4 max-w-md mx-auto my-12">
+        <div className="p-8 rounded-3xl glass-obsidian border border-red-500/30 text-center space-y-4 max-w-md mx-auto my-12">
           <p className="text-sm text-red-300">{error}</p>
           <button
             onClick={() => loadPage(page)}
-            className="px-5 py-2 rounded-full bg-white text-black font-bold text-xs"
+            className="px-5 py-2 rounded-full bg-white text-black font-bold text-xs spring-press"
           >
             Coba Lagi
           </button>
@@ -79,8 +79,8 @@ export default function OngoingPage() {
       ) : (
         <>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4">
-            {list.map((anime) => (
-              <AnimeGlassCard key={anime.animeId || anime.title} anime={anime} />
+            {list.map((anime, i) => (
+              <AnimeGlassCard key={anime.animeId || anime.title} anime={anime} index={i} />
             ))}
           </div>
 
@@ -89,7 +89,7 @@ export default function OngoingPage() {
             <button
               onClick={() => loadPage(Math.max(1, page - 1))}
               disabled={page <= 1 || loading}
-              className="flex items-center gap-1.5 px-5 py-2.5 rounded-full glass-fluent border border-white/15 text-xs font-semibold text-zinc-300 disabled:opacity-30 disabled:pointer-events-none hover:text-white transition-all active:scale-95"
+              className="flex items-center gap-1.5 px-5 py-2.5 rounded-full glass-obsidian border border-white/15 text-xs font-semibold text-zinc-300 disabled:opacity-30 disabled:pointer-events-none hover:text-white spring-press"
             >
               <ChevronLeft className="w-4 h-4" />
               Sebelumnya
@@ -102,7 +102,7 @@ export default function OngoingPage() {
             <button
               onClick={() => loadPage(page + 1)}
               disabled={loading || list.length === 0}
-              className="flex items-center gap-1.5 px-5 py-2.5 rounded-full glass-fluent border border-white/15 text-xs font-semibold text-zinc-300 disabled:opacity-30 disabled:pointer-events-none hover:text-white transition-all active:scale-95"
+              className="flex items-center gap-1.5 px-5 py-2.5 rounded-full glass-obsidian border border-white/15 text-xs font-semibold text-zinc-300 disabled:opacity-30 disabled:pointer-events-none hover:text-white spring-press"
             >
               Selanjutnya
               <ChevronRight className="w-4 h-4" />
