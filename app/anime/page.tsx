@@ -32,6 +32,7 @@ import {
 import { AnimeDetail, WatchlistCategory } from '@/lib/types';
 import FloatingGlassDock from '@/components/FloatingGlassDock';
 import { useTheme } from '@/lib/themeContext';
+import AnimeReviewSection from '@/components/AnimeReviewSection';
 
 const WATCHLIST_CATEGORIES: WatchlistCategory[] = [
   'Sedang Ditonton',
@@ -480,6 +481,9 @@ function AnimeDetailContent() {
           </div>
         )}
       </div>
+
+      {/* Personal Star Rating & Review Section */}
+      <AnimeReviewSection animeId={animeId} animeTitle={detail.title} />
     </div>
   );
 }

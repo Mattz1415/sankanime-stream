@@ -12,7 +12,9 @@ import {
   Calendar,
   Compass,
   Sparkles,
-  ChevronDown
+  ChevronDown,
+  Dice5,
+  Search
 } from 'lucide-react';
 import FluentHeader from '@/components/FluentHeader';
 import HeroCarousel from '@/components/HeroCarousel';
@@ -23,6 +25,8 @@ import AnimeListView from '@/components/AnimeListView';
 import HistoryBookmarksView from '@/components/HistoryBookmarksView';
 import AnimeAiChat from '@/components/AnimeAiChat';
 import UserProfileView from '@/components/UserProfileView';
+import CommandPaletteModal from '@/components/CommandPaletteModal';
+import AnimeGachaModal from '@/components/AnimeGachaModal';
 import { getHomeData, getSchedule } from '@/lib/clientApi';
 import { getWatchHistory } from '@/lib/storage';
 import { HomeData, ScheduleDay, WatchHistoryItem } from '@/lib/types';
@@ -56,6 +60,11 @@ export default function HomePage() {
   const [selectedDay, setSelectedDay] = useState<string>('Semua');
   const [ongoingCount, setOngoingCount] = useState(12);
   const [completedCount, setCompletedCount] = useState(12);
+
+  // Modals state
+  const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
+  const [isGachaOpen, setIsGachaOpen] = useState(false);
+
   const { accentColor } = useTheme();
 
   const loadData = async () => {
@@ -98,12 +107,13 @@ export default function HomePage() {
   }, [schedule, selectedDay]);
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#020204] text-zinc-100 selection:bg-white selection:text-black">
+    <div className="min-h-screen flex flex-col bg-[#000000] text-zinc-100 selection:bg-white selection:text-black">
       {/* Sticky Glass Header */}
       <FluentHeader
         activeCategory={activeCategory}
         onSelectCategory={(cat) => setActiveCategory(cat)}
         onOpenProfile={() => setActiveTab('profil')}
+        onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
       />
 
       {/* Main Container */}
@@ -132,6 +142,41 @@ export default function HomePage() {
         {/* Tab 1: JELAJAH (Main Home Feed) */}
         {activeTab === 'jelajah' && activeCategory === 'Anime' && (
           <div className="space-y-8 animate-fade-in-up">
+            {/* Quick Interactive Actions Row: Gacha & Command Palette Pill */}
+            <div className="flex flex-wrap items-center justify-between gap-3 p-3.5 px-5 rounded-2xl card-frosted-obsidian border border-white/[0.08] shadow-[0_16px_40px_rgba(0,0,0,0.9)]">
+              <div className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-cyan-400 animate-ping" />
+                <span className="text-xs font-bold text-white tracking-wide font-cinematic">
+                  NEXUS DISCOVERY
+                </span>
+                <span className="text-[10px] text-zinc-400 hidden sm:inline">
+                  • Rekomendasi pintar & pencarian cepat
+                </span>
+              </div>
+
+              <div className="flex items-center gap-2">
+                {/* Gacha Surprise Me Button */}
+                <button
+                  type="button"
+                  onClick={() => setIsGachaOpen(true)}
+                  className="px-4 py-1.5 rounded-full text-xs font-black bg-gradient-to-r from-amber-400 via-amber-300 to-amber-500 text-black shadow-lg shadow-amber-400/20 hover:shadow-amber-400/40 transition-all spring-press flex items-center gap-1.5"
+                >
+                  <Dice5 className="w-3.5 h-3.5 fill-black" />
+                  <span>🎰 Acak Anime (Gacha)</span>
+                </button>
+
+                {/* Command Palette Trigger */}
+                <button
+                  type="button"
+                  onClick={() => setIsCommandPaletteOpen(true)}
+                  className="px-3.5 py-1.5 rounded-full text-xs font-semibold bg-white/10 hover:bg-white/15 text-white border border-white/20 transition-all spring-press flex items-center gap-1.5"
+                >
+                  <Search className="w-3.5 h-3.5 text-cyan-400" />
+                  <span>Filter Genre (Ctrl+K)</span>
+                </button>
+              </div>
+            </div>
+
             {/* Loading State with OLED Shimmer */}
             {loading && (
               <div className="space-y-6">
@@ -388,6 +433,18 @@ export default function HomePage() {
       <FloatingGlassDock
         activeTab={activeTab}
         onTabChange={(tab) => setActiveTab(tab)}
+      />
+
+      {/* Command Palette Modal (Ctrl+K) */}
+      <CommandPaletteModal
+        isOpen={isCommandPaletteOpen}
+        onClose={() => setIsCommandPaletteOpen(false)}
+      />
+
+      {/* Anime Gacha Surprise Me Modal */}
+      <AnimeGachaModal
+        isOpen={isGachaOpen}
+        onClose={() => setIsGachaOpen(false)}
       />
     </div>
   );

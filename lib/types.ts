@@ -12,6 +12,7 @@ export interface AnimeListItem {
   score?: string;
   status?: string;
   slug?: string;
+  genres?: string[];
   genreList?: {
     title: string;
     genreId: string;

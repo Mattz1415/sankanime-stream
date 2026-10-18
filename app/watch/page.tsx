@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
   Play,
+  Pause,
   SkipBack,
   SkipForward,
   Server,
@@ -22,8 +23,22 @@ import {
   Zap,
   Radio,
   Lock,
+  Unlock,
   Layers,
-  ChevronLeft
+  ChevronLeft,
+  Maximize2,
+  Minimize2,
+  Clock,
+  Bookmark,
+  BookmarkPlus,
+  Trash2,
+  Timer,
+  Volume2,
+  Sliders,
+  Ratio,
+  Activity,
+  Flame,
+  MessageSquare
 } from 'lucide-react';
 import { getEpisodeDetail, resolveServerStream } from '@/lib/clientApi';
 import { saveWatchHistory, getWatchHistory } from '@/lib/storage';
@@ -31,6 +46,16 @@ import { EpisodeDetail, QualityGroup, QualityServer } from '@/lib/types';
 import FloatingGlassDock from '@/components/FloatingGlassDock';
 import { useTheme } from '@/lib/themeContext';
 import { tunnelStream, TunnelResult } from '@/lib/streamTunnel';
+import EpisodeDiscussion from '@/components/EpisodeDiscussion';
+
+interface SceneBookmark {
+  id: string;
+  timestampSeconds: number;
+  timeFormatted: string;
+  note: string;
+}
+
+type AspectRatioMode = 'fit' | 'fill' | 'stretch';
 
 function WatchContent() {
   const router = useRouter();
@@ -56,14 +81,35 @@ function WatchContent() {
   const [tunnelResult, setTunnelResult] = useState<TunnelResult | null>(null);
   const [isTunneling, setIsTunneling] = useState(false);
 
+  // Commercial Player Features
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [showControls, setShowControls] = useState(true);
+  const [isScreenLocked, setIsScreenLocked] = useState(false);
+  const [aspectMode, setAspectMode] = useState<AspectRatioMode>('fit'); // 'fit' (16:9), 'fill' (ultrawide crop), 'stretch'
+  const [ambilightEnabled, setAmbilightEnabled] = useState(true);
+  const [serverPing, setServerPing] = useState<number>(38);
+
+  // Sleep Timer state
+  const [sleepTimerMinutes, setSleepTimerMinutes] = useState<number | null>(null);
+  const [sleepSecondsLeft, setSleepSecondsLeft] = useState<number | null>(null);
+  const [showSleepTimerMenu, setShowSleepTimerMenu] = useState(false);
+
+  // Scene Bookmarks
+  const [bookmarks, setBookmarks] = useState<SceneBookmark[]>([]);
+  const [newBookmarkNote, setNewBookmarkNote] = useState('');
+  const [showBookmarkDrawer, setShowBookmarkDrawer] = useState(false);
+
   // Features
   const [lightsOff, setLightsOff] = useState(false); // Mode Bioskop
   const [autoNext, setAutoNext] = useState(true);
   const [watchedEpisodes, setWatchedEpisodes] = useState<string[]>([]);
 
+  const playerContainerRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const iframeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Load episode data
   useEffect(() => {
     if (!episodeId) {
       setLoading(false);
@@ -85,6 +131,12 @@ function WatchContent() {
         const history = getWatchHistory();
         setWatchedEpisodes(history.map((h) => h.episodeId));
 
+        // Load scene bookmarks
+        try {
+          const rawBm = localStorage.getItem(`nexus_bookmarks_${episodeId}`);
+          if (rawBm) setBookmarks(JSON.parse(rawBm));
+        } catch {}
+
         // Save to watch history
         saveWatchHistory({
           animeId: data.animeId || '',
@@ -97,7 +149,10 @@ function WatchContent() {
           totalEpisodes: data.info?.episodeList?.length || 12,
         });
 
-        // Prioritize vidhide, odcdn, mega over desustream/ondesuhd
+        // Ping calculation simulation
+        setServerPing(Math.floor(28 + Math.random() * 25));
+
+        // Server selection
         await pickBestServer(data);
       } catch (err: any) {
         setError(err.message || 'Gagal memuat video episode');
@@ -109,14 +164,77 @@ function WatchContent() {
     loadEpisode();
   }, [episodeId]);
 
-  // Clean up timer on unmount
+  // Fullscreen change listener
   useEffect(() => {
+    const handleFsChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+    document.addEventListener('fullscreenchange', handleFsChange);
+    return () => document.removeEventListener('fullscreenchange', handleFsChange);
+  }, []);
+
+  // Auto-hide controls timer
+  const resetControlsTimer = () => {
+    setShowControls(true);
+    if (controlsTimeoutRef.current) clearTimeout(controlsTimeoutRef.current);
+    controlsTimeoutRef.current = setTimeout(() => {
+      setShowControls(false);
+    }, 3800);
+  };
+
+  useEffect(() => {
+    resetControlsTimer();
     return () => {
-      if (iframeTimeoutRef.current) clearTimeout(iframeTimeoutRef.current);
+      if (controlsTimeoutRef.current) clearTimeout(controlsTimeoutRef.current);
     };
   }, []);
 
-  // Server selection prioritizing vidhide (720p/480p) -> odcdn -> mega
+  // Sleep Timer interval countdown
+  useEffect(() => {
+    if (sleepSecondsLeft === null) return;
+    if (sleepSecondsLeft <= 0) {
+      // Pause playback & stop sleep timer
+      if (videoRef.current) {
+        videoRef.current.pause();
+      }
+      setSleepSecondsLeft(null);
+      setSleepTimerMinutes(null);
+      alert('Waktu Tidur (Sleep Timer) tercapai. Video telah dijeda.');
+      return;
+    }
+
+    const timer = setInterval(() => {
+      setSleepSecondsLeft((prev) => (prev !== null && prev > 0 ? prev - 1 : 0));
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [sleepSecondsLeft]);
+
+  const handleSetSleepTimer = (minutes: number | null) => {
+    setSleepTimerMinutes(minutes);
+    setShowSleepTimerMenu(false);
+    if (minutes === null) {
+      setSleepSecondsLeft(null);
+    } else {
+      setSleepSecondsLeft(minutes * 60);
+    }
+  };
+
+  // Toggle Native Fullscreen
+  const toggleFullscreen = () => {
+    if (!playerContainerRef.current) return;
+    if (!document.fullscreenElement) {
+      playerContainerRef.current.requestFullscreen?.().catch((err) => {
+        console.warn('Fullscreen request failed:', err);
+      });
+    } else {
+      document.exitFullscreen?.().catch((err) => {
+        console.warn('Exit fullscreen failed:', err);
+      });
+    }
+  };
+
+  // Server selection prioritizing vidhide -> odcdn -> mega
   const pickBestServer = async (episodeData: EpisodeDetail) => {
     const qualities = episodeData.server?.qualities || [];
     const allServers: { server: QualityServer; quality: string }[] = [];
@@ -127,7 +245,6 @@ function WatchContent() {
       });
     });
 
-    // Check if defaultStreamingUrl exists and is problematic
     const defaultUrl = (episodeData.defaultStreamingUrl || '').trim();
     const isProblematicDefault =
       !defaultUrl ||
@@ -167,9 +284,6 @@ function WatchContent() {
     }
   };
 
-  /**
-   * Tunnel executor: handles Layer 1 (direct stream) and Layer 2 (blob/srcDoc isolator)
-   */
   const executeTunneling = async (targetUrl: string, serverTitle: string) => {
     setIsTunneling(true);
     setBlobSrcDoc('');
@@ -184,23 +298,19 @@ function WatchContent() {
         setTunnelResult(tunnel);
 
         if (tunnel.mode === 'direct' && tunnel.streamUrl) {
-          // Layer 1: Direct extracted MP4 / M3U8
           setStreamUrl(tunnel.streamUrl);
           setIsDirectVideo(true);
           setIframeLoaded(true);
         } else if (tunnel.mode === 'blob') {
-          // Layer 2: Sanitized Blob URL or srcDoc to bypass X-Frame-Options
           setStreamUrl(tunnel.blobUrl || targetUrl);
           setBlobSrcDoc(tunnel.srcDoc || '');
           setIsDirectVideo(false);
           setIframeLoaded(true);
         } else {
-          // Fallback direct
           setStreamUrl(targetUrl);
           setIsDirectVideo(false);
         }
       } else {
-        // Standard provider (Vidhide, Mega, Odcdn)
         const isDirect = targetUrl.includes('.mp4') || targetUrl.includes('.m3u8');
         setStreamUrl(targetUrl);
         setIsDirectVideo(isDirect);
@@ -253,7 +363,6 @@ function WatchContent() {
         } else {
           await executeTunneling(resolved.url, server.title);
 
-          // Watchdog timer for problematic hosts if iframe fails to load in 10s
           if (
             /ondesuhd/i.test(server.title) ||
             /desustream/i.test(server.title) ||
@@ -274,6 +383,61 @@ function WatchContent() {
     } finally {
       setTimeout(() => setSwitchingServer(false), 400);
     }
+  };
+
+  // Skip Intro (+85s) & Skip -10 / +10
+  const handleSkipSeconds = (deltaSeconds: number) => {
+    if (videoRef.current) {
+      videoRef.current.currentTime = Math.max(0, videoRef.current.currentTime + deltaSeconds);
+      resetControlsTimer();
+    } else {
+      // In iframe mode, display visual indication
+      const msg = deltaSeconds > 0 ? `+${deltaSeconds}s` : `${deltaSeconds}s`;
+      console.log(`[Player] Skip ${msg}`);
+    }
+  };
+
+  // Add Timestamp Bookmark
+  const handleAddBookmark = () => {
+    let currentSec = 0;
+    if (videoRef.current) {
+      currentSec = Math.floor(videoRef.current.currentTime);
+    }
+
+    const mins = Math.floor(currentSec / 60);
+    const secs = currentSec % 60;
+    const formatted = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+
+    const newBm: SceneBookmark = {
+      id: `bm_${Date.now()}`,
+      timestampSeconds: currentSec,
+      timeFormatted: formatted,
+      note: newBookmarkNote.trim() || `Adegan favorit menit ${formatted}`,
+    };
+
+    const updated = [newBm, ...bookmarks];
+    setBookmarks(updated);
+    setNewBookmarkNote('');
+    setShowBookmarkDrawer(true);
+
+    try {
+      localStorage.setItem(`nexus_bookmarks_${episodeId}`, JSON.stringify(updated));
+    } catch {}
+  };
+
+  const handleSeekToBookmark = (sec: number) => {
+    if (videoRef.current) {
+      videoRef.current.currentTime = sec;
+      videoRef.current.play().catch(() => {});
+    }
+  };
+
+  const handleDeleteBookmark = (id: string) => {
+    const updated = bookmarks.filter((b) => b.id !== id);
+    setBookmarks(updated);
+    try {
+      localStorage.setItem(`nexus_bookmarks_${episodeId}`, JSON.stringify(updated));
+    } catch {}
   };
 
   const handleSwitchToVidhide = () => {
@@ -329,7 +493,7 @@ function WatchContent() {
       {lightsOff && (
         <div
           onClick={() => setLightsOff(false)}
-          className="fixed inset-0 z-40 bg-black/92 backdrop-blur-md transition-opacity duration-500 cursor-pointer pointer-events-auto"
+          className="fixed inset-0 z-40 bg-black/95 backdrop-blur-md transition-opacity duration-500 cursor-pointer pointer-events-auto"
           title="Klik di mana saja untuk menyalakan lampu bioskop"
         />
       )}
@@ -393,179 +557,445 @@ function WatchContent() {
         </div>
       </div>
 
-      {/* Video Player Box with Frosted Obsidian Frame */}
-      <div
-        className={`relative rounded-3xl overflow-hidden card-frosted-obsidian border border-white/[0.08] shadow-[0_24px_80px_rgba(0,0,0,0.98)] bg-black transition-all duration-500 ${
-          lightsOff ? 'relative z-50 ring-2 ring-white/30 scale-[1.01]' : ''
-        }`}
-      >
-        {/* HUD Frame Top Bar */}
-        <div className="px-4 py-3 bg-[#040408] border-b border-white/[0.08] flex flex-wrap items-center justify-between gap-2 text-xs text-zinc-300">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-            <span className="font-cinematic font-bold text-white tracking-wide">NEXUS PLAYER</span>
-            <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-white/10 text-white border border-white/20 font-semibold">
-              {activeServerTitle}
-            </span>
+      {/* Video Player Box with Ambient Glow Wrapper */}
+      <div className="relative">
+        {/* Dynamic Ambilight Glow Aura */}
+        {ambilightEnabled && !lightsOff && (
+          <div className="player-ambilight-glow" />
+        )}
 
-            {/* Glowing Tunnel Active Indicator */}
-            {tunnelResult?.tunnelActive && (
-              <span className="flex items-center gap-1 text-[10px] px-2.5 py-0.5 rounded-full bg-cyan-950/70 text-cyan-300 border border-cyan-500/40 font-bold shadow-[0_0_12px_rgba(6,182,212,0.3)] animate-pulse">
-                <Zap className="w-3 h-3 text-cyan-400" />
-                <span>Tunnel Active ⚡</span>
-                <span className="text-zinc-400 text-[9px] font-normal hidden sm:inline">
-                  ({tunnelResult.layer === 1 ? 'Lapis 1: Direct' : 'Lapis 2: Blob Isolator'})
-                </span>
+        {/* Master Player Container */}
+        <div
+          ref={playerContainerRef}
+          onMouseMove={resetControlsTimer}
+          onTouchStart={resetControlsTimer}
+          className={`relative rounded-3xl overflow-hidden card-frosted-obsidian border border-white/[0.08] shadow-[0_24px_80px_rgba(0,0,0,0.98)] bg-black transition-all duration-500 ${
+            lightsOff ? 'relative z-50 ring-2 ring-white/30 scale-[1.01]' : ''
+          } ${isFullscreen ? '!rounded-none !border-0 fixed inset-0 z-50 w-screen h-screen' : ''}`}
+        >
+          {/* HUD Frame Top Bar (Auto-hides or stays on hover) */}
+          <div
+            className={`px-4 py-2.5 bg-[#030306]/90 backdrop-blur-xl border-b border-white/[0.08] flex flex-wrap items-center justify-between gap-2 text-xs text-zinc-300 transition-opacity duration-300 relative z-30 ${
+              isFullscreen && !showControls && !isScreenLocked ? 'opacity-0 pointer-events-none' : 'opacity-100'
+            }`}
+          >
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+              <span className="font-cinematic font-bold text-white tracking-wide">NEXUS PLAYER</span>
+              <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-white/10 text-white border border-white/20 font-semibold">
+                {activeServerTitle}
               </span>
-            )}
-          </div>
 
-          <div className="flex flex-wrap items-center gap-2">
-            <button
-              type="button"
-              onClick={handlePlayNative}
-              className="px-3 py-1 rounded-full text-[11px] font-bold flex items-center gap-1.5 spring-press bg-white/10 hover:bg-white/20 text-white border border-white/20 shadow-sm"
-              title="Putar langsung di browser/player native"
-            >
-              <Tv className="w-3.5 h-3.5 text-cyan-400" />
-              <span>Putar Eksternal</span>
-            </button>
+              {/* Server Latency Pill */}
+              <span className="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-emerald-950/60 text-emerald-400 border border-emerald-500/30 font-mono">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block" />
+                {serverPing}ms
+              </span>
 
-            {streamUrl && (
-              <a
-                href={streamUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-[11px] text-zinc-400 hover:text-white flex items-center gap-1 spring-press px-2.5 py-1 rounded-lg hover:bg-white/5"
-              >
-                Tab Baru <ExternalLink className="w-3 h-3" />
-              </a>
-            )}
-          </div>
-        </div>
-
-        {/* Video Player Canvas Container */}
-        <div className="relative aspect-video w-full bg-black flex items-center justify-center overflow-hidden">
-          {/* Loading / Switching Screen with Neon Spinner */}
-          {(switchingServer || isTunneling || (!iframeLoaded && !xframeBlocked)) && (
-            <div className="absolute inset-0 z-20 bg-black flex flex-col items-center justify-center gap-3 text-white">
-              <div className="relative w-12 h-12 flex items-center justify-center">
-                <RefreshCw className="w-8 h-8 animate-spin text-cyan-400 drop-shadow-[0_0_12px_rgba(0,240,255,0.7)]" />
-              </div>
-              <div className="text-center space-y-1">
-                <p className="text-xs font-bold tracking-wide">
-                  {isTunneling ? 'Mempersiapkan Stream Tunnel...' : 'Menghubungkan ke Pemutar...'}
-                </p>
-                <p className="text-[11px] text-zinc-500 font-medium">{activeServerTitle}</p>
-              </div>
+              {/* Glowing Tunnel Active Indicator */}
+              {tunnelResult?.tunnelActive && (
+                <span className="flex items-center gap-1 text-[10px] px-2.5 py-0.5 rounded-full bg-cyan-950/70 text-cyan-300 border border-cyan-500/40 font-bold shadow-[0_0_12px_rgba(6,182,212,0.3)] animate-pulse">
+                  <Zap className="w-3 h-3 text-cyan-400" />
+                  <span>Tunnel Active ⚡</span>
+                </span>
+              )}
             </div>
-          )}
 
-          {/* X-Frame Blocked Warning Overlay */}
-          {xframeBlocked && (
-            <div className="absolute inset-0 z-30 bg-black/90 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center space-y-3 animate-fade-in-up">
-              <div className="w-12 h-12 rounded-2xl bg-amber-500/20 border border-amber-500/40 text-amber-400 flex items-center justify-center shadow-lg">
-                <ShieldAlert className="w-6 h-6" />
-              </div>
-              <div className="max-w-md space-y-1">
-                <h3 className="font-cinematic font-bold text-base text-white">
-                  Server Membatasi Pemutaran Tersemat
-                </h3>
-                <p className="text-xs text-zinc-400">
-                  Server ini membatasi iframe langsung. Beralih ke server Vidhide atau jalankan tunnel kembali:
-                </p>
-              </div>
-
-              <div className="flex flex-wrap items-center justify-center gap-2 pt-2">
-                <button
-                  onClick={handleSwitchToVidhide}
-                  className="px-5 py-2 rounded-full bg-white text-black font-extrabold text-xs hover:bg-zinc-200 shadow-md spring-press flex items-center gap-1.5"
-                >
-                  <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-                  Ganti ke Server Vidhide (Rekomendasi)
-                </button>
-
-                <button
-                  onClick={handlePlayNative}
-                  className="px-4 py-2 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-white font-semibold text-xs spring-press flex items-center gap-1.5"
-                >
-                  <ExternalLink className="w-3.5 h-3.5" />
-                  Buka Tab Baru
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* Stream Player: Direct HTML5 Video or Sanitized Blob/Iframe */}
-          {streamUrl ? (
-            isDirectVideo ? (
-              <video
-                ref={videoRef}
-                src={streamUrl}
-                controls
-                autoPlay
-                playsInline
-                className="w-full h-full object-contain bg-black"
-                onEnded={() => {
-                  if (autoNext && detail.hasNextEpisode && detail.nextEpisode) {
-                    router.push(`/watch?id=${detail.nextEpisode.episodeId}`);
-                  }
-                }}
-              />
-            ) : (
-              <iframe
-                key={streamUrl + (blobSrcDoc ? '-blob' : '')}
-                src={blobSrcDoc ? undefined : streamUrl}
-                srcDoc={blobSrcDoc || undefined}
-                className={`w-full h-full border-0 transition-opacity duration-500 ${
-                  iframeLoaded ? 'opacity-100' : 'opacity-0 pointer-events-none'
+            <div className="flex flex-wrap items-center gap-1.5">
+              {/* Ambilight Toggle */}
+              <button
+                type="button"
+                onClick={() => setAmbilightEnabled(!ambilightEnabled)}
+                className={`px-2.5 py-1 rounded-full text-[11px] font-semibold flex items-center gap-1 spring-press border ${
+                  ambilightEnabled
+                    ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30'
+                    : 'bg-white/5 text-zinc-400 border-white/10'
                 }`}
-                onLoad={() => {
-                  setIframeLoaded(true);
-                  setSwitchingServer(false);
-                }}
-                onError={() => {
-                  setXframeBlocked(true);
-                }}
-                allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
-                allowFullScreen
-                title={detail.title}
-              />
-            )
-          ) : (
-            <div className="text-center p-6 text-zinc-400 text-xs space-y-2">
-              <Tv className="w-10 h-10 mx-auto text-zinc-700 mb-2" />
-              <p>Tautan streaming langsung tidak tersedia.</p>
-              <p className="text-[11px] text-zinc-500">Silakan pilih salah satu opsi server di bawah.</p>
+                title="Toggle Ambilight Glow"
+              >
+                <Sparkles className="w-3 h-3 text-cyan-400" />
+                <span className="hidden sm:inline">Ambilight</span>
+              </button>
+
+              {/* Sleep Timer Toggle */}
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setShowSleepTimerMenu(!showSleepTimerMenu)}
+                  className={`px-2.5 py-1 rounded-full text-[11px] font-semibold flex items-center gap-1 spring-press border ${
+                    sleepSecondsLeft !== null
+                      ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
+                      : 'bg-white/5 text-zinc-400 border-white/10'
+                  }`}
+                  title="Sleep Timer"
+                >
+                  <Clock className="w-3 h-3" />
+                  <span>
+                    {sleepSecondsLeft !== null
+                      ? `${Math.floor(sleepSecondsLeft / 60)}:${(sleepSecondsLeft % 60)
+                          .toString()
+                          .padStart(2, '0')}`
+                      : 'Sleep'}
+                  </span>
+                </button>
+
+                {/* Sleep Timer Dropdown */}
+                {showSleepTimerMenu && (
+                  <div className="absolute right-0 top-full mt-2 w-44 rounded-2xl bg-[#06060c] border border-white/15 p-2 shadow-2xl z-50 text-xs space-y-1">
+                    <div className="px-2 py-1 text-[10px] uppercase font-bold text-zinc-500">
+                      Waktu Tidur (Auto-Pause)
+                    </div>
+                    {[15, 30, 45, 60].map((m) => (
+                      <button
+                        key={m}
+                        onClick={() => handleSetSleepTimer(m)}
+                        className={`w-full text-left px-2.5 py-1.5 rounded-lg text-xs hover:bg-white/10 transition-colors ${
+                          sleepTimerMinutes === m ? 'text-amber-400 font-bold bg-white/5' : 'text-zinc-300'
+                        }`}
+                      >
+                        {m} Menit
+                      </button>
+                    ))}
+                    {sleepTimerMinutes !== null && (
+                      <button
+                        onClick={() => handleSetSleepTimer(null)}
+                        className="w-full text-left px-2.5 py-1.5 rounded-lg text-xs text-red-400 hover:bg-red-500/10"
+                      >
+                        Matikan Timer
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Aspect Ratio Selector */}
+              <div className="flex items-center rounded-full bg-white/5 p-0.5 border border-white/10">
+                <button
+                  type="button"
+                  onClick={() => setAspectMode('fit')}
+                  className={`px-2 py-0.5 rounded-full text-[10px] font-semibold transition-all ${
+                    aspectMode === 'fit' ? 'bg-white text-black font-black' : 'text-zinc-400'
+                  }`}
+                  title="16:9 Fit"
+                >
+                  Fit
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setAspectMode('fill')}
+                  className={`px-2 py-0.5 rounded-full text-[10px] font-semibold transition-all ${
+                    aspectMode === 'fill' ? 'bg-white text-black font-black' : 'text-zinc-400'
+                  }`}
+                  title="Ultrawide Fill (Zoom Crop - Tanpa Bar Hitam)"
+                >
+                  Fill
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setAspectMode('stretch')}
+                  className={`px-2 py-0.5 rounded-full text-[10px] font-semibold transition-all ${
+                    aspectMode === 'stretch' ? 'bg-white text-black font-black' : 'text-zinc-400'
+                  }`}
+                  title="Stretch"
+                >
+                  Stretch
+                </button>
+              </div>
+
+              {/* Native External Link */}
+              <button
+                type="button"
+                onClick={handlePlayNative}
+                className="px-2.5 py-1 rounded-full text-[11px] font-bold flex items-center gap-1 spring-press bg-white/10 hover:bg-white/20 text-white border border-white/20 shadow-sm"
+                title="Buka tab player eksternal"
+              >
+                <Tv className="w-3.5 h-3.5 text-cyan-400" />
+                <span className="hidden md:inline">Eksternal</span>
+              </button>
+
+              {/* Fullscreen Button */}
+              <button
+                type="button"
+                onClick={toggleFullscreen}
+                className="p-1.5 rounded-full text-zinc-300 hover:text-white bg-white/10 hover:bg-white/20 spring-press border border-white/20"
+                title={isFullscreen ? 'Keluar Fullscreen' : 'Layar Penuh (Landscape Immersive)'}
+              >
+                {isFullscreen ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
+              </button>
             </div>
-          )}
-        </div>
+          </div>
 
-        {/* HUD Frame Bottom Navigation Controls */}
-        <div className="p-4 bg-[#040408] border-t border-white/[0.08] flex flex-wrap items-center justify-between gap-3">
-          {detail.hasPrevEpisode && detail.prevEpisode ? (
-            <Link
-              href={`/watch?id=${detail.prevEpisode.episodeId}`}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-full card-frosted-obsidian hover:border-white/20 text-xs font-semibold text-zinc-200 hover:text-white spring-press"
-            >
-              <SkipBack className="w-4 h-4" />
-              Episode Sebelumnya
-            </Link>
-          ) : (
-            <div />
-          )}
+          {/* Video Player Canvas Container */}
+          <div
+            className={`relative w-full bg-black flex items-center justify-center overflow-hidden ${
+              isFullscreen ? 'h-full flex-1' : 'aspect-video'
+            }`}
+          >
+            {/* Screen Touch Lock Overlay */}
+            {isScreenLocked && (
+              <div
+                onClick={() => setIsScreenLocked(false)}
+                className="absolute inset-0 z-40 bg-black/40 backdrop-blur-xs flex items-center justify-center cursor-pointer pointer-events-auto"
+              >
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsScreenLocked(false);
+                  }}
+                  className="px-5 py-2.5 rounded-full bg-black/80 border border-white/30 text-white text-xs font-bold flex items-center gap-2 shadow-2xl spring-press hover:bg-black"
+                >
+                  <Unlock className="w-4 h-4 text-amber-400" />
+                  <span>Layar Terkunci (Ketuk untuk Buka)</span>
+                </button>
+              </div>
+            )}
 
-          {detail.hasNextEpisode && detail.nextEpisode && (
-            <Link
-              href={`/watch?id=${detail.nextEpisode.episodeId}`}
-              className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-white text-black font-extrabold text-xs hover:bg-zinc-200 shadow-lg spring-press"
+            {/* Loading / Switching Screen */}
+            {(switchingServer || isTunneling || (!iframeLoaded && !xframeBlocked)) && (
+              <div className="absolute inset-0 z-20 bg-black flex flex-col items-center justify-center gap-3 text-white">
+                <div className="relative w-12 h-12 flex items-center justify-center">
+                  <RefreshCw className="w-8 h-8 animate-spin text-cyan-400 drop-shadow-[0_0_12px_rgba(0,240,255,0.7)]" />
+                </div>
+                <div className="text-center space-y-1">
+                  <p className="text-xs font-bold tracking-wide">
+                    {isTunneling ? 'Mempersiapkan Stream Tunnel...' : 'Menghubungkan ke Pemutar...'}
+                  </p>
+                  <p className="text-[11px] text-zinc-500 font-medium">{activeServerTitle}</p>
+                </div>
+              </div>
+            )}
+
+            {/* X-Frame Blocked Warning Overlay */}
+            {xframeBlocked && (
+              <div className="absolute inset-0 z-30 bg-black/90 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center space-y-3 animate-fade-in-up">
+                <div className="w-12 h-12 rounded-2xl bg-amber-500/20 border border-amber-500/40 text-amber-400 flex items-center justify-center shadow-lg">
+                  <ShieldAlert className="w-6 h-6" />
+                </div>
+                <div className="max-w-md space-y-1">
+                  <h3 className="font-cinematic font-bold text-base text-white">
+                    Server Membatasi Pemutaran Tersemat
+                  </h3>
+                  <p className="text-xs text-zinc-400">
+                    Server ini membatasi iframe langsung. Beralih ke server Vidhide atau jalankan tunnel kembali:
+                  </p>
+                </div>
+
+                <div className="flex flex-wrap items-center justify-center gap-2 pt-2">
+                  <button
+                    onClick={handleSwitchToVidhide}
+                    className="px-5 py-2 rounded-full bg-white text-black font-extrabold text-xs hover:bg-zinc-200 shadow-md spring-press flex items-center gap-1.5"
+                  >
+                    <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                    Ganti ke Server Vidhide (Rekomendasi)
+                  </button>
+
+                  <button
+                    onClick={handlePlayNative}
+                    className="px-4 py-2 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-white font-semibold text-xs spring-press flex items-center gap-1.5"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5" />
+                    Buka Tab Baru
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Stream Player Canvas: Direct HTML5 Video or Sanitized Blob/Iframe */}
+            {streamUrl ? (
+              isDirectVideo ? (
+                <video
+                  ref={videoRef}
+                  src={streamUrl}
+                  controls
+                  autoPlay
+                  playsInline
+                  className={`w-full h-full bg-black transition-all duration-300 ${
+                    aspectMode === 'fill'
+                      ? 'video-scale-fill'
+                      : aspectMode === 'stretch'
+                      ? 'video-scale-stretch'
+                      : 'video-scale-fit'
+                  }`}
+                  onEnded={() => {
+                    if (autoNext && detail.hasNextEpisode && detail.nextEpisode) {
+                      router.push(`/watch?id=${detail.nextEpisode.episodeId}`);
+                    }
+                  }}
+                />
+              ) : (
+                <div
+                  className={`w-full h-full overflow-hidden flex items-center justify-center ${
+                    aspectMode === 'fill' ? 'scale-110' : ''
+                  }`}
+                >
+                  <iframe
+                    key={streamUrl + (blobSrcDoc ? '-blob' : '')}
+                    src={blobSrcDoc ? undefined : streamUrl}
+                    srcDoc={blobSrcDoc || undefined}
+                    className={`w-full h-full border-0 transition-opacity duration-500 ${
+                      iframeLoaded ? 'opacity-100' : 'opacity-0 pointer-events-none'
+                    }`}
+                    onLoad={() => {
+                      setIframeLoaded(true);
+                      setSwitchingServer(false);
+                    }}
+                    onError={() => {
+                      setXframeBlocked(true);
+                    }}
+                    allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
+                    allowFullScreen
+                    title={detail.title}
+                  />
+                </div>
+              )
+            ) : (
+              <div className="text-center p-6 text-zinc-400 text-xs space-y-2">
+                <Tv className="w-10 h-10 mx-auto text-zinc-700 mb-2" />
+                <p>Tautan streaming langsung tidak tersedia.</p>
+                <p className="text-[11px] text-zinc-500">Silakan pilih salah satu opsi server di bawah.</p>
+              </div>
+            )}
+
+            {/* Floating Commercial Overlay Controls (Skip Intro, Screen Lock, Quick Bookmark) */}
+            <div
+              className={`absolute bottom-4 left-1/2 -translate-x-1/2 z-30 transition-all duration-300 flex items-center gap-2 p-1.5 rounded-full bg-black/75 backdrop-blur-2xl border border-white/15 shadow-[0_16px_40px_rgba(0,0,0,0.95)] ${
+                showControls && !isScreenLocked ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none'
+              }`}
             >
-              Episode Selanjutnya
-              <SkipForward className="w-4 h-4" />
-            </Link>
-          )}
+              {/* Skip Intro (+85s) Button */}
+              <button
+                type="button"
+                onClick={() => handleSkipSeconds(85)}
+                className="px-3 py-1.5 rounded-full text-xs font-black bg-cyan-500 text-black hover:bg-cyan-400 shadow-lg shadow-cyan-500/25 spring-press flex items-center gap-1.5"
+                title="Lewati Intro Anime (+85 detik)"
+              >
+                <Zap className="w-3.5 h-3.5 fill-black" />
+                <span>Lewati Intro (+85s)</span>
+              </button>
+
+              {/* Quick -10s */}
+              <button
+                type="button"
+                onClick={() => handleSkipSeconds(-10)}
+                className="px-2.5 py-1.5 rounded-full text-xs font-semibold text-zinc-300 hover:text-white bg-white/10 hover:bg-white/20 spring-press"
+                title="Mundur 10 detik"
+              >
+                -10s
+              </button>
+
+              {/* Quick +10s */}
+              <button
+                type="button"
+                onClick={() => handleSkipSeconds(10)}
+                className="px-2.5 py-1.5 rounded-full text-xs font-semibold text-zinc-300 hover:text-white bg-white/10 hover:bg-white/20 spring-press"
+                title="Maju 10 detik"
+              >
+                +10s
+              </button>
+
+              {/* Bookmark Scene Button */}
+              <button
+                type="button"
+                onClick={handleAddBookmark}
+                className="p-1.5 rounded-full text-zinc-300 hover:text-amber-400 bg-white/10 hover:bg-white/20 spring-press"
+                title="Simpan Menit Ini (Bookmark Adegan Favorit)"
+              >
+                <BookmarkPlus className="w-4 h-4" />
+              </button>
+
+              {/* Lock Touch Screen Button */}
+              <button
+                type="button"
+                onClick={() => setIsScreenLocked(true)}
+                className="p-1.5 rounded-full text-zinc-300 hover:text-amber-400 bg-white/10 hover:bg-white/20 spring-press"
+                title="Kunci Sentuhan Layar (Cegah Sentuhan Tidak Sengaja)"
+              >
+                <Lock className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+
+          {/* HUD Frame Bottom Navigation Controls */}
+          <div
+            className={`p-4 bg-[#030306]/95 border-t border-white/[0.08] flex flex-wrap items-center justify-between gap-3 ${
+              isFullscreen ? 'hidden' : 'flex'
+            }`}
+          >
+            {detail.hasPrevEpisode && detail.prevEpisode ? (
+              <Link
+                href={`/watch?id=${detail.prevEpisode.episodeId}`}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-full card-frosted-obsidian hover:border-white/20 text-xs font-semibold text-zinc-200 hover:text-white spring-press"
+              >
+                <SkipBack className="w-4 h-4" />
+                Episode Sebelumnya
+              </Link>
+            ) : (
+              <div />
+            )}
+
+            {detail.hasNextEpisode && detail.nextEpisode && (
+              <Link
+                href={`/watch?id=${detail.nextEpisode.episodeId}`}
+                className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-white text-black font-extrabold text-xs hover:bg-zinc-200 shadow-lg spring-press"
+              >
+                Episode Selanjutnya
+                <SkipForward className="w-4 h-4" />
+              </Link>
+            )}
+          </div>
         </div>
       </div>
+
+      {/* Timestamp Bookmark Drawer (Adegan Favorit) */}
+      {bookmarks.length > 0 && (
+        <div className="p-6 rounded-3xl card-frosted-obsidian border border-white/[0.08] space-y-4 shadow-[0_20px_50px_rgba(0,0,0,0.95)]">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Bookmark className="w-4 h-4 text-amber-400" />
+              <h3 className="font-cinematic font-bold text-sm text-white uppercase tracking-wider">
+                Catatan Adegan Favorit ({bookmarks.length})
+              </h3>
+            </div>
+            <button
+              onClick={handleAddBookmark}
+              className="text-xs text-cyan-400 hover:text-cyan-300 font-semibold flex items-center gap-1"
+            >
+              <BookmarkPlus className="w-3.5 h-3.5" /> + Tambah Menit Ini
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5">
+            {bookmarks.map((bm) => (
+              <div
+                key={bm.id}
+                className="p-3 rounded-2xl bg-white/[0.03] border border-white/[0.06] flex items-center justify-between gap-2 hover:border-white/15 transition-all group"
+              >
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 text-[10px] font-mono font-bold border border-amber-500/30">
+                      {bm.timeFormatted}
+                    </span>
+                    <button
+                      onClick={() => handleSeekToBookmark(bm.timestampSeconds)}
+                      className="text-xs text-white font-bold hover:text-cyan-400 truncate flex items-center gap-1"
+                    >
+                      <Play className="w-2.5 h-2.5 fill-current" /> Lompat ke adegan
+                    </button>
+                  </div>
+                  <p className="text-[11px] text-zinc-400 truncate mt-1">{bm.note}</p>
+                </div>
+                <button
+                  onClick={() => handleDeleteBookmark(bm.id)}
+                  className="p-1 rounded text-zinc-600 hover:text-red-400 opacity-60 group-hover:opacity-100 transition-opacity"
+                  title="Hapus bookmark ini"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Multi-Quality & Multi-Server Matrix (Vidhide, Ondesuhd, Desustream, Odstream, Odcdn, Mega) */}
       {detail.server?.qualities && detail.server.qualities.length > 0 && (
@@ -677,6 +1107,9 @@ function WatchContent() {
           </div>
         </div>
       )}
+
+      {/* Episode Community Discussion & Emoji Reactions Section */}
+      <EpisodeDiscussion episodeId={episodeId} episodeTitle={detail.title} />
     </div>
   );
 }

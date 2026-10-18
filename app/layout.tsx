@@ -13,11 +13,12 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: '#020204',
+  themeColor: '#000000',
   width: 'device-width',
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
+  viewportFit: 'cover',
 };
 
 export default function RootLayout({
@@ -27,7 +28,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="id" className="dark">
-      <body className="bg-[#020204] text-zinc-100 min-h-screen flex flex-col antialiased selection:bg-white selection:text-black">
+      <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+      </head>
+      <body className="bg-[#000000] text-zinc-100 min-h-screen flex flex-col antialiased selection:bg-white selection:text-black">
         <ThemeProvider>
           {children}
         </ThemeProvider>
