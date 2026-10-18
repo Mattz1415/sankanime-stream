@@ -8,9 +8,6 @@ import {
   SkipBack,
   SkipForward,
   Server,
-  Maximize2,
-  Minimize2,
-  ChevronLeft,
   Tv,
   List,
   ExternalLink,
@@ -21,13 +18,19 @@ import {
   ShieldAlert,
   CheckCircle2,
   ToggleLeft,
-  ToggleRight
+  ToggleRight,
+  Zap,
+  Radio,
+  Lock,
+  Layers,
+  ChevronLeft
 } from 'lucide-react';
-import { getEpisodeDetail, resolveServerStream, ResolvedStream } from '@/lib/clientApi';
+import { getEpisodeDetail, resolveServerStream } from '@/lib/clientApi';
 import { saveWatchHistory, getWatchHistory } from '@/lib/storage';
 import { EpisodeDetail, QualityGroup, QualityServer } from '@/lib/types';
 import FloatingGlassDock from '@/components/FloatingGlassDock';
 import { useTheme } from '@/lib/themeContext';
+import { tunnelStream, TunnelResult } from '@/lib/streamTunnel';
 
 function WatchContent() {
   const router = useRouter();
@@ -41,6 +44,7 @@ function WatchContent() {
 
   // Player state
   const [streamUrl, setStreamUrl] = useState<string>('');
+  const [blobSrcDoc, setBlobSrcDoc] = useState<string>('');
   const [isDirectVideo, setIsDirectVideo] = useState(false);
   const [activeServerTitle, setActiveServerTitle] = useState<string>('Memilih Server Terbaik...');
   const [activeQuality, setActiveQuality] = useState<string>('720p');
@@ -48,8 +52,12 @@ function WatchContent() {
   const [iframeLoaded, setIframeLoaded] = useState(false);
   const [xframeBlocked, setXframeBlocked] = useState(false);
 
+  // Tunnel state
+  const [tunnelResult, setTunnelResult] = useState<TunnelResult | null>(null);
+  const [isTunneling, setIsTunneling] = useState(false);
+
   // Features
-  const [lightsOff, setLightsOff] = useState(false); // Mode Bioskop (Lights Off)
+  const [lightsOff, setLightsOff] = useState(false); // Mode Bioskop
   const [autoNext, setAutoNext] = useState(true);
   const [watchedEpisodes, setWatchedEpisodes] = useState<string[]>([]);
 
@@ -89,7 +97,7 @@ function WatchContent() {
           totalEpisodes: data.info?.episodeList?.length || 12,
         });
 
-        // 1. Prioritize vidhide, odcdn, mega over desustream/ondesuhd
+        // Prioritize vidhide, odcdn, mega over desustream/ondesuhd
         await pickBestServer(data);
       } catch (err: any) {
         setError(err.message || 'Gagal memuat video episode');
@@ -119,7 +127,7 @@ function WatchContent() {
       });
     });
 
-    // Check if defaultStreamingUrl exists and is NOT desustream / ondesuhd
+    // Check if defaultStreamingUrl exists and is problematic
     const defaultUrl = (episodeData.defaultStreamingUrl || '').trim();
     const isProblematicDefault =
       !defaultUrl ||
@@ -152,14 +160,67 @@ function WatchContent() {
     if (chosenServer) {
       await handleSelectServer(chosenServer.server, chosenServer.quality);
     } else if (!isProblematicDefault && defaultUrl) {
-      setStreamUrl(defaultUrl);
-      setIsDirectVideo(
-        defaultUrl.includes('.mp4') || defaultUrl.includes('.m3u8')
-      );
       setActiveServerTitle('Default Server');
-      setIframeLoaded(true);
+      await executeTunneling(defaultUrl, 'Default Server');
     } else if (allServers.length > 0) {
       await handleSelectServer(allServers[0].server, allServers[0].quality);
+    }
+  };
+
+  /**
+   * Tunnel executor: handles Layer 1 (direct stream) and Layer 2 (blob/srcDoc isolator)
+   */
+  const executeTunneling = async (targetUrl: string, serverTitle: string) => {
+    setIsTunneling(true);
+    setBlobSrcDoc('');
+
+    try {
+      const isTunnelCandidate =
+        /desustream|ondesuhd|odstream/i.test(serverTitle) ||
+        /desustream|ondesuhd|odstream/i.test(targetUrl);
+
+      if (isTunnelCandidate) {
+        const tunnel = await tunnelStream(targetUrl);
+        setTunnelResult(tunnel);
+
+        if (tunnel.mode === 'direct' && tunnel.streamUrl) {
+          // Layer 1: Direct extracted MP4 / M3U8
+          setStreamUrl(tunnel.streamUrl);
+          setIsDirectVideo(true);
+          setIframeLoaded(true);
+        } else if (tunnel.mode === 'blob') {
+          // Layer 2: Sanitized Blob URL or srcDoc to bypass X-Frame-Options
+          setStreamUrl(tunnel.blobUrl || targetUrl);
+          setBlobSrcDoc(tunnel.srcDoc || '');
+          setIsDirectVideo(false);
+          setIframeLoaded(true);
+        } else {
+          // Fallback direct
+          setStreamUrl(targetUrl);
+          setIsDirectVideo(false);
+        }
+      } else {
+        // Standard provider (Vidhide, Mega, Odcdn)
+        const isDirect = targetUrl.includes('.mp4') || targetUrl.includes('.m3u8');
+        setStreamUrl(targetUrl);
+        setIsDirectVideo(isDirect);
+        setTunnelResult({
+          success: true,
+          mode: isDirect ? 'direct' : 'fallback',
+          layer: isDirect ? 1 : 0,
+          tunnelActive: false,
+          message: 'Direct Player',
+        });
+        if (isDirect) {
+          setIframeLoaded(true);
+        }
+      }
+    } catch (tunnelErr) {
+      console.warn('[Watch] Tunnel execution error', tunnelErr);
+      setStreamUrl(targetUrl);
+      setIsDirectVideo(false);
+    } finally {
+      setIsTunneling(false);
     }
   };
 
@@ -173,35 +234,45 @@ function WatchContent() {
 
       const resolved = await resolveServerStream(server.serverId);
       if (resolved && resolved.url) {
-        setStreamUrl(resolved.url);
-        setIsDirectVideo(resolved.isDirectVideo);
         setActiveServerTitle(`${server.title} (${quality})`);
         setActiveQuality(quality);
 
-        // If direct video, loading is ready immediately
         if (resolved.isDirectVideo) {
+          setStreamUrl(resolved.url);
+          setBlobSrcDoc('');
+          setIsDirectVideo(true);
           setIframeLoaded(true);
-          setSwitchingServer(false);
+          setTunnelResult({
+            success: true,
+            mode: 'direct',
+            streamUrl: resolved.url,
+            layer: 1,
+            tunnelActive: true,
+            message: 'Tunnel Active ⚡ (Layer 1: Direct Video)',
+          });
         } else {
-          // Detect possible X-Frame blocking timeout after 8s for problematic hosts
+          await executeTunneling(resolved.url, server.title);
+
+          // Watchdog timer for problematic hosts if iframe fails to load in 10s
           if (
             /ondesuhd/i.test(server.title) ||
             /desustream/i.test(server.title) ||
             /odstream/i.test(server.title)
           ) {
             iframeTimeoutRef.current = setTimeout(() => {
-              setXframeBlocked(true);
-            }, 8000);
+              if (!iframeLoaded) {
+                setXframeBlocked(true);
+              }
+            }, 10000);
           }
         }
       } else {
-        alert('Gagal mengambil url dari server ini, mencoba server lain...');
+        alert('Gagal mengambil url dari server ini, silakan coba server lain.');
       }
     } catch (err) {
       alert('Server sedang sibuk, silakan pilih server alternatif di bawah.');
     } finally {
-      // Keep switching spinner until iframe or video loaded
-      setTimeout(() => setSwitchingServer(false), 500);
+      setTimeout(() => setSwitchingServer(false), 400);
     }
   };
 
@@ -330,12 +401,23 @@ function WatchContent() {
       >
         {/* HUD Frame Top Bar */}
         <div className="px-4 py-3 bg-[#040408] border-b border-white/[0.08] flex flex-wrap items-center justify-between gap-2 text-xs text-zinc-300">
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
             <span className="font-cinematic font-bold text-white tracking-wide">NEXUS PLAYER</span>
             <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-white/10 text-white border border-white/20 font-semibold">
               {activeServerTitle}
             </span>
+
+            {/* Glowing Tunnel Active Indicator */}
+            {tunnelResult?.tunnelActive && (
+              <span className="flex items-center gap-1 text-[10px] px-2.5 py-0.5 rounded-full bg-cyan-950/70 text-cyan-300 border border-cyan-500/40 font-bold shadow-[0_0_12px_rgba(6,182,212,0.3)] animate-pulse">
+                <Zap className="w-3 h-3 text-cyan-400" />
+                <span>Tunnel Active ⚡</span>
+                <span className="text-zinc-400 text-[9px] font-normal hidden sm:inline">
+                  ({tunnelResult.layer === 1 ? 'Lapis 1: Direct' : 'Lapis 2: Blob Isolator'})
+                </span>
+              </span>
+            )}
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
@@ -365,13 +447,15 @@ function WatchContent() {
         {/* Video Player Canvas Container */}
         <div className="relative aspect-video w-full bg-black flex items-center justify-center overflow-hidden">
           {/* Loading / Switching Screen with Neon Spinner */}
-          {(switchingServer || (!iframeLoaded && !xframeBlocked)) && (
+          {(switchingServer || isTunneling || (!iframeLoaded && !xframeBlocked)) && (
             <div className="absolute inset-0 z-20 bg-black flex flex-col items-center justify-center gap-3 text-white">
               <div className="relative w-12 h-12 flex items-center justify-center">
                 <RefreshCw className="w-8 h-8 animate-spin text-cyan-400 drop-shadow-[0_0_12px_rgba(0,240,255,0.7)]" />
               </div>
               <div className="text-center space-y-1">
-                <p className="text-xs font-bold tracking-wide">Menghubungkan ke Pemutar...</p>
+                <p className="text-xs font-bold tracking-wide">
+                  {isTunneling ? 'Mempersiapkan Stream Tunnel...' : 'Menghubungkan ke Pemutar...'}
+                </p>
                 <p className="text-[11px] text-zinc-500 font-medium">{activeServerTitle}</p>
               </div>
             </div>
@@ -388,7 +472,7 @@ function WatchContent() {
                   Server Membatasi Pemutaran Tersemat
                 </h3>
                 <p className="text-xs text-zinc-400">
-                  Server ini membatasi iframe langsung. Beralih ke server Vidhide atau putar di tab baru:
+                  Server ini membatasi iframe langsung. Beralih ke server Vidhide atau jalankan tunnel kembali:
                 </p>
               </div>
 
@@ -412,7 +496,7 @@ function WatchContent() {
             </div>
           )}
 
-          {/* Stream Player: Direct HTML5 Video or Hidden Iframe until onLoad */}
+          {/* Stream Player: Direct HTML5 Video or Sanitized Blob/Iframe */}
           {streamUrl ? (
             isDirectVideo ? (
               <video
@@ -430,8 +514,9 @@ function WatchContent() {
               />
             ) : (
               <iframe
-                key={streamUrl}
-                src={streamUrl}
+                key={streamUrl + (blobSrcDoc ? '-blob' : '')}
+                src={blobSrcDoc ? undefined : streamUrl}
+                srcDoc={blobSrcDoc || undefined}
                 className={`w-full h-full border-0 transition-opacity duration-500 ${
                   iframeLoaded ? 'opacity-100' : 'opacity-0 pointer-events-none'
                 }`}
@@ -482,14 +567,20 @@ function WatchContent() {
         </div>
       </div>
 
-      {/* Multi-Quality & Multi-Server Matrix (360p, 480p, 720p, 1080p) */}
+      {/* Multi-Quality & Multi-Server Matrix (Vidhide, Ondesuhd, Desustream, Odstream, Odcdn, Mega) */}
       {detail.server?.qualities && detail.server.qualities.length > 0 && (
         <div className="p-6 rounded-3xl card-frosted-obsidian border border-white/[0.08] space-y-4 shadow-[0_20px_50px_rgba(0,0,0,0.95)]">
-          <div className="flex items-center gap-2">
-            <Server className="w-4 h-4 text-cyan-400" />
-            <h3 className="font-cinematic font-bold text-sm text-white uppercase tracking-wider">
-              Pilihan Resolusi & Server Video (Vidhide, Ondesuhd, Desustream, Odstream, Odcdn, Mega)
-            </h3>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Server className="w-4 h-4 text-cyan-400" />
+              <h3 className="font-cinematic font-bold text-sm text-white uppercase tracking-wider">
+                Pilihan Resolusi & Server Video
+              </h3>
+            </div>
+            <div className="flex items-center gap-1.5 text-[11px] text-zinc-400">
+              <Zap className="w-3.5 h-3.5 text-cyan-400" />
+              <span>Multi-Tunnel Ready</span>
+            </div>
           </div>
           <p className="text-xs text-zinc-400">
             Pilih resolusi dan penyedia server cadangan di bawah jika mengalami kendala pemutaran:
@@ -508,21 +599,25 @@ function WatchContent() {
                       activeServerTitle.includes(srv.title) &&
                       activeServerTitle.includes(group.title);
                     const isVidhide = /vidhide/i.test(srv.title);
+                    const isTunnelServer = /desustream|ondesuhd|odstream/i.test(srv.title);
 
                     return (
                       <button
                         key={srv.serverId}
                         onClick={() => handleSelectServer(srv, group.title)}
-                        className={`px-3.5 py-1.5 rounded-full text-xs font-semibold spring-press transition-all ${
+                        className={`px-3.5 py-1.5 rounded-full text-xs font-semibold spring-press transition-all flex items-center gap-1 ${
                           isSelected
                             ? 'bg-white text-black font-bold shadow-md scale-105'
                             : isVidhide
                             ? 'bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-300 border border-cyan-500/30'
+                            : isTunnelServer
+                            ? 'bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
                             : 'bg-white/[0.04] hover:bg-white/[0.1] text-zinc-300 hover:text-white border border-white/[0.06]'
                         }`}
                       >
-                        {srv.title.toUpperCase()}
-                        {isVidhide && <span className="ml-1 text-[10px] text-cyan-400 font-bold">★</span>}
+                        <span>{srv.title.toUpperCase()}</span>
+                        {isVidhide && <span className="text-[10px] text-cyan-400 font-bold">★</span>}
+                        {isTunnelServer && <span className="text-[10px] text-emerald-400 font-bold">⚡</span>}
                       </button>
                     );
                   })}
