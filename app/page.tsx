@@ -14,7 +14,12 @@ import {
   Sparkles,
   ChevronDown,
   Dice5,
-  Search
+  Search,
+  Zap,
+  Star,
+  Trophy,
+  Crown,
+  Layers
 } from 'lucide-react';
 import FluentHeader from '@/components/FluentHeader';
 import HeroCarousel from '@/components/HeroCarousel';
@@ -27,6 +32,9 @@ import AnimeAiChat from '@/components/AnimeAiChat';
 import UserProfileView from '@/components/UserProfileView';
 import CommandPaletteModal from '@/components/CommandPaletteModal';
 import AnimeGachaModal from '@/components/AnimeGachaModal';
+import AnimeStoriesBar from '@/components/AnimeStoriesBar';
+import TopTenShelf from '@/components/TopTenShelf';
+import ReleaseCountdownBanner from '@/components/ReleaseCountdownBanner';
 import { getHomeData, getSchedule } from '@/lib/clientApi';
 import { getWatchHistory } from '@/lib/storage';
 import { HomeData, ScheduleDay, WatchHistoryItem } from '@/lib/types';
@@ -142,45 +150,61 @@ export default function HomePage() {
         {/* Tab 1: JELAJAH (Main Home Feed) */}
         {activeTab === 'jelajah' && activeCategory === 'Anime' && (
           <div className="space-y-8 animate-fade-in-up">
-            {/* Quick Interactive Actions Row: Gacha & Command Palette Pill */}
-            <div className="flex flex-wrap items-center justify-between gap-3 p-3.5 px-5 rounded-2xl card-frosted-obsidian border border-white/[0.08] shadow-[0_16px_40px_rgba(0,0,0,0.9)]">
-              <div className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-cyan-400 animate-ping" />
-                <span className="text-xs font-bold text-white tracking-wide font-cinematic">
-                  NEXUS DISCOVERY
-                </span>
-                <span className="text-[10px] text-zinc-400 hidden sm:inline">
-                  • Rekomendasi pintar & pencarian cepat
-                </span>
-              </div>
+            {/* Anime Stories / Quick Preview Circles */}
+            {data?.ongoing?.animeList && data.ongoing.animeList.length > 0 && (
+              <AnimeStoriesBar animeList={data.ongoing.animeList} />
+            )}
 
-              <div className="flex items-center gap-2">
-                {/* Gacha Surprise Me Button */}
-                <button
-                  type="button"
-                  onClick={() => setIsGachaOpen(true)}
-                  className="px-4 py-1.5 rounded-full text-xs font-black bg-gradient-to-r from-amber-400 via-amber-300 to-amber-500 text-black shadow-lg shadow-amber-400/20 hover:shadow-amber-400/40 transition-all spring-press flex items-center gap-1.5"
-                >
-                  <Dice5 className="w-3.5 h-3.5 fill-black" />
-                  <span>🎰 Acak Anime (Gacha)</span>
-                </button>
+            {/* Nexus Holographic Bento Hub */}
+            <div className="holographic-bento-hub p-4 sm:p-5 relative overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.98)]">
+              <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 relative z-10">
+                {/* Left: Hologram Branding & Sparkles */}
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="p-1.5 rounded-xl bg-gradient-to-tr from-cyan-400 via-purple-500 to-pink-500 text-white shadow-lg">
+                      <Sparkles className="w-4 h-4 fill-white" />
+                    </span>
+                    <h3 className="font-cinematic font-black text-sm sm:text-base text-white tracking-wide uppercase">
+                      Nexus Holographic Hub
+                    </h3>
+                    <span className="px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 text-[10px] font-bold border border-cyan-500/30 uppercase">
+                      PRO OLED
+                    </span>
+                  </div>
+                  <p className="text-xs text-zinc-400 max-w-md">
+                    Putar takdir anime acak dengan animasi gacha slot 3D atau telusuri instan dengan filter genre.
+                  </p>
+                </div>
 
-                {/* Command Palette Trigger */}
-                <button
-                  type="button"
-                  onClick={() => setIsCommandPaletteOpen(true)}
-                  className="px-3.5 py-1.5 rounded-full text-xs font-semibold bg-white/10 hover:bg-white/15 text-white border border-white/20 transition-all spring-press flex items-center gap-1.5"
-                >
-                  <Search className="w-3.5 h-3.5 text-cyan-400" />
-                  <span>Filter Genre (Ctrl+K)</span>
-                </button>
+                {/* Right: Gacha Summon & Command Palette CTAs */}
+                <div className="flex flex-wrap items-center gap-2.5 w-full md:w-auto">
+                  {/* Holographic Gacha Summon Button */}
+                  <button
+                    type="button"
+                    onClick={() => setIsGachaOpen(true)}
+                    className="flex-1 md:flex-initial px-5 py-2.5 rounded-full text-xs font-black bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 text-black shadow-[0_0_25px_rgba(251,191,36,0.5)] hover:shadow-[0_0_35px_rgba(251,191,36,0.8)] transition-all spring-press flex items-center justify-center gap-2"
+                  >
+                    <Dice5 className="w-4 h-4 fill-black" />
+                    <span>Acak Anime (Gacha Summon)</span>
+                  </button>
+
+                  {/* Command Palette Trigger */}
+                  <button
+                    type="button"
+                    onClick={() => setIsCommandPaletteOpen(true)}
+                    className="px-4 py-2.5 rounded-full text-xs font-bold bg-white/10 hover:bg-white/15 text-white border border-white/20 transition-all spring-press flex items-center gap-2"
+                  >
+                    <Search className="w-3.5 h-3.5 text-cyan-400" />
+                    <span>Filter Cepat (Ctrl+K)</span>
+                  </button>
+                </div>
               </div>
             </div>
 
             {/* Loading State with OLED Shimmer */}
             {loading && (
               <div className="space-y-6">
-                <div className="w-full h-[420px] sm:h-[490px] rounded-3xl oled-shimmer" />
+                <div className="w-full h-[460px] sm:h-[530px] rounded-3xl oled-shimmer" />
                 <div className="w-full h-32 rounded-3xl oled-shimmer" />
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4">
                   {[...Array(6)].map((_, i) => (
@@ -209,21 +233,31 @@ export default function HomePage() {
               </div>
             )}
 
-            {/* Content */}
+            {/* Content Feed */}
             {!loading && data && (
               <>
-                {/* Hero Carousel Besar Bergradasi Gelap & Ken Burns Effect */}
+                {/* Hero Carousel Besar Full-Bleed Showcase */}
                 {data.ongoing?.animeList?.length > 0 && (
                   <HeroCarousel featuredList={data.ongoing.animeList} />
                 )}
 
-                {/* Komponen Kartu Kaca Transparan "LANJUT NONTON" Pintar */}
+                {/* Top 10 Anime Minggu Ini (Giant Metal Numbers) */}
+                {data.ongoing?.animeList?.length > 0 && (
+                  <TopTenShelf animeList={data.ongoing.animeList} />
+                )}
+
+                {/* Komponen Kartu Kaca Transparan "LANJUT NONTON" 3D */}
                 {(history.length > 0 || data.ongoing?.animeList?.[0]) && (
                   <LanjutNontonCard
                     historyItem={history.length > 0 ? history[0] : null}
                     fallbackAnime={data.ongoing?.animeList?.[0] || null}
                     onItemDeleted={refreshHistory}
                   />
+                )}
+
+                {/* Live Countdown Jadwal Rilis Hari Ini */}
+                {schedule.length > 0 && (
+                  <ReleaseCountdownBanner schedule={schedule} />
                 )}
 
                 {/* Eksplorasi Genre Interaktif */}
@@ -254,7 +288,7 @@ export default function HomePage() {
 
                 {/* Seksi: Jadwal Rilis Mingguan dengan Filter Hari */}
                 {schedule.length > 0 && (
-                  <section className="p-5 sm:p-6 rounded-3xl card-frosted-obsidian border border-white/[0.08] space-y-4">
+                  <section className="p-5 sm:p-6 rounded-3xl card-frosted-obsidian border border-white/[0.08] space-y-4 shadow-[0_20px_50px_rgba(0,0,0,0.95)]">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                       <div className="flex items-center gap-2.5">
                         <div className="p-2 rounded-xl bg-white/10 text-white">
@@ -441,7 +475,7 @@ export default function HomePage() {
         onClose={() => setIsCommandPaletteOpen(false)}
       />
 
-      {/* Anime Gacha Surprise Me Modal */}
+      {/* Cinematic 3-Stage Anime Gacha Summon Modal */}
       <AnimeGachaModal
         isOpen={isGachaOpen}
         onClose={() => setIsGachaOpen(false)}

@@ -19,7 +19,11 @@ import {
   Zap,
   Flame,
   Activity,
-  BarChart3
+  BarChart3,
+  QrCode,
+  CreditCard,
+  Cpu,
+  Compass
 } from 'lucide-react';
 import { useTheme, THEME_LIST, ThemePalette } from '@/lib/themeContext';
 import { getBookmarks, getWatchHistory } from '@/lib/storage';
@@ -30,10 +34,11 @@ interface OtakuBadge {
   description: string;
   icon: string;
   unlocked: boolean;
+  tier: 'Gold' | 'Silver' | 'Platinum' | 'Mythic';
 }
 
 export default function UserProfileView() {
-  const { palette, setPalette } = useTheme();
+  const { palette, setPalette, accentColor } = useTheme();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [historyCount, setHistoryCount] = useState(0);
@@ -62,15 +67,17 @@ export default function UserProfileView() {
     const sortedGenres = Object.entries(genreMap)
       .map(([name, count]) => ({ name, count }))
       .sort((a, b) => b.count - a.count)
-      .slice(0, 4);
+      .slice(0, 5);
 
     setTopGenres(
       sortedGenres.length > 0
         ? sortedGenres
         : [
-            { name: 'Action', count: 12 },
-            { name: 'Fantasy', count: 9 },
-            { name: 'Isekai', count: 7 },
+            { name: 'Action', count: 18 },
+            { name: 'Fantasy', count: 14 },
+            { name: 'Isekai', count: 11 },
+            { name: 'Comedy', count: 8 },
+            { name: 'Sci-Fi', count: 6 },
           ]
     );
   }, []);
@@ -93,16 +100,18 @@ export default function UserProfileView() {
     {
       id: 'b1',
       name: 'Marathon Runner',
-      description: 'Menonton 5+ episode anime',
+      description: 'Menonton 5+ episode anime berturut-turut',
       icon: '🌟',
       unlocked: historyCount >= 5,
+      tier: 'Gold',
     },
     {
       id: 'b2',
       name: 'Pustakawan Anime',
-      description: 'Menyimpan 5+ anime di watchlist',
+      description: 'Menyimpan 5+ judul di watchlist',
       icon: '📚',
       unlocked: bookmarkCount >= 5,
+      tier: 'Silver',
     },
     {
       id: 'b3',
@@ -110,13 +119,15 @@ export default function UserProfileView() {
       description: 'Mengaktifkan stream bypass Desustream/Ondesuhd',
       icon: '⚡',
       unlocked: true,
+      tier: 'Platinum',
     },
     {
       id: 'b4',
       name: 'OLED Purist',
-      description: 'Menonton dengan layar gelap murni #000000',
+      description: 'Menonton dengan rasio Fill dan layar pitch black',
       icon: '💎',
       unlocked: true,
+      tier: 'Mythic',
     },
     {
       id: 'b5',
@@ -124,10 +135,19 @@ export default function UserProfileView() {
       description: 'Menyelesaikan 50+ episode tontonan',
       icon: '👑',
       unlocked: historyCount >= 50,
+      tier: 'Mythic',
+    },
+    {
+      id: 'b6',
+      name: 'Gacha Summoner',
+      description: 'Menguji keberuntungan dengan roulette anime',
+      icon: '🎰',
+      unlocked: true,
+      tier: 'Gold',
     },
   ];
 
-  // Weekly activity mock simulation (Mon - Sun)
+  // Weekly activity data
   const weeklyActivity = [
     { day: 'Sen', episodes: 3, height: '45%' },
     { day: 'Sel', episodes: 5, height: '70%' },
@@ -160,9 +180,9 @@ export default function UserProfileView() {
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
 
-      setBackupToast('Backup JSON berhasil diunduh!');
+      setBackupToast('Backup JSON berhasil diekspor!');
       setTimeout(() => setBackupToast(null), 3000);
-    } catch (e) {
+    } catch {
       alert('Gagal mengekspor data backup.');
     }
   };
@@ -211,87 +231,171 @@ export default function UserProfileView() {
   };
 
   return (
-    <div className="w-full max-w-4xl mx-auto space-y-6 animate-fade-in-up">
-      {/* Profile Header Glass Card with Otaku Level */}
-      <div className="p-6 sm:p-8 rounded-3xl card-frosted-obsidian border border-white/[0.08] shadow-[0_20px_50px_rgba(0,0,0,0.95)] relative overflow-hidden">
-        <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 text-center sm:text-left">
-          {/* Avatar with Glow Border */}
-          <div className="relative w-24 h-24 rounded-full p-1 bg-gradient-to-tr from-white/30 via-white/10 to-transparent shadow-2xl flex-shrink-0 spring-press">
-            <img
-              src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80"
-              alt="Avatar"
-              loading="lazy"
-              className="w-full h-full rounded-full object-cover"
-            />
-            <span className="absolute bottom-1 right-1 w-4 h-4 rounded-full bg-emerald-400 border-2 border-black" />
+    <div className="w-full max-w-4xl mx-auto space-y-8 animate-fade-in-up">
+      {/* ========================================================================= */}
+      {/* 1. DIGITAL HOLOGRAPHIC ID CARD (Kartu Identitas Otaku) */}
+      {/* ========================================================================= */}
+      <div className="relative w-full rounded-3xl p-1 bg-gradient-to-tr from-cyan-500/30 via-purple-500/20 to-amber-500/30 shadow-[0_24px_70px_rgba(0,0,0,0.98)] overflow-hidden">
+        <div className="holographic-foil-card rounded-[22px] bg-[#050508] p-6 sm:p-8 space-y-6 relative overflow-hidden">
+          {/* Top Row: Chip Icon & Branding */}
+          <div className="flex items-center justify-between relative z-10">
+            <div className="flex items-center gap-2.5">
+              <div className="p-2 rounded-xl bg-gradient-to-tr from-cyan-400 to-blue-600 text-white shadow-lg shadow-cyan-500/30">
+                <Cpu className="w-5 h-5" />
+              </div>
+              <div>
+                <span className="font-cinematic font-black text-sm text-white tracking-widest uppercase block">
+                  Nexus Digital ID
+                </span>
+                <span className="text-[10px] text-zinc-500 font-mono">UID: NX-8849-OLED</span>
+              </div>
+            </div>
+
+            <span className="px-3 py-1 rounded-full bg-gradient-to-r from-amber-400 to-yellow-300 text-black font-black text-[10px] tracking-wider uppercase shadow-md shadow-amber-400/25">
+              PRO STREAMER
+            </span>
           </div>
 
-          <div className="space-y-3 flex-1">
-            <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
-              <h2 className="font-cinematic font-black text-2xl text-white">Kepiskepsi</h2>
-              <span className="px-2.5 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 text-[10px] font-bold tracking-wider uppercase border border-cyan-500/40">
-                PRO STREAMER
-              </span>
-              <span className="px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 text-[10px] font-bold tracking-wider uppercase border border-amber-500/40">
-                LVL {otakuInfo.level} • {otakuInfo.title}
-              </span>
+          {/* Center Info: Avatar, Name & Level */}
+          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 relative z-10 text-center sm:text-left">
+            <div className="relative w-24 h-24 rounded-2xl overflow-hidden p-[2px] bg-gradient-to-tr from-cyan-400 via-white to-purple-500 shadow-2xl shrink-0 spring-press">
+              <img
+                src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80"
+                alt="Avatar"
+                className="w-full h-full object-cover rounded-[14px]"
+              />
+              <span className="absolute bottom-1 right-1 w-3.5 h-3.5 rounded-full bg-emerald-400 border-2 border-black" />
             </div>
 
-            {/* Otaku Level Progress Bar */}
-            <div className="space-y-1">
-              <div className="flex items-center justify-between text-[11px] text-zinc-400">
-                <span>Progress Menuju Level {otakuInfo.level + 1}</span>
-                <span className="font-mono text-cyan-300 font-bold">{progressPercent}%</span>
+            <div className="space-y-2 flex-1">
+              <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
+                <h2 className="font-cinematic font-black text-2xl sm:text-3xl text-white">Kepiskepsi</h2>
+                <span className="px-2.5 py-0.5 rounded-full bg-white/10 text-zinc-300 text-[10px] font-bold border border-white/20">
+                  LVL {otakuInfo.level} • {otakuInfo.title}
+                </span>
               </div>
-              <div className="w-full h-2 rounded-full bg-white/10 overflow-hidden">
-                <div
-                  className="h-full bg-gradient-to-r from-cyan-500 to-emerald-400 rounded-full transition-all duration-700"
-                  style={{ width: `${progressPercent}%` }}
-                />
+              <p className="text-xs text-zinc-400 max-w-md">
+                Streamer anime aktif dengan sistem akselerasi hardware native dan tunnel bypass.
+              </p>
+
+              {/* Level XP Progress Bar */}
+              <div className="space-y-1 pt-1 max-w-md">
+                <div className="flex items-center justify-between text-[10px] text-zinc-400 font-medium">
+                  <span>Progres Menuju Level {otakuInfo.level + 1}</span>
+                  <span className="font-mono text-cyan-300 font-bold">{progressPercent}%</span>
+                </div>
+                <div className="w-full h-2 rounded-full bg-white/10 overflow-hidden">
+                  <div
+                    className="h-full bg-gradient-to-r from-cyan-400 via-blue-500 to-emerald-400 rounded-full transition-all duration-700"
+                    style={{ width: `${progressPercent}%` }}
+                  />
+                </div>
               </div>
             </div>
+          </div>
 
-            {/* Quick Stats Badges */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-2">
-              <div className="px-3.5 py-2.5 rounded-2xl bg-white/[0.03] border border-white/[0.06] flex items-center gap-2.5">
-                <Film className="w-4 h-4 text-cyan-400" />
-                <div>
-                  <span className="text-sm font-bold text-white block leading-none">{uniqueAnimeCount}</span>
-                  <span className="text-[10px] text-zinc-400">Total Judul</span>
-                </div>
-              </div>
-
-              <div className="px-3.5 py-2.5 rounded-2xl bg-white/[0.03] border border-white/[0.06] flex items-center gap-2.5">
-                <Clock className="w-4 h-4 text-emerald-400" />
-                <div>
-                  <span className="text-sm font-bold text-white block leading-none">{historyCount}</span>
-                  <span className="text-[10px] text-zinc-400">Episode Ditonton</span>
-                </div>
-              </div>
-
-              <div className="px-3.5 py-2.5 rounded-2xl bg-white/[0.03] border border-white/[0.06] flex items-center gap-2.5 col-span-2 sm:col-span-1">
-                <Heart className="w-4 h-4 text-pink-400" />
-                <div>
-                  <span className="text-sm font-bold text-white block leading-none">{bookmarkCount}</span>
-                  <span className="text-[10px] text-zinc-400">Watchlist</span>
-                </div>
-              </div>
+          {/* Bottom Card Strip: Stats Badges */}
+          <div className="grid grid-cols-3 gap-3 pt-4 border-t border-white/[0.08] relative z-10">
+            <div className="p-3 rounded-xl bg-white/[0.02] border border-white/[0.05] text-center sm:text-left">
+              <span className="text-[10px] text-zinc-500 block uppercase font-bold">Judul Ditonton</span>
+              <span className="text-base font-black text-white">{uniqueAnimeCount}</span>
+            </div>
+            <div className="p-3 rounded-xl bg-white/[0.02] border border-white/[0.05] text-center sm:text-left">
+              <span className="text-[10px] text-zinc-500 block uppercase font-bold">Total Episode</span>
+              <span className="text-base font-black text-cyan-300">{historyCount}</span>
+            </div>
+            <div className="p-3 rounded-xl bg-white/[0.02] border border-white/[0.05] text-center sm:text-left">
+              <span className="text-[10px] text-zinc-500 block uppercase font-bold">Watchlist</span>
+              <span className="text-base font-black text-amber-300">{bookmarkCount}</span>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Otaku Achievement Badges */}
+      {/* ========================================================================= */}
+      {/* 2. GENRE RADAR DISTRIBUTION & WEEKLY CHART */}
+      {/* ========================================================================= */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Genre Visual Distribution Polygon */}
+        <div className="p-6 rounded-3xl card-frosted-obsidian border border-white/[0.08] shadow-[0_20px_50px_rgba(0,0,0,0.95)] space-y-4">
+          <div className="flex items-center gap-2">
+            <Compass className="w-4 h-4 text-cyan-400" />
+            <h3 className="font-cinematic font-bold text-sm sm:text-base text-white">
+              Radar Distribusi Genre Favorit
+            </h3>
+          </div>
+
+          <div className="space-y-3 pt-1">
+            {topGenres.map((g, idx) => {
+              const maxCount = topGenres[0]?.count || 20;
+              const barPercent = Math.min(100, Math.floor((g.count / maxCount) * 100));
+
+              return (
+                <div key={idx} className="space-y-1">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-zinc-300 font-semibold">{g.name}</span>
+                    <span className="text-zinc-500 font-mono">{g.count} Anime</span>
+                  </div>
+                  <div className="w-full h-2 rounded-full bg-white/10 overflow-hidden">
+                    <div
+                      className="h-full rounded-full bg-gradient-to-r from-cyan-400 to-purple-500 transition-all duration-500"
+                      style={{ width: `${barPercent}%` }}
+                    />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Weekly Activity Chart */}
+        <div className="p-6 rounded-3xl card-frosted-obsidian border border-white/[0.08] shadow-[0_20px_50px_rgba(0,0,0,0.95)] space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <BarChart3 className="w-4 h-4 text-amber-400" />
+              <h3 className="font-cinematic font-bold text-sm sm:text-base text-white">
+                Aktivitas Tontonan
+              </h3>
+            </div>
+            <span className="text-xs text-emerald-400 font-semibold flex items-center gap-1">
+              <Activity className="w-3.5 h-3.5" /> 35 Ep/Minggu
+            </span>
+          </div>
+
+          <div className="pt-4 pb-2 px-3 rounded-2xl bg-black/40 border border-white/[0.05]">
+            <div className="flex items-end justify-between h-32 gap-2">
+              {weeklyActivity.map((w, idx) => (
+                <div key={idx} className="flex-1 flex flex-col items-center gap-2 h-full justify-end group">
+                  <div className="text-[10px] font-bold text-cyan-300 opacity-0 group-hover:opacity-100 transition-opacity">
+                    {w.episodes}
+                  </div>
+                  <div
+                    className="w-full max-w-[26px] rounded-t-lg bg-gradient-to-t from-cyan-600 via-cyan-400 to-emerald-400 transition-all duration-500 hover:brightness-125"
+                    style={{ height: w.height }}
+                  />
+                  <span className="text-[10px] font-semibold text-zinc-400 group-hover:text-white">
+                    {w.day}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ========================================================================= */}
+      {/* 3. GLOWING ACHIEVEMENT TROPHIES GRID */}
+      {/* ========================================================================= */}
       <div className="p-6 rounded-3xl card-frosted-obsidian border border-white/[0.08] shadow-[0_20px_50px_rgba(0,0,0,0.95)] space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Trophy className="w-4 h-4 text-amber-400" />
+            <Trophy className="w-5 h-5 text-amber-400" />
             <h3 className="font-cinematic font-bold text-sm sm:text-base text-white">
-              Lencana Prestasi Otaku (Achievement Badges)
+              Koleksi Trofi Prestasi Otaku
             </h3>
           </div>
-          <span className="text-xs text-zinc-400 font-mono">
-            {badges.filter((b) => b.unlocked).length} / {badges.length} Terbuka
+          <span className="text-xs text-amber-300 font-mono font-bold">
+            {badges.filter((b) => b.unlocked).length} / {badges.length} Terkumpul
           </span>
         </div>
 
@@ -301,84 +405,31 @@ export default function UserProfileView() {
               key={b.id}
               className={`p-3.5 rounded-2xl border transition-all flex items-start gap-3 ${
                 b.unlocked
-                  ? 'bg-white/[0.04] border-white/15 text-white'
+                  ? 'bg-white/[0.04] border-white/15 text-white hover:border-amber-400/40 shadow-lg'
                   : 'bg-white/[0.01] border-white/[0.04] text-zinc-600 opacity-50'
               }`}
             >
-              <span className="text-2xl p-1.5 rounded-xl bg-white/5 border border-white/10 shrink-0">
+              <span className="text-2xl p-2 rounded-xl bg-white/5 border border-white/10 shrink-0">
                 {b.icon}
               </span>
-              <div className="min-w-0 space-y-0.5">
+              <div className="min-w-0 space-y-1">
                 <div className="flex items-center gap-1.5">
                   <h4 className="text-xs font-bold text-white font-cinematic truncate">{b.name}</h4>
-                  {b.unlocked && <ShieldCheck className="w-3 h-3 text-emerald-400 shrink-0" />}
+                  {b.unlocked && <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 shrink-0" />}
                 </div>
                 <p className="text-[10px] text-zinc-400 leading-tight">{b.description}</p>
+                <span className="inline-block text-[9px] font-bold text-amber-400/80 uppercase">
+                  {b.tier}
+                </span>
               </div>
             </div>
           ))}
         </div>
       </div>
 
-      {/* Weekly Activity Chart */}
-      <div className="p-6 rounded-3xl card-frosted-obsidian border border-white/[0.08] shadow-[0_20px_50px_rgba(0,0,0,0.95)] space-y-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <BarChart3 className="w-4 h-4 text-cyan-400" />
-            <h3 className="font-cinematic font-bold text-sm sm:text-base text-white">
-              Aktivitas Menonton Mingguan
-            </h3>
-          </div>
-          <span className="text-xs text-emerald-400 font-semibold flex items-center gap-1">
-            <Activity className="w-3.5 h-3.5" /> 35 Episode / Minggu
-          </span>
-        </div>
-
-        {/* Bar Chart Container */}
-        <div className="pt-4 pb-2 px-4 rounded-2xl bg-black/40 border border-white/[0.05]">
-          <div className="flex items-end justify-between h-32 gap-2">
-            {weeklyActivity.map((w, idx) => (
-              <div key={idx} className="flex-1 flex flex-col items-center gap-2 h-full justify-end group">
-                <div className="text-[10px] font-bold text-cyan-300 opacity-0 group-hover:opacity-100 transition-opacity">
-                  {w.episodes}
-                </div>
-                <div
-                  className="w-full max-w-[28px] rounded-t-lg bg-gradient-to-t from-cyan-600 via-cyan-400 to-emerald-400 transition-all duration-500 hover:brightness-125"
-                  style={{ height: w.height }}
-                />
-                <span className="text-[10px] font-semibold text-zinc-400 group-hover:text-white">
-                  {w.day}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Top Favorite Genres */}
-      <div className="p-6 rounded-3xl card-frosted-obsidian border border-white/[0.08] shadow-[0_20px_50px_rgba(0,0,0,0.95)] space-y-3">
-        <div className="flex items-center gap-2">
-          <Award className="w-4 h-4 text-amber-400" />
-          <h3 className="font-cinematic font-bold text-sm sm:text-base text-white">
-            Genre Favorit Kamu
-          </h3>
-        </div>
-
-        <div className="flex flex-wrap gap-2 pt-1">
-          {topGenres.map((g, idx) => (
-            <span
-              key={idx}
-              className="px-3.5 py-1.5 rounded-full card-frosted-obsidian text-xs font-semibold text-zinc-200 border border-white/10 flex items-center gap-2"
-            >
-              <span className="w-2 h-2 rounded-full bg-cyan-400" />
-              <span>{g.name}</span>
-              <span className="text-[10px] text-zinc-500">({g.count} anime)</span>
-            </span>
-          ))}
-        </div>
-      </div>
-
-      {/* Theme Accent Palette Customizer */}
+      {/* ========================================================================= */}
+      {/* 4. THEME CUSTOMIZER & BACKUP MANAGEMENT */}
+      {/* ========================================================================= */}
       <div className="p-6 rounded-3xl card-frosted-obsidian border border-white/[0.08] shadow-[0_20px_50px_rgba(0,0,0,0.95)] space-y-4">
         <div className="flex items-center gap-2">
           <Palette className="w-5 h-5 text-white" />
@@ -414,7 +465,7 @@ export default function UserProfileView() {
         </div>
       </div>
 
-      {/* Export & Import Backup JSON + Cache Management */}
+      {/* Backup JSON & Storage Maintenance */}
       <div className="p-6 rounded-3xl card-frosted-obsidian border border-white/[0.08] shadow-[0_20px_50px_rgba(0,0,0,0.95)] space-y-4">
         <div className="flex items-center gap-2">
           <HardDrive className="w-5 h-5 text-zinc-300" />
@@ -425,7 +476,6 @@ export default function UserProfileView() {
         </div>
 
         <div className="flex flex-wrap items-center gap-3 pt-1">
-          {/* Export JSON Button */}
           <button
             onClick={handleExportBackup}
             className="px-4 py-2.5 rounded-2xl bg-white text-black font-extrabold text-xs hover:bg-zinc-200 transition-all shadow-md spring-press flex items-center gap-2"
@@ -434,7 +484,6 @@ export default function UserProfileView() {
             <span>Ekspor Backup JSON</span>
           </button>
 
-          {/* Import JSON Button */}
           <button
             onClick={() => fileInputRef.current?.click()}
             className="px-4 py-2.5 rounded-2xl bg-white/10 hover:bg-white/20 border border-white/20 text-white font-bold text-xs transition-all spring-press flex items-center gap-2"
@@ -450,7 +499,6 @@ export default function UserProfileView() {
             className="hidden"
           />
 
-          {/* Clear Cache */}
           <button
             onClick={handleClearCache}
             className="px-4 py-2.5 rounded-2xl bg-red-500/20 hover:bg-red-500/30 text-red-300 border border-red-500/30 text-xs font-bold spring-press flex items-center gap-1.5 ml-auto"
@@ -465,17 +513,6 @@ export default function UserProfileView() {
             <Check className="w-4 h-4" /> {backupToast}
           </div>
         )}
-      </div>
-
-      {/* App Information */}
-      <div className="p-6 rounded-3xl card-frosted-obsidian border border-white/[0.08] text-center space-y-2 text-xs text-zinc-400 shadow-[0_20px_50px_rgba(0,0,0,0.95)]">
-        <p className="font-cinematic font-bold text-sm text-zinc-200">
-          NexusAnime Ultra-Dark OLED v2.5 PRO MAX
-        </p>
-        <p>Bertenaga Sanka Vollerei REST API • Native Immersive Display Cutout Mode</p>
-        <p className="text-[11px] text-zinc-500">
-          Android APK Capacitor 8 • Zero Grey Bars • 100% OLED Spatial Glassmorphism
-        </p>
       </div>
     </div>
   );

@@ -19,9 +19,16 @@ import {
   RefreshCw,
   ArrowUpDown,
   ChevronDown,
-  Check
+  Check,
+  Sparkles,
+  Info,
+  Tv,
+  MessageSquareQuote,
+  Flame,
+  Building2,
+  Hash
 } from 'lucide-react';
-import { getAnimeDetail } from '@/lib/clientApi';
+import { getAnimeDetail, searchAnime } from '@/lib/clientApi';
 import {
   isAnimeBookmarked,
   getAnimeBookmark,
@@ -29,10 +36,11 @@ import {
   deleteBookmark,
   getWatchHistory
 } from '@/lib/storage';
-import { AnimeDetail, WatchlistCategory } from '@/lib/types';
+import { AnimeDetail, AnimeListItem, WatchlistCategory } from '@/lib/types';
 import FloatingGlassDock from '@/components/FloatingGlassDock';
 import { useTheme } from '@/lib/themeContext';
 import AnimeReviewSection from '@/components/AnimeReviewSection';
+import AnimeGlassCard from '@/components/AnimeGlassCard';
 
 const WATCHLIST_CATEGORIES: WatchlistCategory[] = [
   'Sedang Ditonton',
@@ -40,6 +48,8 @@ const WATCHLIST_CATEGORIES: WatchlistCategory[] = [
   'Selesai',
   'Favorit',
 ];
+
+type DetailTab = 'episodes' | 'info' | 'similar' | 'reviews';
 
 function AnimeDetailContent() {
   const router = useRouter();
@@ -52,10 +62,17 @@ function AnimeDetailContent() {
   const [error, setError] = useState<string | null>(null);
   const [bookmarkedCategory, setBookmarkedCategory] = useState<WatchlistCategory | null>(null);
   const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
+  const [activeTab, setActiveTab] = useState<DetailTab>('episodes');
+
+  // Episode controls
   const [searchEps, setSearchEps] = useState('');
-  const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc'); // desc = newest first
+  const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
+  const [selectedBatchRange, setSelectedBatchRange] = useState<string>('Semua');
   const [watchedEpisodes, setWatchedEpisodes] = useState<string[]>([]);
   const [showFullSynopsis, setShowFullSynopsis] = useState(false);
+
+  // Similar anime recommendations
+  const [similarAnime, setSimilarAnime] = useState<AnimeListItem[]>([]);
 
   useEffect(() => {
     if (!animeId) {
@@ -84,6 +101,14 @@ function AnimeDetailContent() {
           .filter((h) => h.animeId === animeId)
           .map((h) => h.episodeId);
         setWatchedEpisodes(watched);
+
+        // Fetch similar anime based on first genre
+        if (data.genreList && data.genreList.length > 0) {
+          const firstGenre = data.genreList[0].title;
+          searchAnime(firstGenre).then((res) => {
+            setSimilarAnime(res.filter((a) => a.animeId !== animeId).slice(0, 6));
+          }).catch(() => {});
+        }
       } catch (err: any) {
         setError(err.message || 'Gagal memuat detail anime');
       } finally {
@@ -97,7 +122,6 @@ function AnimeDetailContent() {
   const handleSelectCategory = (cat: WatchlistCategory) => {
     if (!detail) return;
     if (bookmarkedCategory === cat) {
-      // Toggle off
       deleteBookmark(animeId);
       setBookmarkedCategory(null);
     } else {
@@ -139,6 +163,7 @@ function AnimeDetailContent() {
           <div className="md:col-span-3 space-y-4">
             <div className="h-8 w-3/4 rounded-xl oled-shimmer" />
             <div className="h-20 w-full rounded-xl oled-shimmer" />
+            <div className="h-10 w-1/2 rounded-full oled-shimmer" />
           </div>
         </div>
       </div>
@@ -148,8 +173,8 @@ function AnimeDetailContent() {
   if (error || !detail) {
     return (
       <div className="p-8 rounded-3xl card-frosted-obsidian border border-red-500/30 text-center space-y-4 max-w-md mx-auto my-16 animate-fade-in-up">
-        <h2 className="font-cinematic font-bold text-lg text-white">Detail Tidak Ditemukan</h2>
-        <p className="text-xs text-zinc-400">{error || 'Data anime tidak dapat diambil'}</p>
+        <h2 className="font-cinematic font-bold text-lg text-white">Gagal Memuat Anime</h2>
+        <p className="text-xs text-zinc-400">{error || 'Data anime tidak ditemukan'}</p>
         <Link
           href="/"
           className="inline-block px-6 py-2.5 rounded-full bg-white text-black font-extrabold text-xs hover:bg-zinc-200 transition-all shadow-md spring-press"
@@ -160,330 +185,457 @@ function AnimeDetailContent() {
     );
   }
 
-  // Filter and sort episodes
+  // Calculate episode batch groups (e.g., 1-25, 26-50, etc.)
+  const totalEps = detail.episodeList?.length || 0;
+  const batchOptions = ['Semua'];
+  if (totalEps > 25) {
+    const batchesCount = Math.ceil(totalEps / 25);
+    for (let b = 0; b < batchesCount; b++) {
+      const start = b * 25 + 1;
+      const end = Math.min((b + 1) * 25, totalEps);
+      batchOptions.push(`${start} - ${end}`);
+    }
+  }
+
+  // Filter episodes by search and batch
   const filteredEpisodes = (detail.episodeList || [])
-    .filter((ep) =>
-      ep.title.toLowerCase().includes(searchEps.toLowerCase()) ||
-      String(ep.eps).includes(searchEps)
-    )
+    .filter((ep) => {
+      if (searchEps.trim() && !ep.title.toLowerCase().includes(searchEps.toLowerCase()) && !ep.eps.toString().includes(searchEps)) {
+        return false;
+      }
+      if (selectedBatchRange !== 'Semua') {
+        const [minStr, maxStr] = selectedBatchRange.split(' - ');
+        const epNum = typeof ep.eps === 'number' ? ep.eps : parseInt(String(ep.eps)) || 0;
+        if (epNum < parseInt(minStr) || epNum > parseInt(maxStr)) return false;
+      }
+      return true;
+    })
     .sort((a, b) => {
-      const numA = Number(a.eps) || 0;
-      const numB = Number(b.eps) || 0;
+      const numA = typeof a.eps === 'number' ? a.eps : parseInt(String(a.eps)) || 0;
+      const numB = typeof b.eps === 'number' ? b.eps : parseInt(String(b.eps)) || 0;
       return sortOrder === 'desc' ? numB - numA : numA - numB;
     });
 
-  const firstEpisode = detail.episodeList?.[detail.episodeList.length - 1];
-  const latestEpisode = detail.episodeList?.[0];
+  const synopsisText = detail.synopsis?.paragraphs?.join('\n\n') || 'Sinopsis belum tersedia.';
 
   return (
     <div className="space-y-8 max-w-5xl mx-auto pb-24 animate-fade-in-up relative">
-      {/* Ambient Dynamic Glow radiating poster colors */}
-      <div
-        className="ambient-glow -top-20 -left-20 w-[480px] h-[480px] opacity-25"
-        style={{ backgroundColor: accentColor }}
-      />
+      {/* Parallax Header Backdrop Poster with Deep OLED Vignette */}
+      <div className="relative w-full h-[320px] sm:h-[400px] rounded-3xl overflow-hidden glass-obsidian border border-white/[0.08] shadow-[0_24px_70px_rgba(0,0,0,0.98)]">
+        <img
+          src={detail.poster}
+          alt={detail.title}
+          className="w-full h-full object-cover object-center filter blur-md brightness-[0.55] scale-105"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#000000] via-[#000000]/60 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#000000]/80 via-transparent to-[#000000]/40" />
 
-      {/* Back button */}
-      <Link
-        href="/"
-        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-white/[0.05] hover:bg-white/[0.1] border border-white/[0.08] text-zinc-300 hover:text-white text-xs font-semibold spring-press"
-      >
-        <ChevronLeft className="w-4 h-4" />
-        Beranda
-      </Link>
-
-      {/* Hero Header Card */}
-      <div className="relative rounded-3xl card-frosted-obsidian border border-white/[0.08] overflow-hidden shadow-[0_24px_70px_rgba(0,0,0,0.95)] p-6 sm:p-10">
-        {/* Background poster blur with Ken Burns */}
-        <div className="absolute inset-0 pointer-events-none overflow-hidden">
-          <img
-            src={detail.poster}
-            alt={detail.title}
-            loading="lazy"
-            className="w-full h-full object-cover filter blur-3xl opacity-20 scale-125 animate-ken-burns"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#020204] via-[#020204]/85 to-transparent" />
+        {/* Back Link Top Left */}
+        <div className="absolute top-4 left-4 z-20">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-black/60 hover:bg-black/85 backdrop-blur-xl border border-white/15 text-zinc-300 hover:text-white text-xs font-semibold spring-press"
+          >
+            <ChevronLeft className="w-4 h-4" />
+            Beranda
+          </Link>
         </div>
 
-        <div className="relative z-10 flex flex-col md:flex-row gap-6 md:gap-8 items-start">
-          {/* Poster Image */}
-          <div className="relative w-44 sm:w-56 aspect-[3/4] flex-shrink-0 mx-auto md:mx-0 rounded-2xl overflow-hidden border border-white/20 shadow-2xl group spring-press">
+        {/* Share Button Top Right */}
+        <div className="absolute top-4 right-4 z-20">
+          <button
+            onClick={handleShare}
+            className="p-2.5 rounded-full bg-black/60 hover:bg-black/85 backdrop-blur-xl border border-white/15 text-white spring-press shadow-lg"
+            title="Bagikan Anime"
+          >
+            <Share2 className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* Backdrop Bottom Title Summary */}
+        <div className="absolute bottom-6 left-6 right-6 z-20 hidden sm:block">
+          <span className="px-2.5 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 text-[10px] font-bold uppercase tracking-wider border border-cyan-500/30">
+            {detail.status || 'Ongoing'}
+          </span>
+          <h1 className="font-cinematic font-black text-2xl sm:text-3xl text-white mt-1 drop-shadow-lg">
+            {detail.title}
+          </h1>
+        </div>
+      </div>
+
+      {/* Main Details Grid: Left Poster Card & Right Meta/CTAs */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 -mt-16 sm:-mt-24 relative z-30 px-2 sm:px-0">
+        {/* Poster Card */}
+        <div className="flex flex-col items-center sm:items-start space-y-3">
+          <div className="relative w-44 sm:w-full aspect-[3/4] rounded-2xl overflow-hidden card-frosted-obsidian border-2 border-white/20 shadow-[0_20px_50px_rgba(0,0,0,0.98)] group">
             <img
               src={detail.poster}
               alt={detail.title}
-              loading="lazy"
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
             />
             {detail.score && (
-              <div className="absolute top-2.5 right-2.5 flex items-center gap-1 px-2.5 py-1 rounded-full bg-black/75 backdrop-blur-md border border-amber-400/30 text-amber-300 font-bold text-xs shadow-md">
+              <div className="absolute top-2.5 right-2.5 px-2.5 py-1 rounded-full bg-black/85 backdrop-blur-md border border-amber-400/40 flex items-center gap-1 shadow-lg">
                 <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-                {detail.score}
+                <span className="text-xs font-black text-amber-300">{detail.score}</span>
               </div>
             )}
           </div>
+        </div>
 
-          {/* Details & Actions */}
-          <div className="flex-1 space-y-4 text-center md:text-left">
-            <div>
-              <h1 className="font-cinematic font-black text-2xl sm:text-3xl md:text-4xl text-white leading-tight drop-shadow-[0_4px_16px_rgba(0,0,0,0.9)]">
-                {detail.title}
-              </h1>
-              {detail.japanese && (
-                <p className="text-xs sm:text-sm text-zinc-400 font-medium mt-1">
-                  {detail.japanese}
-                </p>
+        {/* Anime Information Header & Quick Action Buttons */}
+        <div className="md:col-span-3 space-y-4">
+          <div className="space-y-1">
+            <h1 className="font-cinematic font-black text-2xl sm:text-3xl text-white block sm:hidden">
+              {detail.title}
+            </h1>
+            {detail.japanese && (
+              <p className="text-xs text-zinc-400 italic font-medium">{detail.japanese}</p>
+            )}
+          </div>
+
+          {/* Quick Badges Row */}
+          <div className="flex flex-wrap items-center gap-2">
+            {detail.type && (
+              <span className="px-3 py-1 rounded-full card-frosted-obsidian text-xs font-semibold text-zinc-300 border border-white/10">
+                {detail.type}
+              </span>
+            )}
+            {detail.duration && (
+              <span className="px-3 py-1 rounded-full card-frosted-obsidian text-xs font-semibold text-zinc-300 border border-white/10 flex items-center gap-1">
+                <Clock className="w-3 h-3 text-cyan-400" /> {detail.duration}
+              </span>
+            )}
+            {detail.episodes && (
+              <span className="px-3 py-1 rounded-full card-frosted-obsidian text-xs font-semibold text-zinc-300 border border-white/10 flex items-center gap-1">
+                <Film className="w-3 h-3 text-emerald-400" /> {detail.episodes} Episode
+              </span>
+            )}
+            {detail.studios && (
+              <span className="px-3 py-1 rounded-full card-frosted-obsidian text-xs font-semibold text-zinc-300 border border-white/10 flex items-center gap-1">
+                <Building2 className="w-3 h-3 text-purple-400" /> {detail.studios}
+              </span>
+            )}
+          </div>
+
+          {/* Genre Badges */}
+          {detail.genreList && detail.genreList.length > 0 && (
+            <div className="flex flex-wrap items-center gap-1.5 pt-1">
+              {detail.genreList.map((g) => (
+                <Link
+                  key={g.genreId || g.title}
+                  href={`/search?q=${encodeURIComponent(g.title)}`}
+                  className="px-3 py-1 rounded-xl bg-white/[0.04] hover:bg-white/[0.1] border border-white/[0.06] hover:border-white/20 text-xs font-medium text-zinc-300 hover:text-white transition-all spring-press"
+                >
+                  {g.title}
+                </Link>
+              ))}
+            </div>
+          )}
+
+          {/* Main Action Buttons */}
+          <div className="flex flex-wrap items-center gap-3 pt-2">
+            {detail.episodeList && detail.episodeList.length > 0 ? (
+              <Link
+                href={`/watch?id=${detail.episodeList[0].episodeId}`}
+                className="inline-flex items-center gap-2 px-7 py-3 rounded-full bg-white text-black font-extrabold text-xs sm:text-sm hover:bg-zinc-200 shadow-[0_0_25px_rgba(255,255,255,0.35)] spring-press"
+              >
+                <Play className="w-4 h-4 fill-black" />
+                <span>Mulai Nonton Ep 1</span>
+              </Link>
+            ) : null}
+
+            {/* Watchlist Dropdown */}
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
+                className={`inline-flex items-center gap-2 px-5 py-3 rounded-full backdrop-blur-xl border text-xs sm:text-sm font-semibold spring-press transition-all ${
+                  bookmarkedCategory
+                    ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-300 shadow-lg'
+                    : 'bg-white/10 hover:bg-white/15 border-white/15 text-white'
+                }`}
+              >
+                {bookmarkedCategory ? (
+                  <>
+                    <BookmarkCheck className="w-4 h-4 text-emerald-400" />
+                    <span>{bookmarkedCategory}</span>
+                  </>
+                ) : (
+                  <>
+                    <Bookmark className="w-4 h-4" />
+                    <span>+ Simpan Watchlist</span>
+                  </>
+                )}
+                <ChevronDown className="w-3.5 h-3.5 ml-1" />
+              </button>
+
+              {showCategoryDropdown && (
+                <div className="absolute left-0 mt-2 w-48 rounded-2xl bg-[#06060c] border border-white/15 p-2 shadow-2xl z-50 text-xs space-y-1">
+                  {WATCHLIST_CATEGORIES.map((cat) => (
+                    <button
+                      key={cat}
+                      type="button"
+                      onClick={() => handleSelectCategory(cat)}
+                      className={`w-full text-left px-3 py-2 rounded-xl flex items-center justify-between transition-colors ${
+                        bookmarkedCategory === cat
+                          ? 'bg-emerald-500/20 text-emerald-300 font-bold'
+                          : 'hover:bg-white/10 text-zinc-300 hover:text-white'
+                      }`}
+                    >
+                      <span>{cat}</span>
+                      {bookmarkedCategory === cat && <Check className="w-3.5 h-3.5 text-emerald-400" />}
+                    </button>
+                  ))}
+                </div>
               )}
             </div>
+          </div>
+        </div>
+      </div>
 
-            {/* Quick Meta Badges */}
-            <div className="flex flex-wrap items-center justify-center md:justify-start gap-2 pt-1">
-              {detail.status && (
-                <span className="px-3 py-1 rounded-full text-xs font-semibold bg-white/10 border border-white/15 text-white">
-                  {detail.status}
-                </span>
-              )}
-              {detail.type && (
-                <span className="px-3 py-1 rounded-full text-xs font-semibold bg-white/10 border border-white/15 text-zinc-300">
-                  {detail.type}
-                </span>
-              )}
-              {detail.duration && (
-                <span className="px-3 py-1 rounded-full text-xs font-semibold bg-white/10 text-zinc-300 flex items-center gap-1">
-                  <Clock className="w-3 h-3" />
-                  {detail.duration}
-                </span>
-              )}
-              {detail.studios && (
-                <span className="px-3 py-1 rounded-full text-xs font-semibold bg-white/10 text-zinc-300 flex items-center gap-1">
-                  <Film className="w-3 h-3" />
-                  {detail.studios}
-                </span>
-              )}
-              {detail.aired && (
-                <span className="px-3 py-1 rounded-full text-xs font-semibold bg-white/10 text-zinc-300 flex items-center gap-1">
-                  <Calendar className="w-3 h-3" />
-                  {detail.aired}
-                </span>
-              )}
-            </div>
+      {/* Information Tab Switcher */}
+      <div className="p-1 rounded-2xl glass-pill-container flex items-center gap-1 overflow-x-auto no-scrollbar border border-white/[0.08]">
+        <button
+          onClick={() => setActiveTab('episodes')}
+          className={`flex-1 min-w-[120px] py-2.5 rounded-xl text-xs font-bold transition-all spring-press flex items-center justify-center gap-1.5 ${
+            activeTab === 'episodes'
+              ? 'bg-white text-black shadow-lg font-black'
+              : 'text-zinc-400 hover:text-white'
+          }`}
+        >
+          <Layers className="w-3.5 h-3.5" />
+          <span>Daftar Episode ({totalEps})</span>
+        </button>
 
-            {/* Clickable Genre Tags */}
-            {detail.genreList && detail.genreList.length > 0 && (
-              <div className="flex flex-wrap items-center justify-center md:justify-start gap-1.5 pt-1">
-                {detail.genreList.map((genre) => (
-                  <Link
-                    key={genre.genreId || genre.title}
-                    href={`/search?q=${encodeURIComponent(genre.title)}`}
-                    className="text-xs px-3 py-1 rounded-full bg-white/[0.05] hover:bg-white/[0.12] border border-white/[0.08] hover:border-white/25 text-zinc-300 hover:text-white transition-all spring-press"
+        <button
+          onClick={() => setActiveTab('info')}
+          className={`flex-1 min-w-[120px] py-2.5 rounded-xl text-xs font-bold transition-all spring-press flex items-center justify-center gap-1.5 ${
+            activeTab === 'info'
+              ? 'bg-white text-black shadow-lg font-black'
+              : 'text-zinc-400 hover:text-white'
+          }`}
+        >
+          <Info className="w-3.5 h-3.5" />
+          <span>Detail & Sinopsis</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('similar')}
+          className={`flex-1 min-w-[120px] py-2.5 rounded-xl text-xs font-bold transition-all spring-press flex items-center justify-center gap-1.5 ${
+            activeTab === 'similar'
+              ? 'bg-white text-black shadow-lg font-black'
+              : 'text-zinc-400 hover:text-white'
+          }`}
+        >
+          <Sparkles className="w-3.5 h-3.5" />
+          <span>Anime Serupa</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('reviews')}
+          className={`flex-1 min-w-[120px] py-2.5 rounded-xl text-xs font-bold transition-all spring-press flex items-center justify-center gap-1.5 ${
+            activeTab === 'reviews'
+              ? 'bg-white text-black shadow-lg font-black'
+              : 'text-zinc-400 hover:text-white'
+          }`}
+        >
+          <MessageSquareQuote className="w-3.5 h-3.5" />
+          <span>Ulasan & Rating</span>
+        </button>
+      </div>
+
+      {/* ========================================================================= */}
+      {/* TAB 1: EPISODE LIST (With Batch Range & Sort) */}
+      {/* ========================================================================= */}
+      {activeTab === 'episodes' && (
+        <div className="space-y-4 animate-fade-in-up">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-2xl card-frosted-obsidian border border-white/[0.06]">
+            {/* Batch Filter Pills if total episodes > 25 */}
+            {batchOptions.length > 1 && (
+              <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+                <span className="text-[10px] uppercase font-bold text-zinc-500 mr-1 shrink-0">Batch:</span>
+                {batchOptions.map((opt) => (
+                  <button
+                    key={opt}
+                    onClick={() => setSelectedBatchRange(opt)}
+                    className={`px-3 py-1 rounded-full text-[11px] font-semibold shrink-0 transition-all ${
+                      selectedBatchRange === opt
+                        ? 'bg-cyan-500 text-black font-extrabold'
+                        : 'bg-white/5 text-zinc-400 hover:text-white'
+                    }`}
                   >
-                    {genre.title}
-                  </Link>
+                    {opt}
+                  </button>
                 ))}
               </div>
             )}
 
-            {/* Action Buttons: Watch Latest, Watchlist Dropdown, Share */}
-            <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 pt-3">
-              {latestEpisode && (
-                <Link
-                  href={`/watch?id=${latestEpisode.episodeId}`}
-                  className="inline-flex items-center gap-2 px-7 py-3 rounded-full bg-white text-black font-extrabold text-xs sm:text-sm hover:bg-zinc-200 shadow-[0_4px_30px_rgba(255,255,255,0.35)] spring-press"
-                >
-                  <Play className="w-4 h-4 fill-black" />
-                  Tonton Sekarang
-                </Link>
-              )}
-
-              {firstEpisode && firstEpisode !== latestEpisode && (
-                <Link
-                  href={`/watch?id=${firstEpisode.episodeId}`}
-                  className="inline-flex items-center gap-2 px-5 py-3 rounded-full bg-white/10 hover:bg-white/20 border border-white/15 text-white text-xs sm:text-sm font-semibold spring-press"
-                >
-                  Episode 1
-                </Link>
-              )}
-
-              {/* Watchlist with Categories Dropdown */}
-              <div className="relative">
-                <button
-                  onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
-                  className={`px-5 py-3 rounded-full border spring-press flex items-center gap-2 text-xs font-semibold ${
-                    bookmarkedCategory
-                      ? 'bg-white/20 border-white/40 text-white shadow-lg'
-                      : 'bg-white/10 hover:bg-white/20 border-white/15 text-white'
-                  }`}
-                >
-                  {bookmarkedCategory ? (
-                    <>
-                      <BookmarkCheck className="w-4 h-4 text-emerald-400" />
-                      <span>{bookmarkedCategory}</span>
-                    </>
-                  ) : (
-                    <>
-                      <Bookmark className="w-4 h-4" />
-                      <span>+ Watchlist</span>
-                    </>
-                  )}
-                  <ChevronDown className="w-3.5 h-3.5 opacity-60" />
-                </button>
-
-                {/* Dropdown Menu */}
-                {showCategoryDropdown && (
-                  <div className="absolute top-full mt-2 left-0 z-30 w-48 rounded-2xl card-frosted-obsidian border border-white/15 p-1.5 shadow-2xl space-y-1 animate-fade-in-up">
-                    <div className="px-3 py-1.5 text-[10px] font-bold text-zinc-400 uppercase tracking-wider">
-                      Simpan ke Kategori
-                    </div>
-                    {WATCHLIST_CATEGORIES.map((cat) => {
-                      const isSelected = bookmarkedCategory === cat;
-                      return (
-                        <button
-                          key={cat}
-                          onClick={() => handleSelectCategory(cat)}
-                          className={`w-full text-left px-3 py-2 rounded-xl text-xs font-medium flex items-center justify-between transition-colors ${
-                            isSelected
-                              ? 'bg-white/20 text-white font-bold'
-                              : 'text-zinc-300 hover:bg-white/10 hover:text-white'
-                          }`}
-                        >
-                          <span>{cat}</span>
-                          {isSelected && <Check className="w-3.5 h-3.5 text-emerald-400" />}
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-
+            <div className="flex items-center gap-2 ml-auto w-full sm:w-auto">
+              {/* Sort Order Toggle */}
               <button
-                onClick={handleShare}
-                className="p-3 rounded-full bg-white/10 hover:bg-white/20 border border-white/15 text-white spring-press"
-                title="Bagikan"
+                onClick={() => setSortOrder(sortOrder === 'desc' ? 'asc' : 'desc')}
+                className="px-3.5 py-2 rounded-xl card-frosted-obsidian hover:border-white/20 text-xs font-semibold text-zinc-300 hover:text-white flex items-center gap-1.5 spring-press"
               >
-                <Share2 className="w-4 h-4" />
+                <ArrowUpDown className="w-3.5 h-3.5" />
+                <span>{sortOrder === 'desc' ? 'Terbaru' : 'Terlama'}</span>
               </button>
+
+              {/* Episode Search Bar */}
+              <div className="relative flex-1 sm:w-44">
+                <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" />
+                <input
+                  type="text"
+                  value={searchEps}
+                  onChange={(e) => setSearchEps(e.target.value)}
+                  placeholder="Cari episode..."
+                  className="w-full pl-8 pr-3 py-1.5 rounded-xl bg-black/60 border border-white/10 text-xs text-white placeholder-zinc-500 outline-none focus:border-cyan-400/50"
+                />
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Synopsis Section (Expandable) */}
-        {detail.synopsis?.paragraphs && detail.synopsis.paragraphs.length > 0 && (
-          <div className="mt-8 pt-6 border-t border-white/[0.08] space-y-2">
-            <h3 className="font-cinematic font-bold text-sm text-white uppercase tracking-wider">
-              Sinopsis
-            </h3>
-            <div
-              className={`text-xs sm:text-sm text-zinc-300 leading-relaxed space-y-2 transition-all ${
-                !showFullSynopsis && detail.synopsis.paragraphs.length > 2
-                  ? 'line-clamp-3'
-                  : ''
-              }`}
-            >
-              {detail.synopsis.paragraphs.map((p, i) => (
-                <p key={i}>{p}</p>
-              ))}
+          {/* Episode Cards Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+            {filteredEpisodes.map((ep, idx) => {
+              const isWatched = watchedEpisodes.includes(ep.episodeId);
+
+              return (
+                <Link
+                  key={ep.episodeId}
+                  href={`/watch?id=${ep.episodeId}`}
+                  className={`p-4 rounded-2xl card-frosted-obsidian flex items-center justify-between gap-3 group spring-press transition-all ${
+                    isWatched ? 'border-emerald-500/40 bg-emerald-950/[0.1]' : 'hover:border-cyan-400/40'
+                  }`}
+                >
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/10 text-white border border-white/15">
+                        EPS {ep.eps}
+                      </span>
+                      {isWatched && (
+                        <span className="flex items-center gap-0.5 text-[10px] text-emerald-400 font-bold bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
+                          <CheckCircle2 className="w-3 h-3" />
+                          Ditonton
+                        </span>
+                      )}
+                    </div>
+                    <h4 className="font-cinematic font-bold text-xs text-white group-hover:text-cyan-300 truncate mt-1.5">
+                      {ep.title}
+                    </h4>
+                    {ep.date && (
+                      <span className="text-[10px] text-zinc-400 block mt-0.5">{ep.date}</span>
+                    )}
+                  </div>
+
+                  <div className="w-8 h-8 rounded-full bg-white text-black flex items-center justify-center shrink-0 shadow-md group-hover:scale-105 transition-transform">
+                    <Play className="w-3.5 h-3.5 fill-black ml-0.5" />
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+
+          {filteredEpisodes.length === 0 && (
+            <div className="p-8 text-center card-frosted-obsidian rounded-3xl text-zinc-400 text-xs border border-white/[0.06]">
+              Tidak ada episode yang cocok.
             </div>
-            {detail.synopsis.paragraphs.length > 2 && (
+          )}
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* TAB 2: DETAIL & SINOPSIS */}
+      {/* ========================================================================= */}
+      {activeTab === 'info' && (
+        <div className="space-y-6 animate-fade-in-up">
+          {/* Synopsis Box */}
+          <div className="p-6 rounded-3xl card-frosted-obsidian border border-white/[0.08] space-y-3 shadow-[0_20px_50px_rgba(0,0,0,0.95)]">
+            <h3 className="font-cinematic font-bold text-sm text-white uppercase tracking-wider">
+              Sinopsis Cerita
+            </h3>
+            <p className="text-xs sm:text-sm text-zinc-300 leading-relaxed whitespace-pre-line">
+              {showFullSynopsis ? synopsisText : `${synopsisText.slice(0, 360)}...`}
+            </p>
+            {synopsisText.length > 360 && (
               <button
+                type="button"
                 onClick={() => setShowFullSynopsis(!showFullSynopsis)}
-                className="text-xs text-white font-bold underline pt-1 block spring-press"
+                className="text-xs text-cyan-400 hover:text-cyan-300 font-semibold"
               >
-                {showFullSynopsis ? 'Ciutkan Sinopsis' : 'Baca Selengkapnya...'}
+                {showFullSynopsis ? 'Tampilkan Lebih Sedikit' : 'Baca Selengkapnya...'}
               </button>
             )}
           </div>
-        )}
-      </div>
 
-      {/* Episode List Section */}
-      <div className="space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
-            <div className="p-2 rounded-xl bg-white/10 border border-white/15 text-white">
-              <Layers className="w-4 h-4" />
-            </div>
-            <div>
-              <h2 className="font-cinematic font-bold text-lg text-white">Daftar Episode</h2>
-              <p className="text-xs text-zinc-400">
-                Total {detail.episodeList?.length || 0} Episode Tersedia
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2">
-            {/* Tombol Urutkan Episode (Terbaru / Terlama) */}
-            <button
-              onClick={() => setSortOrder(sortOrder === 'desc' ? 'asc' : 'desc')}
-              className="px-3.5 py-2 rounded-full card-frosted-obsidian hover:border-white/20 text-xs font-semibold text-zinc-300 hover:text-white flex items-center gap-1.5 spring-press"
-              title="Urutkan Episode"
-            >
-              <ArrowUpDown className="w-3.5 h-3.5" />
-              <span>{sortOrder === 'desc' ? 'Terbaru' : 'Terlama'}</span>
-            </button>
-
-            {/* Search Episode Filter */}
-            <div className="relative max-w-xs w-full">
-              <Search className="w-3.5 h-3.5 absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400" />
-              <input
-                type="text"
-                value={searchEps}
-                onChange={(e) => setSearchEps(e.target.value)}
-                placeholder="Cari nomor episode..."
-                className="w-full pl-9 pr-4 py-2 rounded-full bg-white/[0.05] border border-white/10 focus:border-white/30 text-xs text-white placeholder-zinc-500 outline-none"
-              />
+          {/* Technical Metadata Table */}
+          <div className="p-6 rounded-3xl card-frosted-obsidian border border-white/[0.08] space-y-4 shadow-[0_20px_50px_rgba(0,0,0,0.95)]">
+            <h3 className="font-cinematic font-bold text-sm text-white uppercase tracking-wider">
+              Informasi Produksi & Rilis
+            </h3>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs">
+              <div className="p-3 rounded-xl bg-white/[0.02] border border-white/[0.05]">
+                <span className="text-zinc-500 block text-[10px] uppercase font-bold">Judul Asli</span>
+                <span className="text-white font-medium">{detail.japanese || '-'}</span>
+              </div>
+              <div className="p-3 rounded-xl bg-white/[0.02] border border-white/[0.05]">
+                <span className="text-zinc-500 block text-[10px] uppercase font-bold">Studio</span>
+                <span className="text-white font-medium">{detail.studios || '-'}</span>
+              </div>
+              <div className="p-3 rounded-xl bg-white/[0.02] border border-white/[0.05]">
+                <span className="text-zinc-500 block text-[10px] uppercase font-bold">Produser</span>
+                <span className="text-white font-medium">{detail.producers || '-'}</span>
+              </div>
+              <div className="p-3 rounded-xl bg-white/[0.02] border border-white/[0.05]">
+                <span className="text-zinc-500 block text-[10px] uppercase font-bold">Tayang Perdana</span>
+                <span className="text-white font-medium">{detail.aired || '-'}</span>
+              </div>
+              <div className="p-3 rounded-xl bg-white/[0.02] border border-white/[0.05]">
+                <span className="text-zinc-500 block text-[10px] uppercase font-bold">Status</span>
+                <span className="text-white font-medium">{detail.status || '-'}</span>
+              </div>
+              <div className="p-3 rounded-xl bg-white/[0.02] border border-white/[0.05]">
+                <span className="text-zinc-500 block text-[10px] uppercase font-bold">Skor Komunitas</span>
+                <span className="text-amber-400 font-bold">{detail.score || '-'}</span>
+              </div>
             </div>
           </div>
         </div>
+      )}
 
-        {/* Episode Grid with Staggered Entrance */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-          {filteredEpisodes.map((ep, idx) => {
-            const isWatched = watchedEpisodes.includes(ep.episodeId);
-
-            return (
-              <Link
-                key={ep.episodeId}
-                href={`/watch?id=${ep.episodeId}`}
-                className={`p-4 rounded-2xl card-frosted-obsidian flex items-center justify-between gap-3 group spring-press animate-fade-in-up stagger-${(idx % 12) + 1} ${
-                  isWatched ? 'border-emerald-500/40 bg-emerald-950/[0.08]' : ''
-                }`}
-              >
-                <div className="min-w-0">
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/10 text-white border border-white/15">
-                      EPS {ep.eps}
-                    </span>
-                    {isWatched && (
-                      <span className="flex items-center gap-0.5 text-[10px] text-emerald-400 font-bold bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
-                        <CheckCircle2 className="w-3 h-3" />
-                        Sudah Ditonton
-                      </span>
-                    )}
-                  </div>
-                  <h4 className="font-cinematic font-bold text-xs text-white group-hover:text-zinc-200 truncate mt-1.5">
-                    {ep.title}
-                  </h4>
-                  {ep.date && (
-                    <span className="text-[10px] text-zinc-400 block mt-0.5">{ep.date}</span>
-                  )}
-                </div>
-
-                <div className="w-8 h-8 rounded-full bg-white text-black flex items-center justify-center flex-shrink-0 shadow-md group-hover:scale-105 transition-transform">
-                  <Play className="w-3.5 h-3.5 fill-black ml-0.5" />
-                </div>
-              </Link>
-            );
-          })}
-        </div>
-
-        {filteredEpisodes.length === 0 && (
-          <div className="p-8 text-center card-frosted-obsidian rounded-3xl text-zinc-400 text-xs border border-white/[0.06]">
-            Tidak ada episode yang cocok dengan pencarian "{searchEps}"
+      {/* ========================================================================= */}
+      {/* TAB 3: ANIME SERUPA */}
+      {/* ========================================================================= */}
+      {activeTab === 'similar' && (
+        <div className="space-y-4 animate-fade-in-up">
+          <div className="flex items-center gap-2">
+            <Sparkles className="w-4 h-4 text-cyan-400" />
+            <h3 className="font-cinematic font-bold text-sm text-white uppercase tracking-wider">
+              Rekomendasi Anime Serupa
+            </h3>
           </div>
-        )}
-      </div>
 
-      {/* Personal Star Rating & Review Section */}
-      <AnimeReviewSection animeId={animeId} animeTitle={detail.title} />
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4">
+            {similarAnime.map((anime, i) => (
+              <AnimeGlassCard key={anime.animeId || i} anime={anime} index={i} />
+            ))}
+          </div>
+
+          {similarAnime.length === 0 && (
+            <div className="p-8 text-center card-frosted-obsidian rounded-3xl text-zinc-400 text-xs border border-white/[0.06]">
+              Memuat rekomendasi anime serupa...
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* TAB 4: ULASAN & RATING */}
+      {/* ========================================================================= */}
+      {activeTab === 'reviews' && (
+        <div className="animate-fade-in-up">
+          <AnimeReviewSection animeId={animeId} animeTitle={detail.title} />
+        </div>
+      )}
     </div>
   );
 }
