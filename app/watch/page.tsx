@@ -380,6 +380,7 @@ function WatchContent() {
 
         {/* Master Player Box */}
         <div
+          id="nexus-player-canvas"
           className={`relative rounded-3xl overflow-hidden card-frosted-obsidian border border-white/[0.08] shadow-[0_24px_80px_rgba(0,0,0,0.98)] bg-black transition-all duration-500 ${
             lightsOff ? 'relative z-50 ring-2 ring-white/30 scale-[1.01]' : ''
           }`}

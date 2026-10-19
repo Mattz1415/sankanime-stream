@@ -1,0 +1,11 @@
+{
+    "Type": "Live2D Expression",
+    "IsModelCustomizationExpression": false,
+    "Parameters": [
+        {
+            "Id": "PinkPaint",
+            "Value": 1.0,
+            "Blend": "Add"
+        }
+    ]
+}

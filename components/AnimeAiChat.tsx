@@ -7,7 +7,6 @@ import {
   Pin,
   ShieldCheck,
   Crown,
-  Heart,
   Sparkles,
   Trash2,
   Play,
@@ -17,15 +16,15 @@ import {
 } from 'lucide-react';
 import { useTheme } from '@/lib/themeContext';
 import {
-  RezeChatMessage,
-  getRezeChatHistory,
-  saveRezeChatHistory,
-  clearRezeChatHistory,
-  sendRezeChatMessage,
-} from '@/lib/rezeAiService';
+  MikuChatMessage,
+  getMikuChatHistory,
+  saveMikuChatHistory,
+  clearMikuChatHistory,
+  sendMikuChatMessage,
+} from '@/lib/mikuAiService';
+import { MikuExpressionKey, MIKU_EXPRESSIONS } from '@/lib/mikuExpressions';
 import { getHomeData } from '@/lib/clientApi';
 import { AnimeListItem } from '@/lib/types';
-import { RezeAvatar } from './RezeFloatingChat';
 import IsolatedChatInput from './IsolatedChatInput';
 
 interface GlobalChatMessage {
@@ -87,25 +86,48 @@ const GlobalMessageItem = React.memo(function GlobalMessageItem({ msg }: { msg: 
   );
 });
 
-const RezeMessageItem = React.memo(function RezeMessageItem({ msg }: { msg: RezeChatMessage }) {
+const MikuMessageItem = React.memo(function MikuMessageItem({ msg }: { msg: MikuChatMessage }) {
   const isUser = msg.sender === 'user';
+  const expInfo = msg.expression ? MIKU_EXPRESSIONS[msg.expression] : null;
+
   return (
     <div className={`flex items-start gap-3 animate-fade-in-up ${isUser ? 'flex-row-reverse' : ''}`}>
-      {!isUser && <RezeAvatar className="w-8 h-8 mt-1 shrink-0" />}
+      {!isUser && (
+        <div className="relative w-8 h-8 rounded-full overflow-hidden border border-cyan-400/50 shadow-[0_0_12px_rgba(0,240,255,0.4)] shrink-0 mt-1">
+          <img
+            src="/RetrynowMiku/miku.png"
+            alt="Miku Avatar"
+            className="w-full h-full object-cover"
+          />
+        </div>
+      )}
 
       <div className="max-w-[80%] space-y-1">
         <div
           className={`rounded-2xl p-4 text-xs leading-relaxed shadow-md ${
             isUser
-              ? 'bg-gradient-to-tr from-pink-600 to-purple-600 text-white font-medium rounded-tr-xs'
+              ? 'bg-gradient-to-tr from-cyan-600 to-teal-500 text-white font-medium rounded-tr-xs'
               : 'bg-white/[0.05] border border-white/[0.08] text-zinc-200 rounded-tl-xs backdrop-blur-md'
           }`}
         >
+          {/* Expression & Action Badge on Miku's messages */}
+          {!isUser && expInfo && (
+            <div className="flex items-center gap-1.5 mb-1.5 pb-1 border-b border-white/[0.06] text-[10px] text-cyan-300 font-bold">
+              <span>{expInfo.badgeEmoji}</span>
+              <span className="uppercase tracking-wider">{expInfo.label}</span>
+              {msg.action && msg.action !== 'IDLE' && (
+                <span className="ml-auto px-1.5 py-0.2 rounded-full bg-cyan-500/20 text-cyan-200 font-mono text-[9px]">
+                  {msg.action}
+                </span>
+              )}
+            </div>
+          )}
+
           <p className="whitespace-pre-line">{msg.text}</p>
 
           {/* Mini Recommended Anime Card */}
           {msg.matchedAnime && (
-            <div className="mt-3 p-2.5 rounded-2xl bg-black/70 border border-pink-500/30 flex items-center gap-3 shadow-lg hover:border-pink-500/60 transition-transform">
+            <div className="mt-3 p-2.5 rounded-2xl bg-black/70 border border-cyan-400/30 flex items-center gap-3 shadow-lg hover:border-cyan-400/60 transition-transform">
               {msg.matchedAnime.poster ? (
                 <img
                   src={msg.matchedAnime.poster}
@@ -115,15 +137,15 @@ const RezeMessageItem = React.memo(function RezeMessageItem({ msg }: { msg: Reze
                   className="w-12 h-16 object-cover rounded-xl border border-white/10 shrink-0"
                 />
               ) : (
-                <div className="w-12 h-16 rounded-xl bg-pink-950/40 border border-pink-500/30 flex items-center justify-center shrink-0">
-                  <Film className="w-5 h-5 text-pink-400" />
+                <div className="w-12 h-16 rounded-xl bg-cyan-950/40 border border-cyan-400/30 flex items-center justify-center shrink-0">
+                  <Film className="w-5 h-5 text-cyan-400" />
                 </div>
               )}
 
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-1.5">
-                  <span className="text-[9px] px-2 py-0.5 rounded-full bg-pink-500/20 text-pink-300 font-bold border border-pink-500/30">
-                    REKOMENDASI REZE
+                  <span className="text-[9px] px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 font-bold border border-cyan-500/30">
+                    PILIHAN MIKU
                   </span>
                   {msg.matchedAnime.score && (
                     <span className="text-[10px] text-amber-300 font-bold">
@@ -140,7 +162,7 @@ const RezeMessageItem = React.memo(function RezeMessageItem({ msg }: { msg: Reze
                       ? `/anime?id=${msg.matchedAnime.animeId}`
                       : '/'
                   }
-                  className="inline-flex items-center gap-1 mt-1 text-[11px] font-bold text-pink-400 hover:text-pink-300 spring-press"
+                  className="inline-flex items-center gap-1 mt-1 text-[11px] font-bold text-cyan-400 hover:text-cyan-300 spring-press"
                 >
                   <Play className="w-3 h-3 fill-current" />
                   <span>Tonton Sekarang</span>
@@ -193,12 +215,12 @@ const DEFAULT_GLOBAL_MESSAGES: GlobalChatMessage[] = [
   },
 ];
 
-const REZE_QUICK_REPLIES = [
-  'lagi apa yang?',
-  'aku kangen',
-  'cerita dong hari kamu',
-  'aku capek hari ini',
-  'rekomendasiin anime seru dong',
+const MIKU_QUICK_REPLIES = [
+  'Rekomendasi anime seru dong!',
+  'Cari Solo Leveling',
+  'Tunjukin tombol putar video!',
+  'Bonk aku pake palu dong!',
+  'Ceritain anime favoritmu~',
 ];
 
 export default function AnimeAiChat() {
@@ -206,12 +228,12 @@ export default function AnimeAiChat() {
   const [globalMessages, setGlobalMessages] = useState<GlobalChatMessage[]>(DEFAULT_GLOBAL_MESSAGES);
   const { accentColor } = useTheme();
 
-  // Reze AI states
-  const [rezeMessages, setRezeMessages] = useState<RezeChatMessage[]>([]);
-  const [isRezeTyping, setIsRezeTyping] = useState(false);
+  // Miku AI states
+  const [mikuMessages, setMikuMessages] = useState<MikuChatMessage[]>([]);
+  const [isMikuTyping, setIsMikuTyping] = useState(false);
   const [knownAnimeList, setKnownAnimeList] = useState<AnimeListItem[]>([]);
 
-  const rezeMessagesEndRef = useRef<HTMLDivElement>(null);
+  const mikuMessagesEndRef = useRef<HTMLDivElement>(null);
   const globalMessagesEndRef = useRef<HTMLDivElement>(null);
 
   // Load chats on mount
@@ -226,7 +248,7 @@ export default function AnimeAiChat() {
       }
     } catch {}
 
-    setRezeMessages(getRezeChatHistory());
+    setMikuMessages(getMikuChatHistory());
 
     getHomeData()
       .then((data) => {
@@ -239,12 +261,12 @@ export default function AnimeAiChat() {
       .catch(() => {});
   }, []);
 
-  // Auto-scroll Reze messages
+  // Auto-scroll Miku messages
   useEffect(() => {
     if (activeTab === 'ai') {
-      rezeMessagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+      mikuMessagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }
-  }, [rezeMessages, isRezeTyping, activeTab]);
+  }, [mikuMessages, isMikuTyping, activeTab]);
 
   const handleSendGlobal = (text: string) => {
     const trimmed = text.trim();
@@ -291,59 +313,59 @@ export default function AnimeAiChat() {
     }, 1500);
   };
 
-  const handleSendReze = async (textToSend: string) => {
+  const handleSendMiku = async (textToSend: string) => {
     const promptText = textToSend.trim();
-    if (!promptText || isRezeTyping) return;
+    if (!promptText || isMikuTyping) return;
 
-    const userMessage: RezeChatMessage = {
+    const userMessage: MikuChatMessage = {
       id: `user-${Date.now()}`,
       sender: 'user',
       text: promptText,
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     };
 
-    const newHistory = [...rezeMessages, userMessage];
-    setRezeMessages(newHistory);
-    saveRezeChatHistory(newHistory);
-    setIsRezeTyping(true);
+    const newHistory = [...mikuMessages, userMessage];
+    setMikuMessages(newHistory);
+    saveMikuChatHistory(newHistory);
+    setIsMikuTyping(true);
 
     try {
-      const reply = await sendRezeChatMessage(promptText, newHistory, {
+      const reply = await sendMikuChatMessage(promptText, newHistory, {
         knownAnimeList,
       });
 
       const updatedWithReply = [...newHistory, reply];
-      setRezeMessages(updatedWithReply);
-      saveRezeChatHistory(updatedWithReply);
+      setMikuMessages(updatedWithReply);
+      saveMikuChatHistory(updatedWithReply);
     } catch {
-      // Fallback already guaranteed inside sendRezeChatMessage
+      // Fallback already guaranteed inside sendMikuChatMessage
     } finally {
-      setIsRezeTyping(false);
+      setIsMikuTyping(false);
     }
   };
 
-  const handleResetReze = () => {
-    if (confirm('Hapus seluruh riwayat obrolan dengan Reze?')) {
-      const reset = clearRezeChatHistory();
-      setRezeMessages(reset);
+  const handleResetMiku = () => {
+    if (confirm('Hapus seluruh riwayat obrolan dengan Miku?')) {
+      const reset = clearMikuChatHistory();
+      setMikuMessages(reset);
     }
   };
 
   return (
     <div className="w-full max-w-4xl mx-auto space-y-4 animate-fade-in-up pb-28 sm:pb-32">
-      {/* Top Switcher: CHAT GLOBAL vs REZE AI */}
+      {/* Top Switcher: CHAT GLOBAL vs MIKU VTUBER */}
       <div className="p-4 sm:p-5 rounded-3xl glass-obsidian border border-white/[0.08] flex flex-wrap items-center justify-between gap-3 shadow-[0_20px_50px_rgba(0,0,0,0.95)]">
         <div>
           <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping" />
+            <span className="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-ping" />
             <h2 className="font-cinematic font-black text-base sm:text-lg text-white">
-              {activeTab === 'global' ? 'CHAT GLOBAL (Komunitas)' : 'REZE AI (Virtual Companion)'}
+              {activeTab === 'global' ? 'CHAT GLOBAL (Komunitas)' : 'MIKU VTUBER (Interactive 2D Companion)'}
             </h2>
           </div>
           <p className="text-xs text-zinc-400">
             {activeTab === 'global'
               ? 'Komunitas penonton anime se-Indonesia • 1,429 Online'
-              : 'Asisten perempuan manis bertenaga Gemini 2.0 Flash'}
+              : 'Asisten 2D VTuber Live2D ekspresif dengan auto-pointing & screen roaming'}
           </p>
         </div>
 
@@ -363,12 +385,12 @@ export default function AnimeAiChat() {
             onClick={() => setActiveTab('ai')}
             className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all spring-press flex items-center gap-1.5 ${
               activeTab === 'ai'
-                ? 'bg-gradient-to-r from-pink-500 to-purple-600 text-white shadow-md shadow-pink-500/30'
-                : 'text-pink-300 hover:text-white'
+                ? 'bg-gradient-to-r from-cyan-500 to-teal-400 text-black shadow-md shadow-cyan-500/30 font-black'
+                : 'text-cyan-300 hover:text-white'
             }`}
           >
-            <Heart className="w-3.5 h-3.5 fill-current" />
-            <span>Reze AI</span>
+            <Sparkles className="w-3.5 h-3.5 fill-current" />
+            <span>Miku VTuber</span>
           </button>
         </div>
       </div>
@@ -423,20 +445,26 @@ export default function AnimeAiChat() {
         </div>
       )}
 
-      {/* Main Tab 2: REZE AI COMPANION */}
+      {/* Main Tab 2: MIKU VTUBER COMPANION */}
       {activeTab === 'ai' && (
         <div className="space-y-4 animate-fade-in-up">
-          {/* Reze Persona Header Card */}
-          <div className="p-4 sm:p-5 rounded-3xl bg-gradient-to-r from-pink-950/40 via-purple-950/30 to-black/80 border border-pink-500/30 shadow-[0_10px_30px_rgba(236,72,153,0.15)] flex flex-wrap items-center justify-between gap-3">
+          {/* Miku Persona Header Card */}
+          <div className="p-4 sm:p-5 rounded-3xl bg-gradient-to-r from-cyan-950/40 via-teal-950/30 to-black/80 border border-cyan-500/30 shadow-[0_10px_30px_rgba(0,240,255,0.15)] flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-3">
-              <RezeAvatar className="w-12 h-12" />
+              <div className="relative w-12 h-12 rounded-full overflow-hidden border-2 border-cyan-400/80 shadow-[0_0_15px_#00f0ff] shrink-0">
+                <img
+                  src="/RetrynowMiku/miku.png"
+                  alt="Miku Header Avatar"
+                  className="w-full h-full object-cover"
+                />
+              </div>
               <div>
                 <div className="flex items-center gap-2">
                   <h3 className="font-cinematic font-black text-base text-white tracking-wide">
-                    REZE
+                    HATSUNE MIKU
                   </h3>
-                  <span className="px-2 py-0.5 rounded-full bg-pink-500/20 text-pink-300 text-[10px] font-bold border border-pink-500/30">
-                    VIRTUAL COMPANION
+                  <span className="px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 text-[10px] font-bold border border-cyan-500/30">
+                    2D VTUBER COMPANION
                   </span>
                   <span className="text-[10px] text-emerald-400 font-bold flex items-center gap-1">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block animate-ping" />
@@ -444,14 +472,14 @@ export default function AnimeAiChat() {
                   </span>
                 </div>
                 <p className="text-xs text-zinc-300">
-                  Pendamping perempuan virtual yang manis, peka, dan ahli membahas segala anime & donghua.
+                  Interactive 2D Companion bertenaga Retrynow Miku Live2D Cubism & Real Cloud LLM.
                 </p>
               </div>
             </div>
 
             <button
               type="button"
-              onClick={handleResetReze}
+              onClick={handleResetMiku}
               className="px-3 py-1.5 rounded-full text-xs font-semibold text-zinc-400 hover:text-red-400 hover:bg-white/10 border border-white/10 spring-press flex items-center gap-1.5"
               title="Reset Chat History"
             >
@@ -460,49 +488,55 @@ export default function AnimeAiChat() {
             </button>
           </div>
 
-          {/* Reze Chat Messages Feed */}
+          {/* Miku Chat Messages Feed */}
           <div className="p-4 sm:p-6 rounded-3xl glass-obsidian border border-white/[0.08] min-h-[380px] max-h-[480px] overflow-y-auto space-y-4 shadow-inner">
-            {rezeMessages.map((msg) => (
-              <RezeMessageItem key={msg.id} msg={msg} />
+            {mikuMessages.map((msg) => (
+              <MikuMessageItem key={msg.id} msg={msg} />
             ))}
 
-            {/* Reze Typing Indicator */}
-            {isRezeTyping && (
+            {/* Miku Typing Indicator */}
+            {isMikuTyping && (
               <div className="flex items-center gap-2 animate-fade-in-up">
-                <RezeAvatar className="w-8 h-8 shrink-0" />
-                <div className="px-4 py-3 rounded-2xl bg-white/[0.05] border border-white/[0.08] text-xs text-pink-300 flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-pink-400 animate-bounce" />
-                  <span className="w-1.5 h-1.5 rounded-full bg-pink-400 animate-bounce [animation-delay:0.2s]" />
-                  <span className="w-1.5 h-1.5 rounded-full bg-pink-400 animate-bounce [animation-delay:0.4s]" />
-                  <span className="text-[11px] text-zinc-400 ml-1 font-medium">Reze sedang mengetik balasan manis...</span>
+                <div className="w-8 h-8 rounded-full overflow-hidden border border-cyan-400/50 shadow-[0_0_10px_rgba(0,240,255,0.4)] shrink-0">
+                  <img
+                    src="/RetrynowMiku/miku.png"
+                    alt="Miku Typing"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <div className="px-4 py-3 rounded-2xl bg-white/[0.05] border border-white/[0.08] text-xs text-cyan-300 flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-bounce" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-bounce [animation-delay:0.2s]" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-bounce [animation-delay:0.4s]" />
+                  <span className="text-[11px] text-zinc-400 ml-1 font-medium">Miku sedang menyiapkan respons & ekspresi...</span>
                 </div>
               </div>
             )}
 
-            <div ref={rezeMessagesEndRef} />
+            <div ref={mikuMessagesEndRef} />
           </div>
 
           {/* Quick-Reply Chips */}
           <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1">
-            {REZE_QUICK_REPLIES.map((reply, i) => (
+            {MIKU_QUICK_REPLIES.map((reply, i) => (
               <button
                 key={i}
                 type="button"
-                onClick={() => handleSendReze(reply)}
-                disabled={isRezeTyping}
-                className="px-3.5 py-1.5 rounded-full text-xs font-semibold bg-white/[0.04] hover:bg-pink-500/20 text-zinc-300 hover:text-pink-300 border border-white/[0.08] hover:border-pink-500/30 whitespace-nowrap spring-press transition-all shrink-0"
+                onClick={() => handleSendMiku(reply)}
+                disabled={isMikuTyping}
+                className="px-3.5 py-1.5 rounded-full text-xs font-semibold bg-white/[0.04] hover:bg-cyan-500/20 text-zinc-300 hover:text-cyan-300 border border-white/[0.08] hover:border-cyan-500/30 whitespace-nowrap spring-press transition-all shrink-0"
               >
                 {reply}
               </button>
             ))}
           </div>
 
-          {/* Isolated Reze Input Bar */}
+          {/* Isolated Miku Input Bar */}
           <IsolatedChatInput
-            theme="pink"
-            onSend={handleSendReze}
-            disabled={isRezeTyping}
-            placeholder="Kirim pesan manis atau tanya anime ke Reze..."
+            theme="white"
+            onSend={handleSendMiku}
+            disabled={isMikuTyping}
+            placeholder="Tulis pesan atau tanya anime ke Miku..."
           />
         </div>
       )}

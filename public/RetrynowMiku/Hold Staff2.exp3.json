@@ -1,0 +1,56 @@
+{
+    "Type": "Live2D Expression",
+    "IsModelCustomizationExpression": false,
+    "Parameters": [
+        {
+            "Id": "armshiddenR",
+            "Value": 1.0,
+            "Blend": "Add"
+        },
+        {
+            "Id": "armshidden2",
+            "Value": 1.0,
+            "Blend": "Add"
+        },
+        {
+            "Id": "Pose1",
+            "Value": 0.0,
+            "Blend": "Add"
+        },
+        {
+            "Id": "Pose2",
+            "Value": 0.0,
+            "Blend": "Add"
+        },
+        {
+            "Id": "Pose3",
+            "Value": 0.0,
+            "Blend": "Add"
+        },
+        {
+            "Id": "pose4",
+            "Value": 0.0,
+            "Blend": "Add"
+        },
+        {
+            "Id": "pose5",
+            "Value": 0.0,
+            "Blend": "Add"
+        },
+        {
+            "Id": "pose6",
+            "Value": 1.0,
+            "Blend": "Add"
+        },
+        {
+            "Id": "pose7",
+            "Value": 0.0,
+            "Blend": "Add"
+        },
+        {
+            "Id": "pose8",
+            "Value": 0.0,
+            "Blend": "Add"
+        }
+    ]
+}

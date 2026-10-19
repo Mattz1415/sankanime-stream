@@ -150,6 +150,7 @@ export default function HeroCarousel({ featuredList }: HeroCarouselProps) {
           {/* Side-by-Side Action Buttons: "▶ Tonton Sekarang" and "+ Simpan" */}
           <div className="flex items-center gap-3 pt-2">
             <Link
+              id="featured-play-btn"
               href={`/anime?id=${currentAnime.animeId}`}
               className="inline-flex items-center gap-2 px-6 sm:px-8 py-3 rounded-full bg-white text-black font-extrabold text-xs sm:text-sm hover:bg-zinc-200 shadow-[0_0_30px_rgba(255,255,255,0.4)] spring-press animate-pulse"
             >

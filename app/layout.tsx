@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import { ThemeProvider } from '@/lib/themeContext';
-import RezeFloatingChat from '@/components/RezeFloatingChat';
+import MikuCompanion from '@/components/MikuCompanion';
 
 export const metadata: Metadata = {
   title: 'NexusAnime - Streaming Anime Ultra-Dark OLED (Sanka Vollerei REST API)',
@@ -35,7 +35,7 @@ export default function RootLayout({
       <body className="bg-[#000000] text-zinc-100 min-h-screen flex flex-col antialiased selection:bg-white selection:text-black">
         <ThemeProvider>
           {children}
-          <RezeFloatingChat />
+          <MikuCompanion />
         </ThemeProvider>
       </body>
     </html>

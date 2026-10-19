@@ -1,0 +1,76 @@
+{
+    "Type": "Live2D Expression",
+    "IsModelCustomizationExpression": false,
+    "Parameters": [
+        {
+            "Id": "Magicstaffupright",
+            "Value": 1.0,
+            "Blend": "Add"
+        },
+        {
+            "Id": "Magicstaff2",
+            "Value": 0.0,
+            "Blend": "Add"
+        },
+        {
+            "Id": "utilityknife",
+            "Value": 0.0,
+            "Blend": "Add"
+        },
+        {
+            "Id": "scissors",
+            "Value": 0.0,
+            "Blend": "Add"
+        },
+        {
+            "Id": "wrench",
+            "Value": 0.0,
+            "Blend": "Add"
+        },
+        {
+            "Id": "pliers",
+            "Value": 0.0,
+            "Blend": "Add"
+        },
+        {
+            "Id": "hoe",
+            "Value": 0.0,
+            "Blend": "Add"
+        },
+        {
+            "Id": "baseballbat",
+            "Value": 0.0,
+            "Blend": "Add"
+        },
+        {
+            "Id": "saw",
+            "Value": 0.0,
+            "Blend": "Add"
+        },
+        {
+            "Id": "shovel",
+            "Value": 0.0,
+            "Blend": "Add"
+        },
+        {
+            "Id": "hammer",
+            "Value": 0.0,
+            "Blend": "Add"
+        },
+        {
+            "Id": "crowbar",
+            "Value": 0.0,
+            "Blend": "Add"
+        },
+        {
+            "Id": "stunbaton",
+            "Value": 1.0,
+            "Blend": "Add"
+        },
+        {
+            "Id": "axe",
+            "Value": 0.0,
+            "Blend": "Add"
+        }
+    ]
+}

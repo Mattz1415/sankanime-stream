@@ -186,6 +186,7 @@ export default function HomePage() {
                 <div className="flex flex-wrap items-center gap-2.5 w-full md:w-auto">
                   {/* Holographic Gacha Summon Button */}
                   <button
+                    id="gacha-summon-btn"
                     type="button"
                     onClick={() => setIsGachaOpen(true)}
                     className="flex-1 md:flex-initial px-5 py-2.5 rounded-full text-xs font-black bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 text-black shadow-[0_0_25px_rgba(251,191,36,0.5)] hover:shadow-[0_0_35px_rgba(251,191,36,0.8)] transition-all spring-press flex items-center justify-center gap-2"

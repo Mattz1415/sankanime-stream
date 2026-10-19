@@ -59,6 +59,7 @@ export default function FluentHeader({
         <div className="flex items-center gap-2">
           {/* Command Palette Trigger Button */}
           <button
+            id="search-trigger"
             type="button"
             onClick={onOpenCommandPalette}
             className="h-9 px-3 rounded-full bg-white/[0.05] hover:bg-white/[0.12] border border-white/[0.08] hover:border-white/25 flex items-center gap-2 text-zinc-300 hover:text-white spring-press shadow-sm"
