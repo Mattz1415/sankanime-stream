@@ -9,8 +9,11 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
+import android.net.Uri;
+import android.os.Message;
 import android.webkit.CookieManager;
 import android.webkit.WebChromeClient;
+import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.widget.FrameLayout;
@@ -21,12 +24,14 @@ import androidx.core.view.WindowInsetsControllerCompat;
 import com.getcapacitor.Bridge;
 import com.getcapacitor.BridgeActivity;
 import com.getcapacitor.BridgeWebChromeClient;
+import com.getcapacitor.BridgeWebViewClient;
 
 public class MainActivity extends BridgeActivity {
 
     private View customView;
     private WebChromeClient.CustomViewCallback customViewCallback;
     private CustomChromeClient customChromeClient;
+    private CustomWebViewClient customWebViewClient;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -108,10 +113,16 @@ public class MainActivity extends BridgeActivity {
                 webView.setBackgroundColor(Color.BLACK);
                 webView.setLayerType(View.LAYER_TYPE_HARDWARE, null);
 
-                // Set custom WebChromeClient to support native fullscreen onShowCustomView
+                // Set custom WebChromeClient to support native fullscreen and swallow popups
                 if (customChromeClient == null) {
                     customChromeClient = new CustomChromeClient(getBridge());
                     webView.setWebChromeClient(customChromeClient);
+                }
+
+                // Set custom WebViewClient to block external Chrome / intent redirects
+                if (customWebViewClient == null) {
+                    customWebViewClient = new CustomWebViewClient(getBridge());
+                    webView.setWebViewClient(customWebViewClient);
                 }
 
                 WebSettings settings = webView.getSettings();
@@ -137,11 +148,17 @@ public class MainActivity extends BridgeActivity {
     }
 
     /**
-     * Custom WebChromeClient extending BridgeWebChromeClient to support HTML5 & IFrame Fullscreen
+     * Custom WebChromeClient extending BridgeWebChromeClient to support HTML5 Fullscreen & swallow popups
      */
     public class CustomChromeClient extends BridgeWebChromeClient {
         public CustomChromeClient(Bridge bridge) {
             super(bridge);
+        }
+
+        @Override
+        public boolean onCreateWindow(WebView view, boolean isDialog, boolean isUserGesture, Message resultMsg) {
+            // Telan semua popup window.open dari script iklan/vidhide agar tidak membuka tab baru atau Chrome
+            return false;
         }
 
         @Override
@@ -196,6 +213,53 @@ public class MainActivity extends BridgeActivity {
             } catch (Exception e) {
                 android.util.Log.e("MainActivity", "Error in onHideCustomView", e);
             }
+        }
+    }
+
+    /**
+     * Custom BridgeWebViewClient to lock application inside WebView and prevent jumping to Chrome
+     */
+    public class CustomWebViewClient extends BridgeWebViewClient {
+        public CustomWebViewClient(Bridge bridge) {
+            super(bridge);
+        }
+
+        private boolean isInternalUrl(Uri uri) {
+            if (uri == null) return false;
+            String scheme = uri.getScheme();
+            if (scheme == null) return false;
+            String host = uri.getHost();
+
+            if ("capacitor".equalsIgnoreCase(scheme) ||
+                "file".equalsIgnoreCase(scheme) ||
+                ("http".equalsIgnoreCase(scheme) && "localhost".equalsIgnoreCase(host)) ||
+                ("https".equalsIgnoreCase(scheme) && "localhost".equalsIgnoreCase(host))) {
+                return true;
+            }
+            return false;
+        }
+
+        @Override
+        public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
+            if (request == null || request.getUrl() == null) return true;
+            Uri uri = request.getUrl();
+            if (isInternalUrl(uri)) {
+                return false;
+            }
+            // Blokir semua navigasi keluar domain lokal / intent / iklan agar tidak mental ke Chrome
+            return true;
+        }
+
+        @Override
+        public boolean shouldOverrideUrlLoading(WebView view, String url) {
+            if (url == null) return true;
+            try {
+                Uri uri = Uri.parse(url);
+                if (isInternalUrl(uri)) {
+                    return false;
+                }
+            } catch (Exception ignored) {}
+            return true;
         }
     }
 }

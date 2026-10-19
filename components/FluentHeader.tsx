@@ -5,9 +5,11 @@ import Link from 'next/link';
 import { Search, Sparkles, Palette, Download, Dice5 } from 'lucide-react';
 import { useTheme } from '@/lib/themeContext';
 
+import { MediaCategory } from '@/lib/types';
+
 interface FluentHeaderProps {
-  activeCategory: 'Anime' | 'Komik' | 'Donghua';
-  onSelectCategory: (cat: 'Anime' | 'Komik' | 'Donghua') => void;
+  activeCategory: MediaCategory;
+  onSelectCategory: (cat: MediaCategory) => void;
   onOpenProfile?: () => void;
   onOpenCommandPalette?: () => void;
   onOpenTheme?: () => void;
@@ -24,7 +26,7 @@ export default function FluentHeader({
   onOpenDownloads,
   onOpenGacha,
 }: FluentHeaderProps) {
-  const categories: Array<'Anime' | 'Komik' | 'Donghua'> = ['Anime', 'Komik', 'Donghua'];
+  const categories: MediaCategory[] = ['Anime', 'Donghua', 'Komik', 'Manhwa', 'LK21 Film'];
   const { accentColor } = useTheme();
 
   return (
@@ -43,15 +45,15 @@ export default function FluentHeader({
           </div>
         </Link>
 
-        {/* Central Pill-Switcher: "Anime", "Komik", "Donghua" with sliding pill look */}
-        <div className="glass-pill-container p-1 rounded-full flex items-center shadow-inner border border-white/[0.08]">
+        {/* Central Pill-Switcher: 5 Categories */}
+        <div className="glass-pill-container p-1 rounded-full flex items-center gap-1 shadow-inner border border-white/[0.08] overflow-x-auto no-scrollbar max-w-[280px] xs:max-w-xs sm:max-w-none">
           {categories.map((cat) => {
             const isActive = activeCategory === cat;
             return (
               <button
                 key={cat}
                 onClick={() => onSelectCategory(cat)}
-                className={`relative px-4 sm:px-5 py-1.5 rounded-full text-xs sm:text-sm font-semibold transition-all duration-300 spring-press ${
+                className={`relative px-3 sm:px-3.5 py-1 sm:py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all duration-300 spring-press ${
                   isActive
                     ? 'bg-white text-black shadow-md shadow-white/20 scale-[1.02]'
                     : 'text-zinc-400 hover:text-white hover:bg-white/[0.05]'

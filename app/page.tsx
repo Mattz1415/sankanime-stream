@@ -38,9 +38,13 @@ import ReleaseCountdownBanner from '@/components/ReleaseCountdownBanner';
 import DownloadManagerModal from '@/components/DownloadManagerModal';
 import ThemeCustomizerModal from '@/components/ThemeCustomizerModal';
 import AdvancedFilterModal from '@/components/AdvancedFilterModal';
+import DonghuaView from '@/components/DonghuaView';
+import ComicView from '@/components/ComicView';
+import ManhwaView from '@/components/ManhwaView';
+import LK21MovieView from '@/components/LK21MovieView';
 import { getHomeData, getSchedule } from '@/lib/clientApi';
 import { getWatchHistory } from '@/lib/storage';
-import { HomeData, ScheduleDay, WatchHistoryItem } from '@/lib/types';
+import { HomeData, ScheduleDay, WatchHistoryItem, MediaCategory } from '@/lib/types';
 import { useTheme } from '@/lib/themeContext';
 
 const GENRE_LIST = [
@@ -66,7 +70,7 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [history, setHistory] = useState<WatchHistoryItem[]>([]);
-  const [activeCategory, setActiveCategory] = useState<'Anime' | 'Komik' | 'Donghua'>('Anime');
+  const [activeCategory, setActiveCategory] = useState<MediaCategory>('Anime');
   const [activeTab, setActiveTab] = useState<DockTab>('jelajah');
   const [selectedDay, setSelectedDay] = useState<string>('Semua');
   const [ongoingCount, setOngoingCount] = useState(12);
@@ -131,7 +135,10 @@ export default function HomePage() {
       {/* Sticky Glass Header */}
       <FluentHeader
         activeCategory={activeCategory}
-        onSelectCategory={(cat) => setActiveCategory(cat)}
+        onSelectCategory={(cat) => {
+          setActiveCategory(cat);
+          setActiveTab('jelajah');
+        }}
         onOpenProfile={() => setActiveTab('profil')}
         onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
         onOpenTheme={() => setIsThemeOpen(true)}
@@ -141,28 +148,13 @@ export default function HomePage() {
 
       {/* Main Container */}
       <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 safe-dock-padding space-y-8">
-        {/* If Active Category is not Anime (e.g. Komik or Donghua), show contextual banner */}
-        {activeCategory !== 'Anime' && (
-          <div className="p-8 rounded-3xl card-frosted-obsidian border border-white/[0.08] text-center space-y-4 shadow-[0_20px_50px_rgba(0,0,0,0.95)] animate-fade-in-up">
-            <div className="w-14 h-14 rounded-2xl bg-white/10 border border-white/20 flex items-center justify-center mx-auto text-white">
-              {activeCategory === 'Komik' ? <BookOpen className="w-7 h-7" /> : <Film className="w-7 h-7" />}
-            </div>
-            <h2 className="font-cinematic font-bold text-xl text-white">
-              Katalog {activeCategory} Segera Hadir
-            </h2>
-            <p className="text-xs text-zinc-400 max-w-md mx-auto">
-              Fitur integrasi pembaca {activeCategory} sedang dikembangkan. Nikmati ribuan judul anime subtitle Indonesia melalui tab Anime!
-            </p>
-            <button
-              onClick={() => setActiveCategory('Anime')}
-              className="px-6 py-2.5 rounded-full bg-white text-black font-extrabold text-xs hover:bg-zinc-200 transition-all shadow-md spring-press"
-            >
-              Kembali ke Anime
-            </button>
-          </div>
-        )}
+        {/* Category Views: Donghua, Komik, Manhwa, LK21 Film */}
+        {activeTab === 'jelajah' && activeCategory === 'Donghua' && <DonghuaView />}
+        {activeTab === 'jelajah' && activeCategory === 'Komik' && <ComicView />}
+        {activeTab === 'jelajah' && activeCategory === 'Manhwa' && <ManhwaView />}
+        {activeTab === 'jelajah' && activeCategory === 'LK21 Film' && <LK21MovieView />}
 
-        {/* Tab 1: JELAJAH (Main Home Feed) */}
+        {/* Tab 1: JELAJAH (Main Home Feed for Anime) */}
         {activeTab === 'jelajah' && activeCategory === 'Anime' && (
           <div className="space-y-8 animate-fade-in-up">
             {/* Anime Stories / Quick Preview Circles */}

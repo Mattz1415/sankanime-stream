@@ -73,7 +73,6 @@ function WatchContent() {
   const [activeQuality, setActiveQuality] = useState<string>('720p');
   const [switchingServer, setSwitchingServer] = useState(false);
   const [iframeLoaded, setIframeLoaded] = useState(false);
-  const [xframeBlocked, setXframeBlocked] = useState(false);
 
   // Tunnel state
   const [tunnelResult, setTunnelResult] = useState<TunnelResult | null>(null);
@@ -95,6 +94,26 @@ function WatchContent() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const iframeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const toastTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Instance cleanup for video/audio elements to prevent background sound leaks
+  const cleanupMediaInstances = () => {
+    if (videoRef.current) {
+      try {
+        videoRef.current.pause();
+        videoRef.current.removeAttribute('src');
+        videoRef.current.load();
+      } catch {}
+    }
+    if (typeof window !== 'undefined') {
+      try {
+        document.querySelectorAll('audio, video').forEach((el) => {
+          try {
+            (el as HTMLMediaElement).pause();
+          } catch {}
+        });
+      } catch {}
+    }
+  };
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -178,6 +197,7 @@ function WatchContent() {
     if (targetGroup && targetGroup.serverList.length > 0) {
       const preferred =
         targetGroup.serverList.find((s) => /vidhide/i.test(s.title)) ||
+        targetGroup.serverList.find((s) => /mega/i.test(s.title)) ||
         targetGroup.serverList.find((s) => /ondesuhd/i.test(s.title)) ||
         targetGroup.serverList.find((s) => /desustream/i.test(s.title)) ||
         targetGroup.serverList[0];
@@ -252,8 +272,8 @@ function WatchContent() {
 
   const handleSelectServer = async (server: QualityServer, quality: string) => {
     try {
+      cleanupMediaInstances();
       setSwitchingServer(true);
-      setXframeBlocked(false);
       setIframeLoaded(false);
 
       if (iframeTimeoutRef.current) clearTimeout(iframeTimeoutRef.current);
@@ -278,18 +298,6 @@ function WatchContent() {
           });
         } else {
           await executeTunneling(resolved.url, server.title);
-
-          if (
-            /ondesuhd/i.test(server.title) ||
-            /desustream/i.test(server.title) ||
-            /odstream/i.test(server.title)
-          ) {
-            iframeTimeoutRef.current = setTimeout(() => {
-              if (!iframeLoaded) {
-                setXframeBlocked(true);
-              }
-            }, 6000);
-          }
         }
       } else {
         await executeTunneling(detail?.defaultStreamingUrl || '', 'Fallback Default');
@@ -333,32 +341,6 @@ function WatchContent() {
     setResumePromptSec(null);
   };
 
-  // Skip Intro (+85s)
-  const handleSkipIntro = () => {
-    if (videoRef.current) {
-      videoRef.current.currentTime += 85;
-    }
-    showToast('⏩ Melompati Lagu Intro (+85 Detik)');
-  };
-
-  // Skip Outro (+90s)
-  const handleSkipOutro = () => {
-    if (videoRef.current) {
-      videoRef.current.currentTime += 90;
-    } else if (autoNext && detail?.hasNextEpisode && detail?.nextEpisode) {
-      router.push(`/watch?id=${detail.nextEpisode.episodeId}`);
-    }
-    showToast('⏩ Melompati Outro (+90 Detik)');
-  };
-
-  // Seek -10s / +10s
-  const handleSeek = (seconds: number) => {
-    if (videoRef.current) {
-      videoRef.current.currentTime += seconds;
-    }
-    showToast(`${seconds > 0 ? '+' : ''}${seconds} Detik`);
-  };
-
   // Toggle Watch Later playlist
   const handleToggleWatchLater = () => {
     if (!detail) return;
@@ -383,17 +365,6 @@ function WatchContent() {
   const handlePlayNative = () => {
     if (streamUrl) {
       window.open(streamUrl, '_blank', 'noopener,noreferrer');
-    }
-  };
-
-  const handleSwitchToVidhide = () => {
-    if (!detail?.server?.qualities) return;
-    for (const group of detail.server.qualities) {
-      const vidhide = group.serverList.find((s) => /vidhide/i.test(s.title));
-      if (vidhide) {
-        handleSelectServer(vidhide, group.title);
-        return;
-      }
     }
   };
 
@@ -567,7 +538,7 @@ function WatchContent() {
 
           {/* Clean 16:9 Video Player Canvas */}
           <div className="relative w-full aspect-video bg-black flex items-center justify-center overflow-hidden">
-            {(switchingServer || isTunneling || (!iframeLoaded && !xframeBlocked)) && (
+            {(switchingServer || isTunneling || !iframeLoaded) && (
               <div className="absolute inset-0 z-10 bg-black flex flex-col items-center justify-center gap-3 text-white pointer-events-none">
                 <RefreshCw className="w-8 h-8 animate-spin text-cyan-400 drop-shadow-[0_0_12px_rgba(0,240,255,0.7)]" />
                 <div className="text-center space-y-1">
@@ -575,38 +546,6 @@ function WatchContent() {
                     {isTunneling ? 'Mempersiapkan Stream Tunnel...' : 'Menghubungkan ke Pemutar...'}
                   </p>
                   <p className="text-[11px] text-zinc-500 font-medium">{activeServerTitle}</p>
-                </div>
-              </div>
-            )}
-
-            {xframeBlocked && (
-              <div className="absolute inset-0 z-20 bg-black/90 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center space-y-3 animate-fade-in-up">
-                <ShieldAlert className="w-8 h-8 text-amber-400 mx-auto" />
-                <div className="max-w-md space-y-1">
-                  <h3 className="font-cinematic font-bold text-base text-white">
-                    Server Membatasi Pemutaran Tersemat
-                  </h3>
-                  <p className="text-xs text-zinc-400">
-                    Beralih ke server Vidhide atau buka di tab eksternal:
-                  </p>
-                </div>
-
-                <div className="flex flex-wrap items-center justify-center gap-2 pt-2">
-                  <button
-                    onClick={handleSwitchToVidhide}
-                    className="px-5 py-2 rounded-full bg-white text-black font-extrabold text-xs hover:bg-zinc-200 shadow-md spring-press flex items-center gap-1.5"
-                  >
-                    <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-                    Ganti ke Server Vidhide
-                  </button>
-
-                  <button
-                    onClick={handlePlayNative}
-                    className="px-4 py-2 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-white font-semibold text-xs spring-press flex items-center gap-1.5"
-                  >
-                    <ExternalLink className="w-3.5 h-3.5" />
-                    Buka Tab Baru
-                  </button>
                 </div>
               </div>
             )}
@@ -639,11 +578,9 @@ function WatchContent() {
                     setIframeLoaded(true);
                     setSwitchingServer(false);
                   }}
-                  onError={() => {
-                    setXframeBlocked(true);
-                  }}
                   allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
                   allowFullScreen
+                  sandbox="allow-scripts allow-same-origin allow-forms allow-presentation"
                   title={detail.title}
                 />
               )
@@ -656,52 +593,16 @@ function WatchContent() {
             )}
           </div>
 
-          {/* Quick Utility Action Bar: Skip Intro/Outro, -10s, +10s, Subtitle Settings, Download, Watch Later */}
+          {/* Quick Utility Action Bar: Server Indicator, Watch Later, Download, Subtitle Settings */}
           <div className="p-3 bg-[#050508]/98 border-t border-white/[0.08] flex items-center justify-between gap-2 overflow-x-auto no-scrollbar">
-            <div className="flex items-center gap-1.5 shrink-0">
-              {/* Skip Intro (+85s) Button */}
-              <button
-                type="button"
-                onClick={handleSkipIntro}
-                className="px-3 py-1.5 rounded-xl bg-cyan-500/15 hover:bg-cyan-500/25 border border-cyan-400/30 text-cyan-300 font-extrabold text-[11px] flex items-center gap-1 spring-press transition-all"
-                title="Lewati Opening (+85 Detik)"
-              >
-                <FastForward className="w-3.5 h-3.5" />
-                <span>Lewati Intro (+85s)</span>
-              </button>
-
-              {/* Skip Outro (+90s) Button */}
-              <button
-                type="button"
-                onClick={handleSkipOutro}
-                className="px-3 py-1.5 rounded-xl bg-purple-500/15 hover:bg-purple-500/25 border border-purple-400/30 text-purple-300 font-extrabold text-[11px] flex items-center gap-1 spring-press transition-all"
-                title="Lewati Ending (+90 Detik)"
-              >
-                <FastForward className="w-3.5 h-3.5" />
-                <span>Lewati Outro (+90s)</span>
-              </button>
-
-              {/* Seek -10s */}
-              <button
-                type="button"
-                onClick={() => handleSeek(-10)}
-                className="px-2.5 py-1.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-zinc-300 hover:text-white border border-white/[0.08] text-[11px] font-bold spring-press"
-                title="Mundur 10 Detik"
-              >
-                <Rewind className="w-3 h-3 inline mr-0.5" />
-                -10s
-              </button>
-
-              {/* Seek +10s */}
-              <button
-                type="button"
-                onClick={() => handleSeek(10)}
-                className="px-2.5 py-1.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-zinc-300 hover:text-white border border-white/[0.08] text-[11px] font-bold spring-press"
-                title="Maju 10 Detik"
-              >
-                +10s
-                <FastForward className="w-3 h-3 inline ml-0.5" />
-              </button>
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="w-2 h-2 rounded-full bg-cyan-400 inline-block animate-ping shrink-0" />
+              <span className="text-[11px] font-bold text-zinc-300 truncate">
+                {activeServerTitle}
+              </span>
+              <span className="text-[10px] px-2 py-0.5 rounded-md bg-white/[0.06] text-zinc-400 border border-white/[0.08] font-mono shrink-0">
+                {activeQuality}
+              </span>
             </div>
 
             <div className="flex items-center gap-1.5 shrink-0">

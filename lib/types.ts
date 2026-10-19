@@ -214,3 +214,107 @@ export interface ServerStreamResult {
   rawHtml?: string;
 }
 
+export type MediaCategory = 'Anime' | 'Donghua' | 'Komik' | 'Manhwa' | 'LK21 Film';
+
+// Donghua Types
+export interface DonghuaItem {
+  title: string;
+  slug: string;
+  poster: string;
+  status?: string;
+  type?: string;
+  currentEpisode?: string;
+  href?: string;
+  rating?: string;
+}
+
+export interface DonghuaDetail {
+  title: string;
+  alterTitle?: string;
+  poster: string;
+  rating?: string;
+  status: string;
+  studio?: string;
+  network?: string;
+  released?: string;
+  episodesCount?: string | number;
+  synopsis: string;
+  genres: string[];
+  episodesList: Array<{
+    title: string;
+    slug: string;
+    episodeNumber?: string | number;
+  }>;
+}
+
+export interface DonghuaEpisodeStream {
+  episodeTitle: string;
+  mainUrl: string;
+  servers: Array<{
+    name: string;
+    url: string;
+  }>;
+}
+
+// Comic & Manhwa Types
+export interface ComicItem {
+  title: string;
+  slug: string;
+  image: string;
+  chapter?: string;
+  link?: string;
+  type?: 'Manga' | 'Manhwa' | 'Manhua';
+  description?: string;
+  score?: string;
+}
+
+export interface ComicDetail {
+  title: string;
+  titleIndonesian?: string;
+  slug: string;
+  image: string;
+  synopsis: string;
+  metadata?: {
+    type?: string;
+    author?: string;
+    status?: string;
+    concept?: string;
+    ageRating?: string;
+    readingDirection?: string;
+  };
+  genres: Array<{
+    name: string;
+    slug: string;
+  }>;
+  chapters: Array<{
+    chapter: string;
+    slug: string;
+    date?: string;
+    link?: string;
+  }>;
+}
+
+export interface ComicChapterData {
+  title?: string;
+  chapterSlug: string;
+  images: string[];
+  navigation?: {
+    previousChapter?: string;
+    nextChapter?: string;
+    chapterList?: string;
+  };
+}
+
+// LK21 Movie Types
+export interface MovieItem {
+  id: string; // IMDB or TMDB ID e.g. tt6263850
+  title: string;
+  year: string;
+  poster: string;
+  rating: string;
+  genre: string;
+  duration?: string;
+  synopsis: string;
+  quality?: string;
+  category: 'Box Office' | 'Marvel' | 'Action' | 'Horror' | 'Anime Movie' | 'K-Drama';
+}
