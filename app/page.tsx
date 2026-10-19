@@ -479,6 +479,7 @@ export default function HomePage() {
       <AnimeGachaModal
         isOpen={isGachaOpen}
         onClose={() => setIsGachaOpen(false)}
+        initialPool={[...(data?.ongoing?.animeList || []), ...(data?.complete?.animeList || [])]}
       />
     </div>
   );

@@ -1,22 +1,32 @@
 package com.nexus.anime;
 
+import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
 import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
 import android.webkit.CookieManager;
+import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
+import android.widget.FrameLayout;
 import androidx.annotation.NonNull;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.core.view.WindowInsetsControllerCompat;
+import com.getcapacitor.Bridge;
 import com.getcapacitor.BridgeActivity;
+import com.getcapacitor.BridgeWebChromeClient;
 
 public class MainActivity extends BridgeActivity {
+
+    private View customView;
+    private WebChromeClient.CustomViewCallback customViewCallback;
+    private CustomChromeClient customChromeClient;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -45,6 +55,17 @@ public class MainActivity extends BridgeActivity {
         applyOledDisplayCutoutAndImmersive();
     }
 
+    @Override
+    public void onBackPressed() {
+        if (customView != null) {
+            if (customChromeClient != null) {
+                customChromeClient.onHideCustomView();
+            }
+            return;
+        }
+        super.onBackPressed();
+    }
+
     /**
      * Eliminates grey bars completely:
      * - Forces status bar & nav bar to pure Color.BLACK
@@ -57,26 +78,22 @@ public class MainActivity extends BridgeActivity {
             Window window = getWindow();
             if (window == null) return;
 
-            // 1. Force Pure Pitch Black colors on system bars & window decor
             window.setStatusBarColor(Color.BLACK);
             window.setNavigationBarColor(Color.BLACK);
             if (window.getDecorView() != null) {
                 window.getDecorView().setBackgroundColor(Color.BLACK);
             }
 
-            // 2. Display cutout mode: extend content into notch/ear areas (eliminates grey/white bars in landscape)
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
                 WindowManager.LayoutParams layoutParams = window.getAttributes();
                 layoutParams.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
                 window.setAttributes(layoutParams);
             }
 
-            // 3. Android Immersive Sticky Mode: hide bars and show transiently on swipe
             WindowCompat.setDecorFitsSystemWindows(window, false);
             WindowInsetsControllerCompat insetsController = WindowCompat.getInsetsController(window, window.getDecorView());
             if (insetsController != null) {
                 insetsController.setSystemBarsBehavior(WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
-                // Hide status & navigation bars for seamless immersive viewing
                 insetsController.hide(WindowInsetsCompat.Type.statusBars() | WindowInsetsCompat.Type.navigationBars());
             }
         } catch (Exception e) {
@@ -88,35 +105,96 @@ public class MainActivity extends BridgeActivity {
         try {
             if (getBridge() != null && getBridge().getWebView() != null) {
                 WebView webView = getBridge().getWebView();
-                
-                // Set WebView background to pitch black to prevent any white/grey flash
                 webView.setBackgroundColor(Color.BLACK);
 
-                WebSettings settings = webView.getSettings();
+                // Set custom WebChromeClient to support native fullscreen onShowCustomView
+                if (customChromeClient == null) {
+                    customChromeClient = new CustomChromeClient(getBridge());
+                    webView.setWebChromeClient(customChromeClient);
+                }
 
-                // 1. Popup & redirect suppression while keeping Bridge intact
+                WebSettings settings = webView.getSettings();
                 settings.setSupportMultipleWindows(true);
                 settings.setJavaScriptCanOpenWindowsAutomatically(false);
-
-                // 2. Storage & media playback configurations
                 settings.setDomStorageEnabled(true);
                 settings.setDatabaseEnabled(true);
                 settings.setMediaPlaybackRequiresUserGesture(false);
                 settings.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
 
-                // 3. Remove "; wv" from User-Agent so video hosts treat it as pure Chrome Android
                 String defaultUa = settings.getUserAgentString();
                 if (defaultUa != null && defaultUa.contains("; wv")) {
                     settings.setUserAgentString(defaultUa.replace("; wv", ""));
                 }
 
-                // 4. Accept third-party cookies for embedded iframes (odstream, desustream, ondesuhd)
                 CookieManager cookieManager = CookieManager.getInstance();
                 cookieManager.setAcceptCookie(true);
                 cookieManager.setAcceptThirdPartyCookies(webView, true);
             }
         } catch (Exception e) {
             android.util.Log.e("MainActivity", "Error configuring WebSettings", e);
+        }
+    }
+
+    /**
+     * Custom WebChromeClient extending BridgeWebChromeClient to support HTML5 & IFrame Fullscreen
+     */
+    public class CustomChromeClient extends BridgeWebChromeClient {
+        public CustomChromeClient(Bridge bridge) {
+            super(bridge);
+        }
+
+        @Override
+        public void onShowCustomView(View view, CustomViewCallback callback) {
+            if (customView != null) {
+                callback.onCustomViewHidden();
+                return;
+            }
+
+            customView = view;
+            customViewCallback = callback;
+
+            try {
+                ViewGroup decor = (ViewGroup) getWindow().getDecorView();
+                customView.setBackgroundColor(Color.BLACK);
+                decor.addView(customView, new FrameLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.MATCH_PARENT
+                ));
+
+                if (getBridge() != null && getBridge().getWebView() != null) {
+                    getBridge().getWebView().setVisibility(View.GONE);
+                }
+
+                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
+                applyOledDisplayCutoutAndImmersive();
+            } catch (Exception e) {
+                android.util.Log.e("MainActivity", "Error in onShowCustomView", e);
+            }
+        }
+
+        @Override
+        public void onHideCustomView() {
+            if (customView == null) return;
+
+            try {
+                ViewGroup decor = (ViewGroup) getWindow().getDecorView();
+                decor.removeView(customView);
+                customView = null;
+
+                if (customViewCallback != null) {
+                    customViewCallback.onCustomViewHidden();
+                    customViewCallback = null;
+                }
+
+                if (getBridge() != null && getBridge().getWebView() != null) {
+                    getBridge().getWebView().setVisibility(View.VISIBLE);
+                }
+
+                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
+                applyOledDisplayCutoutAndImmersive();
+            } catch (Exception e) {
+                android.util.Log.e("MainActivity", "Error in onHideCustomView", e);
+            }
         }
     }
 }

@@ -10,14 +10,9 @@ import {
   Play,
   RotateCw,
   Star,
-  Film,
   Zap,
-  Flame,
-  Award,
   Bookmark,
   BookmarkCheck,
-  ChevronRight,
-  ShieldAlert,
   Crown
 } from 'lucide-react';
 import { AnimeListItem } from '@/lib/types';
@@ -27,12 +22,13 @@ import { isAnimeBookmarked, toggleBookmark } from '@/lib/storage';
 interface AnimeGachaModalProps {
   isOpen: boolean;
   onClose: () => void;
+  initialPool?: AnimeListItem[];
 }
 
 type SummonStage = 'idle' | 'spinning' | 'burst' | 'revealed';
 type RarityTier = 'SSR MYTHIC' | 'SR EPIC' | 'RARE';
 
-export default function AnimeGachaModal({ isOpen, onClose }: AnimeGachaModalProps) {
+export default function AnimeGachaModal({ isOpen, onClose, initialPool }: AnimeGachaModalProps) {
   const router = useRouter();
   const [pool, setPool] = useState<AnimeListItem[]>([]);
   const [stage, setStage] = useState<SummonStage>('idle');
@@ -40,20 +36,41 @@ export default function AnimeGachaModal({ isOpen, onClose }: AnimeGachaModalProp
   const [isSaved, setIsSaved] = useState(false);
   const [shake, setShake] = useState(false);
 
-  // Roulette items array (duplicated for infinite horizontal scroll effect)
+  // 30 items strip for roulette
   const [rouletteList, setRouletteList] = useState<AnimeListItem[]>([]);
-  const [winningIndex, setWinningIndex] = useState(15);
-  const rouletteTrackRef = useRef<HTMLDivElement>(null);
+  const [winningIndex, setWinningIndex] = useState(24);
+  const [translateStyle, setTranslateStyle] = useState<string>('translate3d(0, 0, 0)');
+  const [transitionStyle, setTransitionStyle] = useState<string>('none');
 
-  // Load pool
+  const spinTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const burstTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const startRafRef = useRef<number | null>(null);
+
+  // Handle open / close
   useEffect(() => {
     if (isOpen) {
-      loadGachaPool();
+      if (initialPool && initialPool.length > 0) {
+        setPool(initialPool);
+        setupAndStartRoll(initialPool);
+      } else {
+        loadGachaPool();
+      }
     } else {
       setStage('idle');
       setShake(false);
+      clearAllTimers();
     }
-  }, [isOpen]);
+
+    return () => {
+      clearAllTimers();
+    };
+  }, [isOpen, initialPool]);
+
+  const clearAllTimers = () => {
+    if (spinTimeoutRef.current) clearTimeout(spinTimeoutRef.current);
+    if (burstTimeoutRef.current) clearTimeout(burstTimeoutRef.current);
+    if (startRafRef.current) cancelAnimationFrame(startRafRef.current);
+  };
 
   const loadGachaPool = async () => {
     try {
@@ -62,17 +79,9 @@ export default function AnimeGachaModal({ isOpen, onClose }: AnimeGachaModalProp
         ...(data.ongoing?.animeList || []),
         ...(data.complete?.animeList || []),
       ];
-      setPool(combined);
-
       if (combined.length > 0) {
-        // Build roulette strip with 30 items
-        const strip: AnimeListItem[] = [];
-        for (let i = 0; i < 30; i++) {
-          strip.push(combined[i % combined.length]);
-        }
-        setRouletteList(strip);
-        // Start initial roll
-        startSummon(combined, strip);
+        setPool(combined);
+        setupAndStartRoll(combined);
       }
     } catch (e) {
       console.error('Failed to load gacha pool', e);
@@ -81,56 +90,87 @@ export default function AnimeGachaModal({ isOpen, onClose }: AnimeGachaModalProp
 
   const calculateRarity = (anime: AnimeListItem): { tier: RarityTier; color: string; border: string; glow: string } => {
     const rawScore = parseFloat(anime.score || '0');
-    if (rawScore >= 8.3 || anime.title.toLowerCase().includes('jujutsu') || anime.title.toLowerCase().includes('piece')) {
+    if (rawScore >= 8.2 || anime.title.toLowerCase().includes('piece') || anime.title.toLowerCase().includes('jujutsu')) {
       return {
         tier: 'SSR MYTHIC',
         color: 'from-amber-300 via-yellow-200 to-amber-500',
-        border: 'border-amber-400 shadow-[0_0_35px_rgba(251,191,36,0.5)]',
+        border: 'border-amber-400 shadow-[0_0_35px_rgba(251,191,36,0.6)]',
         glow: 'rgba(251,191,36,0.6)',
       };
     }
-    if (rawScore >= 7.6 || rawScore === 0) {
+    if (rawScore >= 7.5 || rawScore === 0) {
       return {
         tier: 'SR EPIC',
         color: 'from-purple-300 via-pink-300 to-indigo-400',
-        border: 'border-purple-400 shadow-[0_0_35px_rgba(168,85,247,0.5)]',
+        border: 'border-purple-400 shadow-[0_0_35px_rgba(168,85,247,0.6)]',
         glow: 'rgba(168,85,247,0.6)',
       };
     }
     return {
       tier: 'RARE',
       color: 'from-cyan-300 via-teal-200 to-cyan-500',
-      border: 'border-cyan-400 shadow-[0_0_35px_rgba(6,182,212,0.5)]',
+      border: 'border-cyan-400 shadow-[0_0_35px_rgba(6,182,212,0.6)]',
       glow: 'rgba(6,182,212,0.6)',
     };
   };
 
-  const startSummon = (currentPool = pool, currentStrip = rouletteList) => {
-    if (currentPool.length === 0) return;
+  /**
+   * Generates a 30-card strip, positions the chosen winner at index 24,
+   * and runs a smooth 3.5s slot spin with cubic-bezier(0.12, 0.8, 0.18, 1) landing dead-center.
+   */
+  const setupAndStartRoll = (sourcePool: AnimeListItem[]) => {
+    if (!sourcePool || sourcePool.length === 0) return;
 
-    setStage('spinning');
+    clearAllTimers();
+
+    // Pick winner randomly
+    const winnerIndex = Math.floor(Math.random() * sourcePool.length);
+    const winner = sourcePool[winnerIndex];
+    const targetIdx = 24; // Lands at index 24 out of 30 cards
+
+    // Generate 30 items
+    const strip: AnimeListItem[] = [];
+    for (let i = 0; i < 30; i++) {
+      if (i === targetIdx) {
+        strip.push(winner);
+      } else {
+        const randItem = sourcePool[Math.floor(Math.random() * sourcePool.length)];
+        strip.push(randItem);
+      }
+    }
+
+    setRouletteList(strip);
+    setWinningIndex(targetIdx);
+    setSelectedAnime(winner);
     setShake(false);
 
-    // Pick winning index in the middle of track
-    const targetIdx = 18 + Math.floor(Math.random() * 8);
-    const chosen = currentStrip[targetIdx] || currentPool[Math.floor(Math.random() * currentPool.length)];
-    setWinningIndex(targetIdx);
-    setSelectedAnime(chosen);
+    // Reset track position to 0 with no transition
+    setTransitionStyle('none');
+    setTranslateStyle('translate3d(0px, 0, 0)');
+    setStage('spinning');
 
-    // Stage 1 -> Stage 2: After 2.4s of spinning deceleration, trigger burst
-    setTimeout(() => {
-      setStage('burst');
-      setShake(true);
+    // Launch animation in next tick
+    startRafRef.current = requestAnimationFrame(() => {
+      // Step: 120px card width + 12px gap = 132px. Center offset: 60px
+      const targetOffset = targetIdx * 132 + 60;
+      setTransitionStyle('transform 3500ms cubic-bezier(0.12, 0.8, 0.18, 1)');
+      setTranslateStyle(`translate3d(calc(50% - ${targetOffset}px), 0, 0)`);
 
-      // Stage 2 -> Stage 3: After burst and 3D card flip, reveal result card
-      setTimeout(() => {
-        setShake(false);
-        setStage('revealed');
-        if (chosen) {
-          setIsSaved(isAnimeBookmarked(chosen.animeId));
-        }
-      }, 700);
-    }, 2400);
+      // After 3500ms, trigger burst
+      spinTimeoutRef.current = setTimeout(() => {
+        setStage('burst');
+        setShake(true);
+
+        // After 600ms burst, reveal card
+        burstTimeoutRef.current = setTimeout(() => {
+          setShake(false);
+          setStage('revealed');
+          if (winner) {
+            setIsSaved(isAnimeBookmarked(winner.animeId));
+          }
+        }, 600);
+      }, 3500);
+    });
   };
 
   const handleToggleSave = () => {
@@ -187,7 +227,7 @@ export default function AnimeGachaModal({ isOpen, onClose }: AnimeGachaModalProp
                 </span>
               </div>
               <p className="text-[11px] text-zinc-400">
-                Pilih takdir tontonan anime berikutnya dengan animasi summon slot berkecepatan tinggi!
+                Putaran pita 30 kartu berkecepatan tinggi dengan sistem akurasi laser dead-center!
               </p>
             </div>
           </div>
@@ -200,41 +240,34 @@ export default function AnimeGachaModal({ isOpen, onClose }: AnimeGachaModalProp
           <div className="relative py-8 space-y-6 overflow-hidden">
             {/* Center Neon Target Laser Line */}
             <div className="absolute top-0 bottom-0 left-1/2 -translate-x-1/2 w-1 bg-gradient-to-b from-cyan-400 via-white to-cyan-400 z-30 shadow-[0_0_18px_#00f0ff] pointer-events-none">
-              <div className="absolute top-1/2 -translate-y-1/2 -left-2 w-5 h-5 rounded-full bg-cyan-400/30 border border-white shadow-[0_0_15px_#00f0ff] animate-ping" />
+              <div className="absolute top-1/2 -translate-y-1/2 -left-2 w-5 h-5 rounded-full bg-cyan-400/40 border border-white shadow-[0_0_15px_#00f0ff] animate-ping" />
             </div>
 
             {/* Stage Indicator */}
             <div className="text-center space-y-1">
               <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-cyan-500/15 text-cyan-300 text-xs font-black tracking-widest uppercase border border-cyan-500/30 animate-pulse">
                 <Zap className="w-3.5 h-3.5 text-cyan-400" />
-                {stage === 'spinning' ? 'MEMUTAR SLOT KARTU ANIME...' : 'BURST! MENGUNCI TARGET...'}
+                {stage === 'spinning' ? 'MEMUTAR SLOT KARTU ANIME (3.5s)...' : 'BURST! MENGUNCI TARGET...'}
               </span>
             </div>
 
             {/* Horizontal Sliding Carousel Strip */}
-            <div className="relative w-full overflow-hidden rounded-2xl bg-black/60 p-3 border border-white/10 shadow-inner">
+            <div className="relative w-full overflow-hidden rounded-2xl bg-black/80 p-3 border border-white/10 shadow-inner">
               <div
-                ref={rouletteTrackRef}
-                className={`flex items-center gap-3 transition-transform ${
-                  stage === 'spinning'
-                    ? 'duration-[2300ms] ease-out'
-                    : 'duration-300'
-                }`}
+                className="flex items-center gap-3 will-change-transform"
                 style={{
-                  transform:
-                    stage === 'spinning' || stage === 'burst'
-                      ? `translateX(calc(-${winningIndex * 132}px + 50% - 66px))`
-                      : 'translateX(0px)',
-                  filter: stage === 'spinning' ? 'blur(1.5px)' : 'none',
+                  transform: translateStyle,
+                  transition: transitionStyle,
+                  filter: stage === 'spinning' ? 'blur(1.2px)' : 'none',
                 }}
               >
                 {rouletteList.map((item, idx) => (
                   <div
                     key={`${item.animeId}-${idx}`}
-                    className={`relative w-28 h-40 rounded-xl overflow-hidden shrink-0 border transition-all duration-300 ${
-                      idx === winningIndex
-                        ? 'border-cyan-400 scale-105 shadow-[0_0_25px_rgba(0,240,255,0.7)]'
-                        : 'border-white/10 opacity-70'
+                    className={`relative w-[120px] h-44 rounded-xl overflow-hidden shrink-0 border transition-all duration-300 ${
+                      idx === winningIndex && stage === 'burst'
+                        ? 'border-amber-400 scale-105 shadow-[0_0_30px_rgba(251,191,36,0.9)] z-20'
+                        : 'border-white/10 opacity-75'
                     }`}
                   >
                     <img
@@ -243,7 +276,7 @@ export default function AnimeGachaModal({ isOpen, onClose }: AnimeGachaModalProp
                       className="w-full h-full object-cover"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent" />
-                    <span className="absolute bottom-1 left-1 right-1 text-[9px] font-bold text-white truncate text-center">
+                    <span className="absolute bottom-1.5 left-1.5 right-1.5 text-[10px] font-bold text-white truncate text-center drop-shadow-md">
                       {item.title}
                     </span>
                   </div>
@@ -253,9 +286,9 @@ export default function AnimeGachaModal({ isOpen, onClose }: AnimeGachaModalProp
 
             {/* Shockwave Burst Ring in Center */}
             {stage === 'burst' && (
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                <div className="w-48 h-48 rounded-full border-4 border-amber-400 animate-shockwave" />
-                <div className="w-32 h-32 rounded-full bg-white/40 filter blur-md animate-ping" />
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-30">
+                <div className="w-56 h-56 rounded-full border-4 border-amber-400 animate-shockwave" />
+                <div className="w-36 h-36 rounded-full bg-white/50 filter blur-md animate-ping" />
               </div>
             )}
           </div>
@@ -329,18 +362,18 @@ export default function AnimeGachaModal({ isOpen, onClose }: AnimeGachaModalProp
                 className="w-full py-3.5 rounded-full text-xs sm:text-sm font-black tracking-wider uppercase bg-gradient-to-r from-white via-zinc-100 to-white text-black hover:bg-zinc-200 transition-all shadow-[0_0_30px_rgba(255,255,255,0.4)] spring-press flex items-center justify-center gap-2"
               >
                 <Play className="w-4 h-4 fill-black" />
-                <span>Tonton Anime Ini Sekarang</span>
+                <span>▶ Tonton Sekarang</span>
               </Link>
 
               <div className="flex items-center gap-2">
                 {/* Reroll Gacha Button */}
                 <button
                   type="button"
-                  onClick={() => startSummon()}
+                  onClick={() => setupAndStartRoll(pool)}
                   className="flex-1 py-2.5 rounded-full text-xs font-bold bg-white/10 hover:bg-white/20 border border-white/20 text-white transition-all spring-press flex items-center justify-center gap-1.5"
                 >
                   <RotateCw className="w-3.5 h-3.5 text-cyan-400" />
-                  <span>Summon Lagi (Reroll)</span>
+                  <span>🎲 Putar Lagi</span>
                 </button>
 
                 {/* Save Bookmark Button */}
