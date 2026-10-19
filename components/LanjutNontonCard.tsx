@@ -7,6 +7,7 @@ import { WatchHistoryItem, AnimeListItem } from '@/lib/types';
 import { useTheme } from '@/lib/themeContext';
 import { deleteWatchHistoryItem } from '@/lib/storage';
 import { getSafeImageUrl, handleSmartImageError } from '@/lib/imageHelper';
+import SmartImage from './SmartImage';
 
 interface LanjutNontonProps {
   historyItem?: WatchHistoryItem | null;
@@ -105,13 +106,11 @@ export default function LanjutNontonCard({
               href={`/watch?id=${episodeId}`}
               className="relative w-18 h-24 sm:w-22 sm:h-28 rounded-2xl overflow-hidden shrink-0 bg-[#040408] border border-white/15 shadow-xl group/thumb spring-press block"
             >
-              <img
-                src={getSafeImageUrl(poster, title)}
+              <SmartImage
+                src={poster}
+                title={title}
                 alt={title}
-                loading="lazy"
-                decoding="async"
-                referrerPolicy="no-referrer"
-                onError={(e) => handleSmartImageError(e, title)}
+                type="anime"
                 className="w-full h-full object-cover group-hover/thumb:scale-108 transition-transform duration-500"
               />
               <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover/thumb:opacity-100 transition-opacity">
@@ -122,11 +121,11 @@ export default function LanjutNontonCard({
             </Link>
           ) : (
             <div className="relative w-18 h-24 sm:w-22 sm:h-28 rounded-2xl overflow-hidden shrink-0 bg-[#040408] border border-white/15">
-              <img
-                src={getSafeImageUrl(poster, title)}
+              <SmartImage
+                src={poster}
+                title={title}
                 alt={title}
-                referrerPolicy="no-referrer"
-                onError={(e) => handleSmartImageError(e, title)}
+                type="anime"
                 className="w-full h-full object-cover"
               />
             </div>

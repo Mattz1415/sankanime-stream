@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { useTheme } from '@/lib/themeContext';
 import { CommunityComment } from '@/lib/types';
+import { DEFAULT_AVATAR } from '@/lib/imageHelper';
 import {
   getCommunityComments,
   saveCommunityComment,
@@ -336,6 +337,7 @@ export default function CommunityDiscussionView({
                     loading="lazy"
                     decoding="async"
                     referrerPolicy="no-referrer"
+                    onError={(e) => { e.currentTarget.src = DEFAULT_AVATAR; }}
                     className="w-9 h-9 rounded-full object-cover border border-white/15 bg-zinc-900"
                   />
                   <div>

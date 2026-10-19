@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { DownloadEpisodeItem } from '@/lib/types';
 import { getSafeImageUrl, handleSmartImageError } from '@/lib/imageHelper';
+import SmartImage from './SmartImage';
 import {
   getDownloads,
   saveDownload,
@@ -202,21 +203,15 @@ export default function DownloadManagerModal({
                 className="p-3.5 rounded-2xl bg-black/50 border border-white/[0.06] hover:border-white/15 flex items-center justify-between gap-3 transition-all"
               >
                 <div className="flex items-center gap-3 min-w-0 flex-1">
-                  {item.poster ? (
-                    <img
-                      src={getSafeImageUrl(item.poster, item.animeTitle)}
+                  <div className="w-12 h-16 rounded-xl overflow-hidden shrink-0 border border-white/10 bg-zinc-900">
+                    <SmartImage
+                      src={item.poster}
+                      title={item.animeTitle}
                       alt={item.animeTitle}
-                      loading="lazy"
-                      decoding="async"
-                      referrerPolicy="no-referrer"
-                      onError={(e) => handleSmartImageError(e, item.animeTitle)}
-                      className="w-12 h-16 object-cover rounded-xl border border-white/10 shrink-0"
+                      type="anime"
+                      className="w-full h-full object-cover"
                     />
-                  ) : (
-                    <div className="w-12 h-16 rounded-xl bg-zinc-900 border border-white/10 flex items-center justify-center shrink-0">
-                      <Film className="w-5 h-5 text-zinc-500" />
-                    </div>
-                  )}
+                  </div>
 
                   <div className="min-w-0 flex-1 space-y-1">
                     <div className="flex items-center gap-1.5 flex-wrap">

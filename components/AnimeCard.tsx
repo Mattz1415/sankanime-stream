@@ -6,6 +6,7 @@ import { Play, Star, Calendar, Flame } from 'lucide-react';
 import { AnimeListItem } from '@/lib/types';
 
 import { getSafeImageUrl, handleSmartImageError } from '@/lib/imageHelper';
+import SmartImage from './SmartImage';
 
 interface AnimeCardProps {
   anime: AnimeListItem;
@@ -30,18 +31,13 @@ function RawAnimeCard({ anime, showStatus = true }: AnimeCardProps) {
           <div className="absolute inset-0 skeleton-shimmer" />
         )}
 
-        <img
-          src={getSafeImageUrl(anime.poster, anime.title)}
+        <SmartImage
+          item={anime}
+          src={anime.poster}
+          title={anime.title}
           alt={anime.title}
-          loading="lazy"
-          decoding="async"
-          referrerPolicy="no-referrer"
+          type="anime"
           onLoad={() => setImageLoaded(true)}
-          onError={(e) => {
-            handleSmartImageError(e, anime.title);
-            setImageError(true);
-            setImageLoaded(true);
-          }}
           className={`w-full h-full object-cover transition-transform duration-500 group-hover:scale-108 ${
             imageLoaded ? 'opacity-100' : 'opacity-0'
           }`}

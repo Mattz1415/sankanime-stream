@@ -14,6 +14,7 @@ import android.os.Message;
 import android.webkit.CookieManager;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceRequest;
+import android.webkit.WebResourceResponse;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.widget.FrameLayout;
@@ -25,6 +26,9 @@ import com.getcapacitor.Bridge;
 import com.getcapacitor.BridgeActivity;
 import com.getcapacitor.BridgeWebChromeClient;
 import com.getcapacitor.BridgeWebViewClient;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
 
 public class MainActivity extends BridgeActivity {
 
@@ -132,6 +136,8 @@ public class MainActivity extends BridgeActivity {
                 settings.setDatabaseEnabled(true);
                 settings.setMediaPlaybackRequiresUserGesture(false);
                 settings.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
+                settings.setBlockNetworkImage(false);
+                settings.setLoadsImagesAutomatically(true);
 
                 String defaultUa = settings.getUserAgentString();
                 if (defaultUa != null && defaultUa.contains("; wv")) {
@@ -260,6 +266,72 @@ public class MainActivity extends BridgeActivity {
                 }
             } catch (Exception ignored) {}
             return true;
+        }
+
+        @Override
+        public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
+            if (request != null && request.getUrl() != null) {
+                Uri uri = request.getUrl();
+                String host = uri.getHost();
+                String path = uri.getPath();
+                if (host != null) {
+                    String hostLower = host.toLowerCase();
+                    boolean isImage = (path != null && (path.endsWith(".jpg") || path.endsWith(".jpeg") || path.endsWith(".png") || path.endsWith(".webp") || path.endsWith(".gif") || path.endsWith(".svg")))
+                        || (request.getRequestHeaders() != null && request.getRequestHeaders().containsKey("Accept") && request.getRequestHeaders().get("Accept") != null && request.getRequestHeaders().get("Accept").contains("image"));
+
+                    boolean isHotlinkedHost = hostLower.contains("komiku") ||
+                                              hostLower.contains("kiryuu") ||
+                                              hostLower.contains("komikstation") ||
+                                              hostLower.contains("mangadex") ||
+                                              hostLower.contains("bacakomik") ||
+                                              hostLower.contains("komikindo") ||
+                                              hostLower.contains("samehadaku") ||
+                                              hostLower.contains("otakudesu") ||
+                                              hostLower.contains("anoboy") ||
+                                              hostLower.contains("desustream") ||
+                                              hostLower.contains("myanimelist");
+
+                    if (isImage || isHotlinkedHost) {
+                        try {
+                            URL url = new URL(uri.toString());
+                            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                            conn.setRequestMethod("GET");
+                            conn.setConnectTimeout(8000);
+                            conn.setReadTimeout(12000);
+                            conn.setInstanceFollowRedirects(true);
+                            conn.setRequestProperty("User-Agent", "Mozilla/5.0 (Linux; Android 10; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36");
+
+                            if (hostLower.contains("kiryuu")) {
+                                conn.setRequestProperty("Referer", "https://v7.kiryuu.to/");
+                            } else if (hostLower.contains("komikstation")) {
+                                conn.setRequestProperty("Referer", "https://komikstation.co/");
+                            } else if (hostLower.contains("komiku")) {
+                                conn.setRequestProperty("Referer", "https://komiku.org/");
+                            } else if (hostLower.contains("mangadex")) {
+                                conn.setRequestProperty("Referer", "https://mangadex.org/");
+                            } else if (hostLower.contains("myanimelist")) {
+                                conn.setRequestProperty("Referer", "https://myanimelist.net/");
+                            } else {
+                                conn.setRequestProperty("Referer", uri.getScheme() + "://" + host + "/");
+                            }
+
+                            int responseCode = conn.getResponseCode();
+                            if (responseCode == HttpURLConnection.HTTP_OK) {
+                                String contentType = conn.getContentType();
+                                if (contentType == null) contentType = "image/jpeg";
+                                String mimeType = contentType.split(";")[0].trim();
+                                String encoding = conn.getContentEncoding();
+                                if (encoding == null) encoding = "UTF-8";
+
+                                return new WebResourceResponse(mimeType, encoding, conn.getInputStream());
+                            }
+                        } catch (Exception ignored) {
+                            // Fall back to default handling
+                        }
+                    }
+                }
+            }
+            return super.shouldInterceptRequest(view, request);
         }
     }
 }

@@ -19,6 +19,7 @@ import {
 import { searchAnime } from '@/lib/clientApi';
 import { AnimeListItem } from '@/lib/types';
 import { getSafeImageUrl, handleSmartImageError } from '@/lib/imageHelper';
+import SmartImage from './SmartImage';
 import IsolatedSearchInput from './IsolatedSearchInput';
 
 interface CommandPaletteModalProps {
@@ -278,13 +279,12 @@ export default function CommandPaletteModal({ isOpen, onClose }: CommandPaletteM
                 >
                   {/* Poster Thumbnail */}
                   <div className="w-12 h-16 rounded-xl overflow-hidden bg-zinc-900 shrink-0 border border-white/10">
-                    <img
-                      src={getSafeImageUrl(anime.poster, anime.title)}
+                    <SmartImage
+                      item={anime}
+                      src={anime.poster}
+                      title={anime.title}
                       alt={anime.title}
-                      loading="lazy"
-                      decoding="async"
-                      referrerPolicy="no-referrer"
-                      onError={(e) => handleSmartImageError(e, anime.title)}
+                      type="anime"
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform"
                     />
                   </div>

@@ -38,37 +38,48 @@ export const KNOWN_MANHWA_COVERS: Record<string, string> = {
   'reincarnation of the suicidal battle god': 'https://uploads.mangadex.org/covers/c2f8211b-c6e3-469b-980b-0dd4f697ec22/9431ff4f-2ca8-4796-abf2-95f3b7ba8232.jpg.512.jpg',
   'mercenary enrollment': 'https://uploads.mangadex.org/covers/0e5b7fb6-5a45-4b1e-b8dd-1ef824eb976d/678ba70b-d242-430c-b26a-9b4334360e23.jpg.512.jpg',
   'magic emperor': 'https://uploads.mangadex.org/covers/71239c09-a78b-4b1c-99f5-412f170ef520/19f5c400-0196-41f8-958b-0ea4fb998ae3.jpg.512.jpg',
-  'martial peak': 'https://uploads.mangadex.org/covers/f78696ec-c5d0-43b9-a2e6-a367507ebba8/a73f8582-777e-4b68-bf09-2420a4b6da32.jpg.512.jpg'
+  'martial peak': 'https://uploads.mangadex.org/covers/f78696ec-c5d0-43b9-a2e6-a367507ebba8/a73f8582-777e-4b68-bf09-2420a4b6da32.jpg.512.jpg',
+  'tokyo revengers': 'https://media.kitsu.app/anime/poster_images/43321/large.jpg',
+  'tokyo revengers: seiya kessen-hen': 'https://media.kitsu.app/anime/poster_images/43321/large.jpg',
+  'tokyo manji revengers': 'https://media.kitsu.app/anime/poster_images/43321/large.jpg',
+  'ulgehasoseo': 'https://uploads.mangadex.org/covers/b6b4d89e-f97b-42f2-badd-2a7ce28d9cef/b4317e18-e8c6-46bf-aef8-9d2008fc3204.jpg.512.jpg',
+  'jujutsu kaisen': 'https://media.kitsu.app/anime/poster_images/42765/large.jpg',
+  'demon slayer': 'https://media.kitsu.app/anime/poster_images/41370/large.jpg',
+  'kimetsu no yaiba': 'https://media.kitsu.app/anime/poster_images/41370/large.jpg',
+  'attack on titan': 'https://media.kitsu.app/anime/poster_images/7442/large.jpg',
+  'shingeki no kyojin': 'https://media.kitsu.app/anime/poster_images/7442/large.jpg',
+  'chainsaw man': 'https://media.kitsu.app/anime/poster_images/43806/large.jpg',
+  'one piece': 'https://media.kitsu.app/anime/poster_images/12/large.jpg',
 };
 
 export function createModernPosterSvg(title: string = 'Nexus'): string {
-  const cleanTitle = title.replace(/[<>&"]/g, '').slice(0, 24);
-  const initials = title
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((w) => w[0]?.toUpperCase() || '')
-    .join('');
+  const cleanTitle = title.replace(/[<>&"]/g, '').slice(0, 26);
 
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="400" height="600" viewBox="0 0 400 600">
     <defs>
       <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
-        <stop offset="0%" stop-color="#0a0a14"/>
-        <stop offset="50%" stop-color="#141124"/>
-        <stop offset="100%" stop-color="#050508"/>
+        <stop offset="0%" stop-color="#07070d"/>
+        <stop offset="50%" stop-color="#121020"/>
+        <stop offset="100%" stop-color="#040407"/>
       </linearGradient>
-      <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="0%">
-        <stop offset="0%" stop-color="#8b5cf6"/>
-        <stop offset="50%" stop-color="#ec4899"/>
-        <stop offset="100%" stop-color="#06b6d4"/>
+      <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#00f0ff"/>
+        <stop offset="50%" stop-color="#8b5cf6"/>
+        <stop offset="100%" stop-color="#ec4899"/>
       </linearGradient>
+      <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+        <feGaussianBlur stdDeviation="8" result="blur" />
+        <feComposite in="SourceGraphic" in2="blur" operator="over" />
+      </filter>
     </defs>
     <rect width="100%" height="100%" fill="url(#bg)"/>
-    <circle cx="200" cy="240" r="90" fill="none" stroke="url(#accent)" stroke-width="2" opacity="0.4"/>
-    <circle cx="200" cy="240" r="70" fill="#18152c" opacity="0.8"/>
-    <text x="200" y="258" font-family="system-ui, -apple-system, sans-serif" font-size="44" font-weight="900" fill="#ffffff" text-anchor="middle" letter-spacing="2">${initials || 'NX'}</text>
-    <rect x="60" y="440" width="280" height="2" fill="url(#accent)" opacity="0.5"/>
-    <text x="200" y="475" font-family="system-ui, -apple-system, sans-serif" font-size="16" font-weight="700" fill="#f4f4f5" text-anchor="middle">${cleanTitle}</text>
-    <text x="200" y="500" font-family="system-ui, -apple-system, sans-serif" font-size="11" font-weight="600" fill="#a1a1aa" text-anchor="middle" letter-spacing="3">NEXUS STREAM HD</text>
+    <circle cx="200" cy="240" r="100" fill="none" stroke="url(#accent)" stroke-width="1.5" opacity="0.3" stroke-dasharray="6 6"/>
+    <circle cx="200" cy="240" r="75" fill="#141324" stroke="url(#accent)" stroke-width="2" opacity="0.9"/>
+    <!-- Stylized Cinema / Anime Triangle Play Glyph instead of raw initials -->
+    <path d="M188 215 L224 240 L188 265 Z" fill="url(#accent)" filter="url(#glow)"/>
+    <rect x="50" y="440" width="300" height="2" fill="url(#accent)" opacity="0.6"/>
+    <text x="200" y="475" font-family="system-ui, -apple-system, sans-serif" font-size="16" font-weight="700" fill="#ffffff" text-anchor="middle">${cleanTitle}</text>
+    <text x="200" y="500" font-family="system-ui, -apple-system, sans-serif" font-size="11" font-weight="700" fill="#00f0ff" text-anchor="middle" letter-spacing="3">NEXUS STREAM HD</text>
   </svg>`;
 
   return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
@@ -219,3 +230,6 @@ export function handleSmartImageError(
   // 4. Fallback to clean aesthetic SVG poster
   img.src = createModernPosterSvg(titleHint || 'Nexus Stream');
 }
+
+export const DEFAULT_AVATAR = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%2318181b'/%3E%3Ccircle cx='50' cy='38' r='18' fill='%2371717a'/%3E%3Cpath d='M20 85 c0 -20 15 -30 30 -30 s30 10 30 30' fill='%2371717a'/%3E%3C/svg%3E";
+

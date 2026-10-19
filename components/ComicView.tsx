@@ -15,6 +15,7 @@ import {
 import { fetchComicPopular, fetchComicLatest, fetchComicDetail, searchComic } from '@/lib/mediaApi';
 import { ComicItem, ComicDetail } from '@/lib/types';
 import { getSafeImageUrl, handleSmartImageError } from '@/lib/imageHelper';
+import SmartImage from './SmartImage';
 import VerticalComicReader from './VerticalComicReader';
 
 export default function ComicView() {
@@ -216,13 +217,12 @@ export default function ComicView() {
               className="group cursor-pointer rounded-2xl overflow-hidden card-frosted-obsidian border border-white/[0.08] hover:border-cyan-400/50 hover:shadow-[0_0_25px_rgba(0,240,255,0.2)] transition-all duration-300 spring-press flex flex-col"
             >
               <div className="relative aspect-[3/4] w-full bg-zinc-900 overflow-hidden">
-                <img
-                  src={getSafeImageUrl(item.image, item.title)}
+                <SmartImage
+                  item={item}
+                  src={item.image}
+                  title={item.title}
                   alt={item.title}
-                  loading="lazy"
-                  decoding="async"
-                  referrerPolicy="no-referrer"
-                  onError={(e) => handleSmartImageError(e, item.title)}
+                  type="comic"
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-black/30 opacity-80" />
@@ -272,11 +272,12 @@ export default function ComicView() {
             ) : (
               <>
                 <div className="flex flex-col sm:flex-row gap-5">
-                  <img
-                    src={getSafeImageUrl(detailData.image, detailData.title)}
+                  <SmartImage
+                    item={detailData}
+                    src={detailData.image}
+                    title={detailData.title}
                     alt={detailData.title}
-                    referrerPolicy="no-referrer"
-                    onError={(e) => handleSmartImageError(e, detailData.title)}
+                    type="comic"
                     className="w-36 h-48 object-cover rounded-2xl shadow-xl shrink-0 mx-auto sm:mx-0 border border-white/10"
                   />
                   <div className="space-y-2 min-w-0">

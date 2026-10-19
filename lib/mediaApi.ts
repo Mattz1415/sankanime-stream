@@ -431,16 +431,131 @@ export async function fetchComicLatest(): Promise<ComicItem[]> {
   }
 }
 
+// Kurokami Manhwa API Endpoints Integration (Gungcakra/kurokami-manhwa-api)
+export const KUROKAMI_API_BASE = 'https://kurokami.vercel.app/api';
+
+export async function fetchKurokamiPopular(): Promise<any[]> {
+  try {
+    const res = await fetch(`${KUROKAMI_API_BASE}/manhwa-popular`);
+    if (res.ok) {
+      const data = await res.json();
+      return Array.isArray(data) ? data : [];
+    }
+  } catch {}
+  return [];
+}
+
+export async function fetchKurokamiNew(): Promise<any[]> {
+  try {
+    const res = await fetch(`${KUROKAMI_API_BASE}/manhwa-new`);
+    if (res.ok) {
+      const data = await res.json();
+      return Array.isArray(data) ? data : [];
+    }
+  } catch {}
+  return [];
+}
+
+export async function fetchKurokamiOngoing(): Promise<any[]> {
+  try {
+    const res = await fetch(`${KUROKAMI_API_BASE}/manhwa-ongoing`);
+    if (res.ok) {
+      const data = await res.json();
+      return Array.isArray(data) ? data : [];
+    }
+  } catch {}
+  return [];
+}
+
+export async function fetchKurokamiTop(): Promise<any[]> {
+  try {
+    const res = await fetch(`${KUROKAMI_API_BASE}/manhwa-top`);
+    if (res.ok) {
+      const data = await res.json();
+      return Array.isArray(data) ? data : [];
+    }
+  } catch {}
+  return [];
+}
+
+export async function fetchKurokamiRecommendation(): Promise<any[]> {
+  try {
+    const res = await fetch(`${KUROKAMI_API_BASE}/manhwa-recommendation`);
+    if (res.ok) {
+      const data = await res.json();
+      return Array.isArray(data) ? data : [];
+    }
+  } catch {}
+  return [];
+}
+
+export async function fetchKurokamiDetail(manhwaId: string): Promise<any | null> {
+  try {
+    const res = await fetch(`${KUROKAMI_API_BASE}/manhwa-detail/${encodeURIComponent(manhwaId)}`);
+    if (res.ok) {
+      return await res.json();
+    }
+  } catch {}
+  return null;
+}
+
+export async function fetchKurokamiChapter(chapterId: string): Promise<any | null> {
+  try {
+    const res = await fetch(`${KUROKAMI_API_BASE}/chapter/${encodeURIComponent(chapterId)}`);
+    if (res.ok) {
+      return await res.json();
+    }
+  } catch {}
+  return null;
+}
+
+export async function fetchKurokamiSearch(query: string, page: number = 1): Promise<any[]> {
+  try {
+    const endpoint = page > 1 ? `${KUROKAMI_API_BASE}/search/${encodeURIComponent(query)}/page/${page}` : `${KUROKAMI_API_BASE}/search/${encodeURIComponent(query)}`;
+    const res = await fetch(endpoint);
+    if (res.ok) {
+      const data = await res.json();
+      return Array.isArray(data) ? data : (data.seriesList || []);
+    }
+  } catch {}
+  return [];
+}
+
+export async function fetchKurokamiGenres(): Promise<any[]> {
+  try {
+    const res = await fetch(`${KUROKAMI_API_BASE}/genres`);
+    if (res.ok) {
+      const data = await res.json();
+      return Array.isArray(data) ? data : [];
+    }
+  } catch {}
+  return [];
+}
+
+export async function fetchKurokamiByGenre(genreId: string, page: number = 1): Promise<any[]> {
+  try {
+    const endpoint = page > 1 ? `${KUROKAMI_API_BASE}/genre/${encodeURIComponent(genreId)}/page/${page}` : `${KUROKAMI_API_BASE}/genre/${encodeURIComponent(genreId)}`;
+    const res = await fetch(endpoint);
+    if (res.ok) {
+      const data = await res.json();
+      return Array.isArray(data) ? data : (data.seriesList || []);
+    }
+  } catch {}
+  return [];
+}
+
 export const MANHWA_MANGADEX_ID_MAP: Record<string, string> = {
-  'serena': '34d8a0e8-6811-459d-87a1-2d3e81ad18fb',
-  'cry-or-better-yet-beg': 'b6b4d89e-f97b-42f2-badd-2a7ce28d9cef',
+  'serena': 'f239fcd4-9f7f-4296-9e52-ee5a66a7e938',
+  'cry-or-better-yet-beg': 'd6bc762b-1159-47f0-a625-feb9f81e4ddd',
+  'ulgehasoseo': 'd6bc762b-1159-47f0-a625-feb9f81e4ddd',
   'the-remarried-empress': 'ac6819d8-de35-442c-82dd-3444983d4f26',
   'who-made-me-a-princess': '722a45c0-5e55-40f2-929b-ff69b0989edb',
   'operation-true-love': 'f8dbced3-1eea-4547-b657-ce568fbdda0f',
   'true-beauty': '51a0cd0c-3254-47f0-a7fd-4b9bb178f813',
   'under-the-oak-tree': 'c9a891f6-9f4b-487d-8b62-7abb0e3f59c8',
-  'solo-leveling': '32d76d19-8a05-4db0-9fc2-e0b0648fe9d0',
+  'solo-leveling': 'ade0306c-f4b6-4890-9edb-1ddf04df2039',
   'lookism': '596191eb-69ee-4401-983e-cc07e277fa17',
+  'omniscient-reader': '9a414441-bbad-43f1-a3a7-dc262ca790a3',
   'omniscient-readers-viewpoint': '9a414441-bbad-43f1-a3a7-dc262ca790a3',
   'nano-machine': '6e4805a6-75ab-462d-883c-4ddedb8e4df6',
   'killer-peter': 'a3db9212-7e87-44ea-8264-23f914671444',
@@ -459,13 +574,28 @@ export const MANHWA_MANGADEX_ID_MAP: Record<string, string> = {
 };
 
 export async function fetchComicDetail(slug: string): Promise<ComicDetail> {
-  const mangaDexId = slug.startsWith('md_') ? slug.replace(/^md_/, '') : MANHWA_MANGADEX_ID_MAP[slug];
+  let mangaDexId = slug.startsWith('md_') ? slug.replace(/^md_/, '') : MANHWA_MANGADEX_ID_MAP[slug];
+
+  // If not mapped, dynamic search MangaDex by title to find active entry with chapters
+  if (!mangaDexId) {
+    const clean = slug.replace(/-(chapter|ch)-.*$/i, '').replace(/-/g, ' ');
+    try {
+      const sRes = await fetch(`https://api.mangadex.org/manga?title=${encodeURIComponent(clean)}&limit=5&includes[]=cover_art`).then(r => r.json());
+      for (const m of (sRes.data || [])) {
+        const feedCheck = await fetch(`https://api.mangadex.org/manga/${m.id}/feed?limit=5`).then(r => r.json());
+        if (feedCheck.total > 0) {
+          mangaDexId = m.id;
+          break;
+        }
+      }
+    } catch {}
+  }
 
   if (mangaDexId) {
     try {
       const [mangaRes, feedRes] = await Promise.all([
-        fetch(`https://api.mangadex.org/manga/${mangaDexId}?includes[]=cover_art`).then((r) => r.json()),
-        fetch(`https://api.mangadex.org/manga/${mangaDexId}/feed?order[chapter]=desc&limit=100`).then((r) => r.json()),
+        fetch(`https://api.mangadex.org/manga/${mangaDexId}?includes[]=cover_art`).then((r) => r.json()).catch(() => ({})),
+        fetch(`https://api.mangadex.org/manga/${mangaDexId}/feed?order[chapter]=desc&limit=100`).then((r) => r.json()).catch(() => ({})),
       ]);
 
       const m = mangaRes.data;
@@ -477,32 +607,30 @@ export async function fetchComicDetail(slug: string): Promise<ComicDetail> {
 
       const chaptersRaw = feedRes?.data || [];
       const chapters = chaptersRaw.map((ch: any) => ({
-        chapter: ch.attributes?.chapter ? `Chapter ${ch.attributes.chapter}` : (ch.attributes?.title || 'Chapter Baru'),
+        chapter: ch.attributes?.chapter ? `Chapter ${ch.attributes.chapter}` : (ch.attributes?.title || 'Chapter'),
         slug: `md_${ch.id}`,
         date: ch.attributes?.publishAt ? ch.attributes.publishAt.split('T')[0] : 'Terbaru',
         link: `/chapter/${ch.id}`,
       }));
 
-      return {
-        title,
-        slug,
-        image: coverUrl,
-        synopsis: desc,
-        metadata: {
-          type: 'Manhwa / Webtoon',
-          status: m?.attributes?.status || 'Ongoing',
-          year: m?.attributes?.year ? String(m.attributes.year) : '2024',
-        },
-        genres: (m?.attributes?.tags || []).slice(0, 5).map((t: any) => ({
-          name: t.attributes?.name?.en || 'Webtoon',
-          slug: t.attributes?.name?.en?.toLowerCase().replace(/\s+/g, '-') || 'webtoon',
-        })),
-        chapters: chapters.length > 0 ? chapters : Array.from({ length: 30 }, (_, i) => ({
-          chapter: `Chapter ${30 - i}`,
-          slug: `${slug}-ch-${30 - i}`,
-          date: 'Terbaru',
-        })),
-      };
+      if (chapters.length > 0) {
+        return {
+          title,
+          slug,
+          image: coverUrl,
+          synopsis: desc,
+          metadata: {
+            type: 'Manhwa / Webtoon',
+            status: m?.attributes?.status || 'Ongoing',
+            year: m?.attributes?.year ? String(m.attributes.year) : '2024',
+          },
+          genres: (m?.attributes?.tags || []).slice(0, 5).map((t: any) => ({
+            name: t.attributes?.name?.en || 'Webtoon',
+            slug: t.attributes?.name?.en?.toLowerCase().replace(/\s+/g, '-') || 'webtoon',
+          })),
+          chapters,
+        };
+      }
     } catch (e) {
       console.warn('[MangaDex] fetchComicDetail fallback for', slug, e);
     }
@@ -538,18 +666,14 @@ export async function fetchComicDetail(slug: string): Promise<ComicDetail> {
       synopsis: 'Manhwa / Webtoon Korea berwarna dengan jalan cerita menarik dan chapter lengkap.',
       metadata: { type: 'Manhwa', status: 'Ongoing', ageRating: '13+' },
       genres: [{ name: 'Action', slug: 'action' }, { name: 'Drama', slug: 'drama' }, { name: 'Fantasy', slug: 'fantasy' }],
-      chapters: Array.from({ length: 25 }, (_, i) => ({
-        chapter: `Chapter ${150 - i}`,
-        slug: `${slug}-chapter-${150 - i}`,
-        date: 'Terbaru',
-      })),
+      chapters: [],
     };
   }
 }
 
 export async function fetchComicChapter(chapterSlug: string): Promise<ComicChapterData> {
-  // If it is a MangaDex Chapter UUID
-  if (chapterSlug.startsWith('md_') || chapterSlug.includes('-')) {
+  // 1. If it is a MangaDex Chapter UUID
+  if (chapterSlug.startsWith('md_') || /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(chapterSlug)) {
     const chapterId = chapterSlug.replace(/^md_/, '');
     try {
       const res = await fetch(`https://api.mangadex.org/at-home/server/${chapterId}`);
@@ -557,9 +681,10 @@ export async function fetchComicChapter(chapterSlug: string): Promise<ComicChapt
         const d = await res.json();
         const baseUrl = d.baseUrl;
         const hash = d.chapter?.hash;
-        const files: string[] = d.chapter?.data || [];
+        const files: string[] = d.chapter?.dataSaver?.length ? d.chapter.dataSaver : (d.chapter?.data || []);
         if (baseUrl && hash && files.length > 0) {
-          const images = files.map((f) => `${baseUrl}/data/${hash}/${f}`);
+          const subPath = d.chapter?.dataSaver?.length ? 'data-saver' : 'data';
+          const images = files.map((f) => `${baseUrl}/${subPath}/${hash}/${f}`);
           return {
             title: `Chapter ${chapterId.slice(0, 8)}`,
             chapterSlug,
@@ -573,33 +698,92 @@ export async function fetchComicChapter(chapterSlug: string): Promise<ComicChapt
     }
   }
 
+  // 2. Try Kurokami API chapter endpoint
+  try {
+    const kuroRes = await fetch(`https://kurokami.vercel.app/api/chapter/${encodeURIComponent(chapterSlug)}`);
+    if (kuroRes.ok) {
+      const kuroData = await kuroRes.json();
+      const imgs = kuroData.images || kuroData.sources?.[0]?.images || [];
+      if (Array.isArray(imgs) && imgs.length > 0) {
+        return {
+          title: kuroData.title || chapterSlug.replace(/-/g, ' '),
+          chapterSlug,
+          images: imgs,
+          navigation: {
+            previousChapter: kuroData.prevChapter,
+            nextChapter: kuroData.nextChapter,
+          },
+        };
+      }
+    }
+  } catch {}
+
+  // 3. Try Sanka Kiryuu API
+  try {
+    const sankaRes = await fetch(`https://www.sankavollerei.web.id/comic/kiryuu/chapter/${encodeURIComponent(chapterSlug)}`);
+    if (sankaRes.ok) {
+      const sankaData = await sankaRes.json();
+      const imgs = sankaData.images || sankaData.chapterImages || [];
+      if (Array.isArray(imgs) && imgs.length > 0) {
+        return {
+          title: sankaData.title || chapterSlug.replace(/-/g, ' '),
+          chapterSlug,
+          images: imgs,
+          navigation: {},
+        };
+      }
+    }
+  } catch {}
+
+  // 4. Try Sanka Default Comic API
   try {
     const raw = await fetchJsonWithCache<any>(`/comic/chapter/${chapterSlug}`, 600000);
-    return {
-      title: raw.title || chapterSlug.replace(/-/g, ' '),
-      chapterSlug,
-      images: Array.isArray(raw.images) ? raw.images : [],
-      navigation: raw.navigation || {
-        previousChapter: raw.previousChapter,
-        nextChapter: raw.nextChapter,
-        chapterList: raw.chapterList,
-      },
-    };
-  } catch (err) {
-    console.warn('[Comic] fetchComicChapter fallback demo pages for', chapterSlug, err);
-    // Return high-definition webtoon demo reading pages so the reader never fails
-    return {
-      title: chapterSlug.replace(/-/g, ' ').toUpperCase(),
-      chapterSlug,
-      images: [
-        'https://uploads.mangadex.org/covers/34d8a0e8-6811-459d-87a1-2d3e81ad18fb/67177930-a1b4-4092-b9e8-b3b47322b21c.jpg.512.jpg',
-        'https://uploads.mangadex.org/covers/32d76d19-8a05-4db0-9fc2-e0b0648fe9d0/e90bdc47-c8b9-4df7-b2c0-17641b645ee1.jpg.512.jpg',
-        'https://uploads.mangadex.org/covers/596191eb-69ee-4401-983e-cc07e277fa17/6df15145-f15b-43f0-b87b-22fd3694eaca.jpg.512.jpg',
-        'https://uploads.mangadex.org/covers/9a414441-bbad-43f1-a3a7-dc262ca790a3/be18dc9a-7f1c-4ca5-b318-ffff2d7d58c3.jpg.512.jpg',
-      ],
-      navigation: {},
-    };
-  }
+    if (Array.isArray(raw?.images) && raw.images.length > 0) {
+      return {
+        title: raw.title || chapterSlug.replace(/-/g, ' '),
+        chapterSlug,
+        images: raw.images,
+        navigation: raw.navigation || {
+          previousChapter: raw.previousChapter,
+          nextChapter: raw.nextChapter,
+          chapterList: raw.chapterList,
+        },
+      };
+    }
+  } catch {}
+
+  // 5. Dynamic fallback for catalog / search titles: match title to MangaDex and extract chapter images
+  const cleanTitle = chapterSlug.replace(/-(chapter|ch)-.*$/i, '').replace(/-/g, ' ');
+  try {
+    const sRes = await fetch(`https://api.mangadex.org/manga?title=${encodeURIComponent(cleanTitle)}&limit=5`).then((r) => r.json());
+    for (const m of sRes.data || []) {
+      const feedRes = await fetch(`https://api.mangadex.org/manga/${m.id}/feed?limit=20&order[chapter]=desc`).then((r) => r.json());
+      if (feedRes.data && feedRes.data.length > 0) {
+        const ch = feedRes.data[0];
+        const atHomeRes = await fetch(`https://api.mangadex.org/at-home/server/${ch.id}`).then((r) => r.json());
+        if (atHomeRes.baseUrl && atHomeRes.chapter?.hash) {
+          const baseUrl = atHomeRes.baseUrl;
+          const hash = atHomeRes.chapter.hash;
+          const files: string[] = atHomeRes.chapter.dataSaver?.length ? atHomeRes.chapter.dataSaver : atHomeRes.chapter.data || [];
+          const subPath = atHomeRes.chapter.dataSaver?.length ? 'data-saver' : 'data';
+          return {
+            title: `Chapter ${ch.attributes?.chapter || '1'}`,
+            chapterSlug,
+            images: files.map((f) => `${baseUrl}/${subPath}/${hash}/${f}`),
+            navigation: {},
+          };
+        }
+      }
+    }
+  } catch {}
+
+  // Return clean empty images without dummy fake covers so error UI shows properly rather than broken page images
+  return {
+    title: chapterSlug.replace(/-/g, ' ').toUpperCase(),
+    chapterSlug,
+    images: [],
+    navigation: {},
+  };
 }
 
 export async function searchComic(query: string): Promise<ComicItem[]> {
@@ -902,6 +1086,25 @@ export async function fetchManhwaList(page: number = 1): Promise<ComicItem[]> {
     } catch {}
   }
 
+  // 3. Try Kurokami API
+  let kurokamiItems: ComicItem[] = [];
+  if (page === 1) {
+    try {
+      const kuroPopular = await fetchKurokamiPopular();
+      if (Array.isArray(kuroPopular) && kuroPopular.length > 0) {
+        kurokamiItems = kuroPopular.map((item: any) => ({
+          title: item.title,
+          slug: item.link?.split('/manga/')[1]?.replace(/\/$/, '') || item.title.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+          image: item.imageSrc,
+          chapter: item.chapter || item.chapters?.[0]?.chapterTitle || 'Terbaru',
+          type: 'Manhwa' as const,
+          score: item.rating || '9.5',
+          description: 'Kurokami Manhwa Indo',
+        }));
+      }
+    } catch {}
+  }
+
   // Combine and deduplicate
   if (page === 1) {
     const seenTitles = new Set<string>();
@@ -920,6 +1123,13 @@ export async function fetchManhwaList(page: number = 1): Promise<ComicItem[]> {
       }
     }
     for (const item of sankaItems) {
+      const norm = item.title.toLowerCase();
+      if (!seenTitles.has(norm)) {
+        seenTitles.add(norm);
+        combined.push(item);
+      }
+    }
+    for (const item of kurokamiItems) {
       const norm = item.title.toLowerCase();
       if (!seenTitles.has(norm)) {
         seenTitles.add(norm);
@@ -990,10 +1200,27 @@ export async function searchManhwa(query: string): Promise<ComicItem[]> {
     }
   } catch {}
 
+  // 4. Search Kurokami API
+  let kuroMatches: ComicItem[] = [];
+  try {
+    const kuroData = await fetchKurokamiSearch(query.trim());
+    if (Array.isArray(kuroData) && kuroData.length > 0) {
+      kuroMatches = kuroData.map((item: any) => ({
+        title: item.title,
+        slug: item.link?.split('/manga/')[1]?.replace(/\/$/, '') || item.title.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+        image: item.imageSrc || item.image,
+        chapter: item.chapter || item.latestChapter || 'Chapter',
+        type: 'Manhwa' as const,
+        score: item.rating || '9.2',
+        description: 'Kurokami Manhwa',
+      }));
+    }
+  } catch {}
+
   const seen = new Set<string>();
   const results: ComicItem[] = [];
 
-  for (const item of [...localMatches, ...mdMatches, ...sankaMatches]) {
+  for (const item of [...localMatches, ...mdMatches, ...sankaMatches, ...kuroMatches]) {
     const norm = item.title.toLowerCase();
     if (!seen.has(norm)) {
       seen.add(norm);

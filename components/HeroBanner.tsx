@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Play, Sparkles, Flame, ChevronRight, Star } from 'lucide-react';
 import { AnimeListItem } from '@/lib/types';
 import { getSafeImageUrl, handleSmartImageError } from '@/lib/imageHelper';
+import SmartImage from './SmartImage';
 
 interface HeroBannerProps {
   featuredList: AnimeListItem[];
@@ -30,11 +31,12 @@ export default function HeroBanner({ featuredList }: HeroBannerProps) {
     <div className="relative w-full rounded-3xl overflow-hidden glass-flutter border border-cyan-500/20 shadow-2xl mb-8">
       {/* Background Image with Blur & Darkening */}
       <div className="absolute inset-0">
-        <img
-          src={getSafeImageUrl(current.poster, current.title)}
+        <SmartImage
+          item={current}
+          src={current.poster}
+          title={current.title}
           alt={current.title}
-          referrerPolicy="no-referrer"
-          onError={(e) => handleSmartImageError(e, current.title)}
+          type="anime"
           className="w-full h-full object-cover object-center filter blur-md scale-110 opacity-30 transition-all duration-1000"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-[#07090e] via-[#07090e]/80 to-transparent" />
@@ -111,13 +113,12 @@ export default function HeroBanner({ featuredList }: HeroBannerProps) {
 
         {/* Right Poster Highlight */}
         <div className="relative w-44 sm:w-56 md:w-64 aspect-[3/4] flex-shrink-0 rounded-2xl overflow-hidden border-2 border-cyan-500/30 shadow-neon-cyan hidden sm:block transform hover:rotate-1 hover:scale-105 transition-transform duration-500">
-          <img
-            src={getSafeImageUrl(current.poster, current.title)}
+          <SmartImage
+            item={current}
+            src={current.poster}
+            title={current.title}
             alt={current.title}
-            loading="lazy"
-            decoding="async"
-            referrerPolicy="no-referrer"
-            onError={(e) => handleSmartImageError(e, current.title)}
+            type="anime"
             className="w-full h-full object-cover"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex items-end p-3">

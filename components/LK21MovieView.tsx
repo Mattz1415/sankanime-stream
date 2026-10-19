@@ -18,6 +18,7 @@ import {
 import { LK21_MOVIES, getLK21Movies, getMovieServers } from '@/lib/mediaApi';
 import { MovieItem } from '@/lib/types';
 import { getSafeImageUrl, handleSmartImageError } from '@/lib/imageHelper';
+import SmartImage from './SmartImage';
 
 export default function LK21MovieView() {
   const [selectedCategory, setSelectedCategory] = useState<string>('Semua');
@@ -58,11 +59,12 @@ export default function LK21MovieView() {
       {heroMovie && (
         <div className="relative rounded-3xl overflow-hidden card-frosted-obsidian border border-white/[0.08] p-6 sm:p-10 shadow-2xl">
           <div className="absolute inset-0 z-0">
-            <img
-              src={getSafeImageUrl(heroMovie.poster, heroMovie.title)}
+            <SmartImage
+              item={heroMovie}
+              src={heroMovie.poster}
+              title={heroMovie.title}
               alt={heroMovie.title}
-              referrerPolicy="no-referrer"
-              onError={(e) => handleSmartImageError(e, heroMovie.title)}
+              type="movie"
               className="w-full h-full object-cover opacity-25 blur-sm scale-105"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black via-black/80 to-transparent" />
@@ -153,13 +155,12 @@ export default function LK21MovieView() {
               className="group cursor-pointer rounded-2xl overflow-hidden card-frosted-obsidian border border-white/[0.08] hover:border-red-500/50 hover:shadow-[0_0_25px_rgba(239,68,68,0.25)] transition-all duration-300 spring-press flex flex-col"
             >
               <div className="relative aspect-[2/3] w-full bg-zinc-900 overflow-hidden">
-                <img
-                  src={getSafeImageUrl(movie.poster, movie.title)}
+                <SmartImage
+                  item={movie}
+                  src={movie.poster}
+                  title={movie.title}
                   alt={movie.title}
-                  loading="lazy"
-                  decoding="async"
-                  referrerPolicy="no-referrer"
-                  onError={(e) => handleSmartImageError(e, movie.title)}
+                  type="movie"
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-black/30 opacity-80" />

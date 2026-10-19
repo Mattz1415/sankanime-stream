@@ -19,6 +19,7 @@ import { AnimeListItem } from '@/lib/types';
 import { getHomeData } from '@/lib/clientApi';
 import { isAnimeBookmarked, toggleBookmark } from '@/lib/storage';
 import { getSafeImageUrl, handleSmartImageError } from '@/lib/imageHelper';
+import SmartImage from './SmartImage';
 
 interface AnimeGachaModalProps {
   isOpen: boolean;
@@ -271,13 +272,11 @@ export default function AnimeGachaModal({ isOpen, onClose, initialPool }: AnimeG
                         : 'border-white/10 opacity-75'
                     }`}
                   >
-                    <img
-                      src={getSafeImageUrl(item.poster, item.title)}
+                    <SmartImage
+                      src={item.poster}
+                      title={item.title}
                       alt={item.title}
-                      loading="lazy"
-                      decoding="async"
-                      referrerPolicy="no-referrer"
-                      onError={(e) => handleSmartImageError(e, item.title)}
+                      type="anime"
                       className="w-full h-full object-cover"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent" />
@@ -311,13 +310,11 @@ export default function AnimeGachaModal({ isOpen, onClose, initialPool }: AnimeG
               <div className="holographic-foil-card rounded-[22px] bg-[#06060c] p-4 text-left space-y-4">
                 {/* Poster Container with Rarity Badge */}
                 <div className="relative aspect-[16/10] w-full rounded-2xl overflow-hidden bg-black shadow-2xl">
-                  <img
-                    src={getSafeImageUrl(selectedAnime.poster, selectedAnime.title)}
+                  <SmartImage
+                    src={selectedAnime.poster}
+                    title={selectedAnime.title}
                     alt={selectedAnime.title}
-                    loading="lazy"
-                    decoding="async"
-                    referrerPolicy="no-referrer"
-                    onError={(e) => handleSmartImageError(e, selectedAnime.title)}
+                    type="anime"
                     className="w-full h-full object-cover transform hover:scale-105 transition-transform duration-500"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black via-black/25 to-transparent" />

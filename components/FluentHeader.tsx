@@ -6,6 +6,7 @@ import { Search, Sparkles, Palette, Download, Dice5 } from 'lucide-react';
 import { useTheme } from '@/lib/themeContext';
 
 import { MediaCategory } from '@/lib/types';
+import { DEFAULT_AVATAR } from '@/lib/imageHelper';
 
 interface FluentHeaderProps {
   activeCategory: MediaCategory;
@@ -117,6 +118,7 @@ export default function FluentHeader({
                 loading="lazy"
                 decoding="async"
                 referrerPolicy="no-referrer"
+                onError={(e) => { e.currentTarget.src = DEFAULT_AVATAR; }}
                 className="w-full h-full object-cover"
               />
             </div>

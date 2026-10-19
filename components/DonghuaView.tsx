@@ -20,6 +20,7 @@ import {
 import { fetchDonghuaHome, fetchDonghuaDetail, fetchDonghuaEpisode } from '@/lib/mediaApi';
 import { DonghuaItem, DonghuaDetail, DonghuaEpisodeStream } from '@/lib/types';
 import { getSafeImageUrl, handleSmartImageError } from '@/lib/imageHelper';
+import SmartImage from './SmartImage';
 import { useTheme } from '@/lib/themeContext';
 
 export default function DonghuaView() {
@@ -123,11 +124,12 @@ export default function DonghuaView() {
       {heroItem && (
         <div className="relative rounded-3xl overflow-hidden card-frosted-obsidian border border-white/[0.08] p-6 sm:p-10 shadow-2xl">
           <div className="absolute inset-0 z-0">
-            <img
-              src={getSafeImageUrl(heroItem.poster, heroItem.title)}
+            <SmartImage
+              item={heroItem}
+              src={heroItem.poster}
+              title={heroItem.title}
               alt={heroItem.title}
-              referrerPolicy="no-referrer"
-              onError={(e) => handleSmartImageError(e, heroItem.title)}
+              type="donghua"
               className="w-full h-full object-cover opacity-20 blur-md scale-105"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black via-black/80 to-transparent" />
@@ -221,13 +223,12 @@ export default function DonghuaView() {
               className="group cursor-pointer rounded-2xl overflow-hidden card-frosted-obsidian border border-white/[0.08] hover:border-cyan-400/50 hover:shadow-[0_0_25px_rgba(0,240,255,0.2)] transition-all duration-300 spring-press flex flex-col"
             >
               <div className="relative aspect-[3/4] w-full bg-zinc-900 overflow-hidden">
-                <img
-                  src={getSafeImageUrl(item.poster, item.title)}
+                <SmartImage
+                  item={item}
+                  src={item.poster}
+                  title={item.title}
                   alt={item.title}
-                  loading="lazy"
-                  decoding="async"
-                  referrerPolicy="no-referrer"
-                  onError={(e) => handleSmartImageError(e, item.title)}
+                  type="donghua"
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-black/30 opacity-80" />
@@ -277,11 +278,12 @@ export default function DonghuaView() {
             ) : (
               <>
                 <div className="flex flex-col sm:flex-row gap-5">
-                  <img
-                    src={getSafeImageUrl(detailData.poster, detailData.title)}
+                  <SmartImage
+                    item={detailData}
+                    src={detailData.poster}
+                    title={detailData.title}
                     alt={detailData.title}
-                    referrerPolicy="no-referrer"
-                    onError={(e) => handleSmartImageError(e, detailData.title)}
+                    type="donghua"
                     className="w-36 h-48 object-cover rounded-2xl shadow-xl shrink-0 mx-auto sm:mx-0 border border-white/10"
                   />
                   <div className="space-y-2 min-w-0">

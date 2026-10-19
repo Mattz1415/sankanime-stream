@@ -27,6 +27,7 @@ import {
 } from 'lucide-react';
 import { useTheme, THEME_LIST, ThemePalette } from '@/lib/themeContext';
 import { getBookmarks, getWatchHistory } from '@/lib/storage';
+import { DEFAULT_AVATAR } from '@/lib/imageHelper';
 
 interface OtakuBadge {
   id: string;
@@ -265,6 +266,7 @@ export default function UserProfileView() {
                 loading="lazy"
                 decoding="async"
                 referrerPolicy="no-referrer"
+                onError={(e) => { e.currentTarget.src = DEFAULT_AVATAR; }}
                 className="w-full h-full object-cover rounded-[14px]"
               />
               <span className="absolute bottom-1 right-1 w-3.5 h-3.5 rounded-full bg-emerald-400 border-2 border-black" />

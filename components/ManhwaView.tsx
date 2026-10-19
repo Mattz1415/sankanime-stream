@@ -19,6 +19,7 @@ import {
 import { fetchManhwaList, searchManhwa, fetchComicDetail } from '@/lib/mediaApi';
 import { ComicItem, ComicDetail } from '@/lib/types';
 import { getSafeImageUrl, handleSmartImageError } from '@/lib/imageHelper';
+import SmartImage from './SmartImage';
 import VerticalComicReader from './VerticalComicReader';
 
 type GenreFilter = 'Semua' | 'Hits' | 'Romance' | 'Action' | 'Isekai';
@@ -321,13 +322,12 @@ export default function ManhwaView() {
                 className="group cursor-pointer rounded-2xl overflow-hidden card-frosted-obsidian border border-white/[0.08] hover:border-purple-400/60 hover:shadow-[0_0_25px_rgba(168,85,247,0.3)] transition-all duration-300 spring-press flex flex-col"
               >
                 <div className="relative aspect-[3/4] w-full bg-[#0a0a10] overflow-hidden">
-                  <img
-                    src={getSafeImageUrl(item.image, item.title)}
+                  <SmartImage
+                    item={item}
+                    src={item.image}
+                    title={item.title}
                     alt={item.title}
-                    loading="lazy"
-                    decoding="async"
-                    referrerPolicy="no-referrer"
-                    onError={(e) => handleSmartImageError(e, item.title)}
+                    type="manhwa"
                     className="w-full h-full object-cover group-hover:scale-108 transition-transform duration-500 ease-out"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent opacity-85 group-hover:opacity-90 transition-opacity" />
@@ -407,11 +407,12 @@ export default function ManhwaView() {
             ) : (
               <>
                 <div className="flex flex-col sm:flex-row gap-5">
-                  <img
-                    src={getSafeImageUrl(detailData.image, detailData.title)}
+                  <SmartImage
+                    item={detailData}
+                    src={detailData.image}
+                    title={detailData.title}
                     alt={detailData.title}
-                    referrerPolicy="no-referrer"
-                    onError={(e) => handleSmartImageError(e, detailData.title)}
+                    type="manhwa"
                     className="w-36 h-48 object-cover rounded-2xl shadow-xl shrink-0 mx-auto sm:mx-0 border border-white/10"
                   />
                   <div className="space-y-2 min-w-0">

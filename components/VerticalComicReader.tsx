@@ -245,6 +245,29 @@ export default function VerticalComicReader({
           </div>
         )}
 
+        {/* Empty Chapter Content */}
+        {!loading && !error && data && (!data.images || data.images.length === 0) && (
+          <div className="my-auto p-8 rounded-3xl card-frosted-obsidian border border-white/[0.08] text-center max-w-sm space-y-3">
+            <BookOpen className="w-10 h-10 text-cyan-400 mx-auto" />
+            <p className="font-bold text-sm text-white">Chapter Sedang Diproses</p>
+            <p className="text-xs text-zinc-400">
+              Halaman untuk chapter ini sedang disinkronkan oleh server penyedia. Silakan buka chapter sebelumnya atau coba beberapa saat lagi.
+            </p>
+            {allChapters && allChapters.length > 1 && onNavigateChapter && (
+              <button
+                onClick={() => {
+                  const currentIndex = allChapters.findIndex((c) => c.slug === chapterSlug);
+                  const nextCh = allChapters[currentIndex + 1] || allChapters[0];
+                  if (nextCh) onNavigateChapter(nextCh.slug);
+                }}
+                className="px-5 py-2 rounded-full bg-cyan-400 text-black font-extrabold text-xs hover:bg-cyan-300 spring-press inline-flex items-center gap-1.5"
+              >
+                Pilih Chapter Lain
+              </button>
+            )}
+          </div>
+        )}
+
         {!loading && !error && data && data.images && data.images.length > 0 && (
           <div
             className="w-full max-w-3xl flex flex-col items-center transition-transform duration-200"
@@ -256,13 +279,13 @@ export default function VerticalComicReader({
                 <div key={idx} className="w-full relative min-h-[250px] bg-[#020204] flex items-center justify-center">
                   {isFailed ? (
                     <div className="py-16 text-center space-y-2">
-                      <p className="text-xs text-zinc-500">Gagal memuat halaman {idx + 1}</p>
+                      <p className="text-xs text-zinc-500">Halaman {idx + 1} sedang dipersiapkan</p>
                       <button
                         onClick={() => handleRetryImage(idx)}
                         className="px-3.5 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-xs font-semibold text-white spring-press inline-flex items-center gap-1"
                       >
                         <RefreshCw className="w-3 h-3" />
-                        Muat Halaman {idx + 1}
+                        Coba Muat Ulang
                       </button>
                     </div>
                   ) : (
@@ -271,7 +294,17 @@ export default function VerticalComicReader({
                       alt={`Halaman ${idx + 1}`}
                       loading="lazy"
                       referrerPolicy="no-referrer"
-                      onError={() => setFailedImages((prev) => ({ ...prev, [idx]: true }))}
+                      onError={(e) => {
+                        const target = e.currentTarget;
+                        const originalUrl = imgUrl;
+                        if (!target.src.includes('wsrv.nl') && !originalUrl.includes('wsrv.nl')) {
+                          target.src = `https://wsrv.nl/?url=${encodeURIComponent(originalUrl)}&w=1000&output=webp`;
+                        } else if (!target.src.includes('images.weserv.nl')) {
+                          target.src = `https://images.weserv.nl/?url=${encodeURIComponent(originalUrl)}&w=1000&output=webp`;
+                        } else {
+                          setFailedImages((prev) => ({ ...prev, [idx]: true }));
+                        }
+                      }}
                       className="w-full h-auto block select-none pointer-events-none"
                     />
                   )}

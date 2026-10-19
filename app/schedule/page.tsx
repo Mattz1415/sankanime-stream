@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { CalendarDays, ChevronLeft, Play, RefreshCw } from 'lucide-react';
 import { getSchedule } from '@/lib/clientApi';
 import FloatingGlassDock from '@/components/FloatingGlassDock';
+import SmartImage from '@/components/SmartImage';
 import { getSafeImageUrl, handleSmartImageError } from '@/lib/imageHelper';
 
 export default function SchedulePage() {
@@ -120,17 +121,14 @@ export default function SchedulePage() {
                         className={`flex items-center justify-between p-3.5 rounded-2xl glass-obsidian-card group spring-press border border-white/[0.06] animate-fade-in-up stagger-${(i % 12) + 1}`}
                       >
                         <div className="flex items-center gap-3 min-w-0">
-                          {anime.poster && (
-                            <img
-                              src={getSafeImageUrl(anime.poster, anime.title)}
-                              alt={anime.title}
-                              loading="lazy"
-                              decoding="async"
-                              referrerPolicy="no-referrer"
-                              onError={(e) => handleSmartImageError(e, anime.title)}
-                              className="w-12 h-14 rounded-xl object-cover flex-shrink-0"
-                            />
-                          )}
+                          <SmartImage
+                            item={anime}
+                            src={anime.poster}
+                            title={anime.title}
+                            alt={anime.title}
+                            type="anime"
+                            className="w-12 h-14 rounded-xl object-cover flex-shrink-0"
+                          />
                           <div className="min-w-0">
                             <h3 className="font-cinematic font-bold text-xs text-white group-hover:text-zinc-200 truncate">
                               {anime.title}

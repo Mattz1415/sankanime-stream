@@ -27,6 +27,7 @@ import {
 import { WatchHistoryItem, BookmarkItem, WatchlistCategory, WatchLaterItem } from '@/lib/types';
 import { useTheme } from '@/lib/themeContext';
 import { getSafeImageUrl, handleSmartImageError } from '@/lib/imageHelper';
+import SmartImage from './SmartImage';
 
 const WATCHLIST_CATEGORIES: ('Semua' | WatchlistCategory)[] = [
   'Semua',
@@ -187,13 +188,11 @@ export default function HistoryBookmarksView() {
                     href={`/watch?id=${item.episodeId}`}
                     className="relative w-16 h-22 rounded-xl overflow-hidden flex-shrink-0 bg-[#040408] border border-white/[0.08]"
                   >
-                    <img
-                      src={getSafeImageUrl(item.poster, item.animeTitle)}
+                    <SmartImage
+                      src={item.poster}
+                      title={item.animeTitle}
                       alt={item.animeTitle}
-                      loading="lazy"
-                      decoding="async"
-                      referrerPolicy="no-referrer"
-                      onError={(e) => handleSmartImageError(e, item.animeTitle)}
+                      type="anime"
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     />
                     <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
@@ -280,13 +279,11 @@ export default function HistoryBookmarksView() {
                   className="relative group rounded-2xl overflow-hidden card-frosted-obsidian border border-white/[0.08] hover:border-cyan-400/50 transition-all flex flex-col"
                 >
                   <Link href={`/anime?id=${item.animeId}`} className="relative aspect-[3/4] overflow-hidden block">
-                    <img
-                      src={getSafeImageUrl(item.poster, item.title)}
+                    <SmartImage
+                      src={item.poster}
+                      title={item.title}
                       alt={item.title}
-                      loading="lazy"
-                      decoding="async"
-                      referrerPolicy="no-referrer"
-                      onError={(e) => handleSmartImageError(e, item.title)}
+                      type="anime"
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-80" />
@@ -363,13 +360,11 @@ export default function HistoryBookmarksView() {
                   className="relative group rounded-2xl overflow-hidden card-frosted-obsidian border border-white/[0.08] hover:border-white/20 transition-all flex flex-col"
                 >
                   <Link href={`/anime?id=${item.animeId}`} className="relative aspect-[3/4] overflow-hidden block">
-                    <img
-                      src={getSafeImageUrl(item.poster, item.title)}
+                    <SmartImage
+                      src={item.poster}
+                      title={item.title}
                       alt={item.title}
-                      loading="lazy"
-                      decoding="async"
-                      referrerPolicy="no-referrer"
-                      onError={(e) => handleSmartImageError(e, item.title)}
+                      type="anime"
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-80" />

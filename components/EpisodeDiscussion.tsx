@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { MessageSquare, Send, Heart, Flame, ThumbsUp, Smile, Sparkles, User } from 'lucide-react';
+import { DEFAULT_AVATAR } from '@/lib/imageHelper';
 
 interface EpisodeDiscussionProps {
   episodeId: string;
@@ -188,6 +189,7 @@ export default function EpisodeDiscussion({ episodeId, episodeTitle }: EpisodeDi
             loading="lazy"
             decoding="async"
             referrerPolicy="no-referrer"
+            onError={(e) => { e.currentTarget.src = DEFAULT_AVATAR; }}
             className="w-full h-full object-cover"
           />
         </div>
@@ -222,6 +224,7 @@ export default function EpisodeDiscussion({ episodeId, episodeTitle }: EpisodeDi
                 loading="lazy"
                 decoding="async"
                 referrerPolicy="no-referrer"
+                onError={(e) => { e.currentTarget.src = DEFAULT_AVATAR; }}
                 className="w-full h-full object-cover"
               />
             </div>

@@ -18,6 +18,7 @@ import {
 import { AnimeListItem } from '@/lib/types';
 import { useTheme } from '@/lib/themeContext';
 import { getSafeImageUrl, handleSmartImageError } from '@/lib/imageHelper';
+import SmartImage from './SmartImage';
 import { isAnimeBookmarked, toggleBookmark } from '@/lib/storage';
 
 interface HeroCarouselProps {
@@ -65,14 +66,13 @@ export default function HeroCarousel({ featuredList }: HeroCarouselProps) {
       {/* Full-Bleed Immersive Showcase Artwork */}
       <div className="relative w-full h-[460px] sm:h-[530px] lg:h-[580px] overflow-hidden bg-black">
         {/* Crisp Image (not muddied at top) */}
-        <img
+        <SmartImage
           key={currentAnime.animeId}
-          src={getSafeImageUrl(currentAnime.poster, currentAnime.title)}
+          item={currentAnime}
+          src={currentAnime.poster}
+          title={currentAnime.title}
           alt={currentAnime.title}
-          loading="eager"
-          decoding="async"
-          referrerPolicy="no-referrer"
-          onError={(e) => handleSmartImageError(e, currentAnime.title)}
+          type="anime"
           className="w-full h-full object-cover object-center filter brightness-[0.92] animate-ken-burns"
         />
 
@@ -201,13 +201,12 @@ export default function HeroCarousel({ featuredList }: HeroCarouselProps) {
                   }`}
                   title={item.title}
                 >
-                  <img
-                    src={getSafeImageUrl(item.poster, item.title)}
+                  <SmartImage
+                    item={item}
+                    src={item.poster}
+                    title={item.title}
                     alt={item.title}
-                    loading="lazy"
-                    decoding="async"
-                    referrerPolicy="no-referrer"
-                    onError={(e) => handleSmartImageError(e, item.title)}
+                    type="anime"
                     className="w-full h-full object-cover"
                   />
                   <div className="absolute inset-0 bg-black/30" />
