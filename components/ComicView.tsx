@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { fetchComicPopular, fetchComicLatest, fetchComicDetail, searchComic } from '@/lib/mediaApi';
 import { ComicItem, ComicDetail } from '@/lib/types';
+import { getSafeImageUrl, handleSmartImageError } from '@/lib/imageHelper';
 import VerticalComicReader from './VerticalComicReader';
 
 export default function ComicView() {
@@ -216,9 +217,12 @@ export default function ComicView() {
             >
               <div className="relative aspect-[3/4] w-full bg-zinc-900 overflow-hidden">
                 <img
-                  src={item.image}
+                  src={getSafeImageUrl(item.image, item.title)}
                   alt={item.title}
                   loading="lazy"
+                  decoding="async"
+                  referrerPolicy="no-referrer"
+                  onError={(e) => handleSmartImageError(e, item.title)}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-black/30 opacity-80" />
@@ -269,8 +273,10 @@ export default function ComicView() {
               <>
                 <div className="flex flex-col sm:flex-row gap-5">
                   <img
-                    src={detailData.image}
+                    src={getSafeImageUrl(detailData.image, detailData.title)}
                     alt={detailData.title}
+                    referrerPolicy="no-referrer"
+                    onError={(e) => handleSmartImageError(e, detailData.title)}
                     className="w-36 h-48 object-cover rounded-2xl shadow-xl shrink-0 mx-auto sm:mx-0 border border-white/10"
                   />
                   <div className="space-y-2 min-w-0">

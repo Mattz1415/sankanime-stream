@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { searchAnime } from '@/lib/clientApi';
 import { AnimeListItem } from '@/lib/types';
+import { getSafeImageUrl, handleSmartImageError } from '@/lib/imageHelper';
 import IsolatedSearchInput from './IsolatedSearchInput';
 
 interface CommandPaletteModalProps {
@@ -278,10 +279,12 @@ export default function CommandPaletteModal({ isOpen, onClose }: CommandPaletteM
                   {/* Poster Thumbnail */}
                   <div className="w-12 h-16 rounded-xl overflow-hidden bg-zinc-900 shrink-0 border border-white/10">
                     <img
-                      src={anime.poster || 'https://images.unsplash.com/photo-1578632767115-351597cf2477?w=100&auto=format&fit=crop&q=80'}
+                      src={getSafeImageUrl(anime.poster, anime.title)}
                       alt={anime.title}
                       loading="lazy"
                       decoding="async"
+                      referrerPolicy="no-referrer"
+                      onError={(e) => handleSmartImageError(e, anime.title)}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform"
                     />
                   </div>

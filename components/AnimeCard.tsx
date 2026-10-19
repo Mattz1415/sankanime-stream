@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { Play, Star, Calendar, Flame } from 'lucide-react';
 import { AnimeListItem } from '@/lib/types';
 
+import { getSafeImageUrl, handleSmartImageError } from '@/lib/imageHelper';
+
 interface AnimeCardProps {
   anime: AnimeListItem;
   showStatus?: boolean;
@@ -29,12 +31,14 @@ function RawAnimeCard({ anime, showStatus = true }: AnimeCardProps) {
         )}
 
         <img
-          src={imageError ? 'https://images.unsplash.com/photo-1578632767115-351597cf2477?w=500&auto=format&fit=crop&q=60' : anime.poster}
+          src={getSafeImageUrl(anime.poster, anime.title)}
           alt={anime.title}
           loading="lazy"
           decoding="async"
+          referrerPolicy="no-referrer"
           onLoad={() => setImageLoaded(true)}
-          onError={() => {
+          onError={(e) => {
+            handleSmartImageError(e, anime.title);
             setImageError(true);
             setImageLoaded(true);
           }}

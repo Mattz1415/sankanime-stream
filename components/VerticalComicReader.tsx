@@ -270,6 +270,7 @@ export default function VerticalComicReader({
                       src={imgUrl}
                       alt={`Halaman ${idx + 1}`}
                       loading="lazy"
+                      referrerPolicy="no-referrer"
                       onError={() => setFailedImages((prev) => ({ ...prev, [idx]: true }))}
                       className="w-full h-auto block select-none pointer-events-none"
                     />

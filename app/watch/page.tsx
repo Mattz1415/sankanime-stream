@@ -580,7 +580,6 @@ function WatchContent() {
                   }}
                   allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
                   allowFullScreen
-                  sandbox="allow-scripts allow-same-origin allow-forms allow-presentation"
                   title={detail.title}
                 />
               )

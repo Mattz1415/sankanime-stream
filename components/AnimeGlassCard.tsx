@@ -6,6 +6,8 @@ import { Play, Star, Clock, Sparkles } from 'lucide-react';
 import { AnimeListItem } from '@/lib/types';
 import { useTheme } from '@/lib/themeContext';
 
+import { getSafeImageUrl, handleSmartImageError } from '@/lib/imageHelper';
+
 interface AnimeGlassCardProps {
   anime: AnimeListItem;
   index?: number;
@@ -27,10 +29,12 @@ function RawAnimeGlassCard({ anime, index = 0 }: AnimeGlassCardProps) {
       {/* Poster Image Container */}
       <div className="relative aspect-[3/4] w-full overflow-hidden bg-[#030306]">
         <img
-          src={anime.poster}
+          src={getSafeImageUrl(anime.poster, anime.title)}
           alt={anime.title}
           loading="lazy"
           decoding="async"
+          referrerPolicy="no-referrer"
+          onError={(e) => handleSmartImageError(e, anime.title)}
           className="w-full h-full object-cover group-hover:scale-108 transition-transform duration-500 ease-out"
         />
 

@@ -262,6 +262,9 @@ export default function UserProfileView() {
               <img
                 src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80"
                 alt="Avatar"
+                loading="lazy"
+                decoding="async"
+                referrerPolicy="no-referrer"
                 className="w-full h-full object-cover rounded-[14px]"
               />
               <span className="absolute bottom-1 right-1 w-3.5 h-3.5 rounded-full bg-emerald-400 border-2 border-black" />

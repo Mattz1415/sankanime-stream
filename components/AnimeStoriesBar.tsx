@@ -4,6 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { Sparkles, Flame } from 'lucide-react';
 import { AnimeListItem } from '@/lib/types';
+import { getSafeImageUrl, handleSmartImageError } from '@/lib/imageHelper';
 
 interface AnimeStoriesBarProps {
   animeList: AnimeListItem[];
@@ -43,9 +44,12 @@ export default function AnimeStoriesBar({ animeList }: AnimeStoriesBarProps) {
               >
                 <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full overflow-hidden bg-black p-[2px]">
                   <img
-                    src={anime.poster}
+                    src={getSafeImageUrl(anime.poster, anime.title)}
                     alt={anime.title}
                     loading="lazy"
+                    decoding="async"
+                    referrerPolicy="no-referrer"
+                    onError={(e) => handleSmartImageError(e, anime.title)}
                     className="w-full h-full rounded-full object-cover group-hover:scale-105 transition-transform"
                   />
                 </div>

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { CalendarDays, ChevronLeft, Play, RefreshCw } from 'lucide-react';
 import { getSchedule } from '@/lib/clientApi';
 import FloatingGlassDock from '@/components/FloatingGlassDock';
+import { getSafeImageUrl, handleSmartImageError } from '@/lib/imageHelper';
 
 export default function SchedulePage() {
   const [scheduleData, setScheduleData] = useState<any[]>([]);
@@ -121,9 +122,12 @@ export default function SchedulePage() {
                         <div className="flex items-center gap-3 min-w-0">
                           {anime.poster && (
                             <img
-                              src={anime.poster}
+                              src={getSafeImageUrl(anime.poster, anime.title)}
                               alt={anime.title}
                               loading="lazy"
+                              decoding="async"
+                              referrerPolicy="no-referrer"
+                              onError={(e) => handleSmartImageError(e, anime.title)}
                               className="w-12 h-14 rounded-xl object-cover flex-shrink-0"
                             />
                           )}

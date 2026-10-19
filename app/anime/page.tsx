@@ -41,6 +41,7 @@ import FloatingGlassDock from '@/components/FloatingGlassDock';
 import { useTheme } from '@/lib/themeContext';
 import AnimeReviewSection from '@/components/AnimeReviewSection';
 import AnimeGlassCard from '@/components/AnimeGlassCard';
+import { getSafeImageUrl, handleSmartImageError } from '@/lib/imageHelper';
 
 const WATCHLIST_CATEGORIES: WatchlistCategory[] = [
   'Sedang Ditonton',
@@ -223,8 +224,10 @@ function AnimeDetailContent() {
       {/* Parallax Header Backdrop Poster with Deep OLED Vignette */}
       <div className="relative w-full h-[320px] sm:h-[400px] rounded-3xl overflow-hidden glass-obsidian border border-white/[0.08] shadow-[0_24px_70px_rgba(0,0,0,0.98)]">
         <img
-          src={detail.poster}
+          src={getSafeImageUrl(detail.poster, detail.title)}
           alt={detail.title}
+          referrerPolicy="no-referrer"
+          onError={(e) => handleSmartImageError(e, detail.title)}
           className="w-full h-full object-cover object-center filter blur-md brightness-[0.55] scale-105"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-[#000000] via-[#000000]/60 to-transparent" />
@@ -269,8 +272,12 @@ function AnimeDetailContent() {
         <div className="flex flex-col items-center sm:items-start space-y-3">
           <div className="relative w-44 sm:w-full aspect-[3/4] rounded-2xl overflow-hidden card-frosted-obsidian border-2 border-white/20 shadow-[0_20px_50px_rgba(0,0,0,0.98)] group">
             <img
-              src={detail.poster}
+              src={getSafeImageUrl(detail.poster, detail.title)}
               alt={detail.title}
+              loading="lazy"
+              decoding="async"
+              referrerPolicy="no-referrer"
+              onError={(e) => handleSmartImageError(e, detail.title)}
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
             />
             {detail.score && (

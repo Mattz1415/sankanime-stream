@@ -6,6 +6,7 @@ import { Play, Clock, ChevronRight, Trash2, Zap, Sparkles } from 'lucide-react';
 import { WatchHistoryItem, AnimeListItem } from '@/lib/types';
 import { useTheme } from '@/lib/themeContext';
 import { deleteWatchHistoryItem } from '@/lib/storage';
+import { getSafeImageUrl, handleSmartImageError } from '@/lib/imageHelper';
 
 interface LanjutNontonProps {
   historyItem?: WatchHistoryItem | null;
@@ -105,9 +106,12 @@ export default function LanjutNontonCard({
               className="relative w-18 h-24 sm:w-22 sm:h-28 rounded-2xl overflow-hidden shrink-0 bg-[#040408] border border-white/15 shadow-xl group/thumb spring-press block"
             >
               <img
-                src={poster}
+                src={getSafeImageUrl(poster, title)}
                 alt={title}
                 loading="lazy"
+                decoding="async"
+                referrerPolicy="no-referrer"
+                onError={(e) => handleSmartImageError(e, title)}
                 className="w-full h-full object-cover group-hover/thumb:scale-108 transition-transform duration-500"
               />
               <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover/thumb:opacity-100 transition-opacity">
@@ -118,7 +122,13 @@ export default function LanjutNontonCard({
             </Link>
           ) : (
             <div className="relative w-18 h-24 sm:w-22 sm:h-28 rounded-2xl overflow-hidden shrink-0 bg-[#040408] border border-white/15">
-              <img src={poster} alt={title} className="w-full h-full object-cover" />
+              <img
+                src={getSafeImageUrl(poster, title)}
+                alt={title}
+                referrerPolicy="no-referrer"
+                onError={(e) => handleSmartImageError(e, title)}
+                className="w-full h-full object-cover"
+              />
             </div>
           )}
 

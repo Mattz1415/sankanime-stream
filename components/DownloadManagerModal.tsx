@@ -16,6 +16,7 @@ import {
   Film,
 } from 'lucide-react';
 import { DownloadEpisodeItem } from '@/lib/types';
+import { getSafeImageUrl, handleSmartImageError } from '@/lib/imageHelper';
 import {
   getDownloads,
   saveDownload,
@@ -203,8 +204,12 @@ export default function DownloadManagerModal({
                 <div className="flex items-center gap-3 min-w-0 flex-1">
                   {item.poster ? (
                     <img
-                      src={item.poster}
+                      src={getSafeImageUrl(item.poster, item.animeTitle)}
                       alt={item.animeTitle}
+                      loading="lazy"
+                      decoding="async"
+                      referrerPolicy="no-referrer"
+                      onError={(e) => handleSmartImageError(e, item.animeTitle)}
                       className="w-12 h-16 object-cover rounded-xl border border-white/10 shrink-0"
                     />
                   ) : (

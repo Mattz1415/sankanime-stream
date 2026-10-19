@@ -45,26 +45,6 @@ export default function FluentHeader({
           </div>
         </Link>
 
-        {/* Central Pill-Switcher: 5 Categories */}
-        <div className="glass-pill-container p-1 rounded-full flex items-center gap-1 shadow-inner border border-white/[0.08] overflow-x-auto no-scrollbar max-w-[280px] xs:max-w-xs sm:max-w-none">
-          {categories.map((cat) => {
-            const isActive = activeCategory === cat;
-            return (
-              <button
-                key={cat}
-                onClick={() => onSelectCategory(cat)}
-                className={`relative px-3 sm:px-3.5 py-1 sm:py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all duration-300 spring-press ${
-                  isActive
-                    ? 'bg-white text-black shadow-md shadow-white/20 scale-[1.02]'
-                    : 'text-zinc-400 hover:text-white hover:bg-white/[0.05]'
-                }`}
-              >
-                {cat}
-              </button>
-            );
-          })}
-        </div>
-
         {/* Right Action Icons: Gacha, Downloads, Theme, Search & Avatar */}
         <div className="flex items-center gap-1.5 sm:gap-2">
           {/* Random Anime Picker (Gacha Roulette) Button */}
@@ -136,6 +116,7 @@ export default function FluentHeader({
                 alt="Avatar"
                 loading="lazy"
                 decoding="async"
+                referrerPolicy="no-referrer"
                 className="w-full h-full object-cover"
               />
             </div>

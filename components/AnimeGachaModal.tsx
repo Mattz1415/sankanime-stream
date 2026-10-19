@@ -18,6 +18,7 @@ import {
 import { AnimeListItem } from '@/lib/types';
 import { getHomeData } from '@/lib/clientApi';
 import { isAnimeBookmarked, toggleBookmark } from '@/lib/storage';
+import { getSafeImageUrl, handleSmartImageError } from '@/lib/imageHelper';
 
 interface AnimeGachaModalProps {
   isOpen: boolean;
@@ -271,10 +272,12 @@ export default function AnimeGachaModal({ isOpen, onClose, initialPool }: AnimeG
                     }`}
                   >
                     <img
-                      src={item.poster}
+                      src={getSafeImageUrl(item.poster, item.title)}
                       alt={item.title}
                       loading="lazy"
                       decoding="async"
+                      referrerPolicy="no-referrer"
+                      onError={(e) => handleSmartImageError(e, item.title)}
                       className="w-full h-full object-cover"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent" />
@@ -309,10 +312,12 @@ export default function AnimeGachaModal({ isOpen, onClose, initialPool }: AnimeG
                 {/* Poster Container with Rarity Badge */}
                 <div className="relative aspect-[16/10] w-full rounded-2xl overflow-hidden bg-black shadow-2xl">
                   <img
-                    src={selectedAnime.poster}
+                    src={getSafeImageUrl(selectedAnime.poster, selectedAnime.title)}
                     alt={selectedAnime.title}
                     loading="lazy"
                     decoding="async"
+                    referrerPolicy="no-referrer"
+                    onError={(e) => handleSmartImageError(e, selectedAnime.title)}
                     className="w-full h-full object-cover transform hover:scale-105 transition-transform duration-500"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black via-black/25 to-transparent" />

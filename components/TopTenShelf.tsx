@@ -4,6 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { Trophy, Star, Play, Crown, Flame, ChevronRight } from 'lucide-react';
 import { AnimeListItem } from '@/lib/types';
+import { getSafeImageUrl, handleSmartImageError } from '@/lib/imageHelper';
 
 interface TopTenShelfProps {
   animeList: AnimeListItem[];
@@ -66,9 +67,12 @@ export default function TopTenShelf({ animeList }: TopTenShelfProps) {
               {/* Poster Card Floating Over the Number */}
               <div className="relative w-32 sm:w-36 h-48 sm:h-52 rounded-2xl overflow-hidden glass-obsidian-card border border-white/15 z-10 shadow-2xl flex flex-col justify-between group-hover:border-cyan-400/50 transition-colors">
                 <img
-                  src={anime.poster}
+                  src={getSafeImageUrl(anime.poster, anime.title)}
                   alt={anime.title}
                   loading="lazy"
+                  decoding="async"
+                  referrerPolicy="no-referrer"
+                  onError={(e) => handleSmartImageError(e, anime.title)}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                 />
 

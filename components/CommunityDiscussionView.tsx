@@ -333,6 +333,9 @@ export default function CommunityDiscussionView({
                   <img
                     src={comment.user.avatar}
                     alt={comment.user.name}
+                    loading="lazy"
+                    decoding="async"
+                    referrerPolicy="no-referrer"
                     className="w-9 h-9 rounded-full object-cover border border-white/15 bg-zinc-900"
                   />
                   <div>

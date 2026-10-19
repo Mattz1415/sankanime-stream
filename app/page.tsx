@@ -38,6 +38,7 @@ import ReleaseCountdownBanner from '@/components/ReleaseCountdownBanner';
 import DownloadManagerModal from '@/components/DownloadManagerModal';
 import ThemeCustomizerModal from '@/components/ThemeCustomizerModal';
 import AdvancedFilterModal from '@/components/AdvancedFilterModal';
+import CategoryNavBar from '@/components/CategoryNavBar';
 import DonghuaView from '@/components/DonghuaView';
 import ComicView from '@/components/ComicView';
 import ManhwaView from '@/components/ManhwaView';
@@ -144,6 +145,15 @@ export default function HomePage() {
         onOpenTheme={() => setIsThemeOpen(true)}
         onOpenDownloads={() => setIsDownloadOpen(true)}
         onOpenGacha={() => setIsGachaOpen(true)}
+      />
+
+      {/* Dedicated Full-Width Category Navigation Bar */}
+      <CategoryNavBar
+        activeCategory={activeCategory}
+        onSelectCategory={(cat) => {
+          setActiveCategory(cat);
+          setActiveTab('jelajah');
+        }}
       />
 
       {/* Main Container */}

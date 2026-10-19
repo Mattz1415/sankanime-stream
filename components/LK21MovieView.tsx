@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { LK21_MOVIES, getLK21Movies, getMovieServers } from '@/lib/mediaApi';
 import { MovieItem } from '@/lib/types';
+import { getSafeImageUrl, handleSmartImageError } from '@/lib/imageHelper';
 
 export default function LK21MovieView() {
   const [selectedCategory, setSelectedCategory] = useState<string>('Semua');
@@ -58,8 +59,10 @@ export default function LK21MovieView() {
         <div className="relative rounded-3xl overflow-hidden card-frosted-obsidian border border-white/[0.08] p-6 sm:p-10 shadow-2xl">
           <div className="absolute inset-0 z-0">
             <img
-              src={heroMovie.poster}
+              src={getSafeImageUrl(heroMovie.poster, heroMovie.title)}
               alt={heroMovie.title}
+              referrerPolicy="no-referrer"
+              onError={(e) => handleSmartImageError(e, heroMovie.title)}
               className="w-full h-full object-cover opacity-25 blur-sm scale-105"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black via-black/80 to-transparent" />
@@ -151,9 +154,12 @@ export default function LK21MovieView() {
             >
               <div className="relative aspect-[2/3] w-full bg-zinc-900 overflow-hidden">
                 <img
-                  src={movie.poster}
+                  src={getSafeImageUrl(movie.poster, movie.title)}
                   alt={movie.title}
                   loading="lazy"
+                  decoding="async"
+                  referrerPolicy="no-referrer"
+                  onError={(e) => handleSmartImageError(e, movie.title)}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-black/30 opacity-80" />
@@ -232,7 +238,6 @@ export default function LK21MovieView() {
                 className="w-full h-full border-0"
                 allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
                 allowFullScreen
-                sandbox="allow-scripts allow-same-origin allow-forms allow-presentation"
                 title={activeMovie.title}
               />
             </div>

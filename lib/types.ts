@@ -281,6 +281,7 @@ export interface ComicDetail {
     concept?: string;
     ageRating?: string;
     readingDirection?: string;
+    year?: string;
   };
   genres: Array<{
     name: string;

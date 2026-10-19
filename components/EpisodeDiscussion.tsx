@@ -185,6 +185,9 @@ export default function EpisodeDiscussion({ episodeId, episodeTitle }: EpisodeDi
           <img
             src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80"
             alt="Kepiskepsi"
+            loading="lazy"
+            decoding="async"
+            referrerPolicy="no-referrer"
             className="w-full h-full object-cover"
           />
         </div>
@@ -216,6 +219,9 @@ export default function EpisodeDiscussion({ episodeId, episodeTitle }: EpisodeDi
               <img
                 src={comment.avatar}
                 alt={comment.userName}
+                loading="lazy"
+                decoding="async"
+                referrerPolicy="no-referrer"
                 className="w-full h-full object-cover"
               />
             </div>
