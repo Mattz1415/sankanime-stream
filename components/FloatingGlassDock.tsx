@@ -22,9 +22,9 @@ export default function FloatingGlassDock({
 
   const tabs: { id: DockTab; label: string; icon: React.ElementType; href: string }[] = [
     { id: 'jelajah', label: 'Jelajah', icon: Compass, href: '/' },
-    { id: 'list', label: 'List', icon: LayoutGrid, href: '/list' },
+    { id: 'list', label: 'Katalog', icon: LayoutGrid, href: '/list' },
     { id: 'riwayat', label: 'Riwayat', icon: Clock, href: '/history' },
-    { id: 'chat', label: 'Chat', icon: MessageSquare, href: '/chat' },
+    { id: 'chat', label: 'Komunitas', icon: MessageSquare, href: '/chat' },
     { id: 'profil', label: 'Profil', icon: User, href: '/profile' },
   ];
 

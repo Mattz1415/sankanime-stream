@@ -18,6 +18,16 @@ export default function SchedulePage() {
         setLoading(true);
         const data = await getSchedule();
         setScheduleData(data);
+
+        // Auto select current day in Indonesia
+        const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+        const todayName = days[new Date().getDay()];
+        const todayIndex = data.findIndex(
+          (d: any) => d.day?.toLowerCase() === todayName.toLowerCase()
+        );
+        if (todayIndex !== -1) {
+          setSelectedDayIndex(todayIndex);
+        }
       } catch (err: any) {
         setError(err.message || 'Gagal memuat jadwal rilis anime');
       } finally {

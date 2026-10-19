@@ -20,15 +20,40 @@ import {
   ToggleLeft,
   ToggleRight,
   Zap,
-  ChevronLeft
+  ChevronLeft,
+  FastForward,
+  Rewind,
+  Sliders,
+  Download,
+  ListPlus,
+  BookmarkCheck,
+  Clock,
+  MessageSquare,
 } from 'lucide-react';
 import { getEpisodeDetail, resolveServerStream } from '@/lib/clientApi';
-import { saveWatchHistory, getWatchHistory } from '@/lib/storage';
-import { EpisodeDetail, QualityGroup, QualityServer } from '@/lib/types';
+import {
+  saveWatchHistory,
+  getWatchHistory,
+  getEpisodeResumeTime,
+  saveWatchLater,
+  removeWatchLater,
+  isAnimeWatchLater,
+  getPlayerSettings,
+} from '@/lib/storage';
+import { EpisodeDetail, QualityGroup, QualityServer, PlayerSettings } from '@/lib/types';
 import FloatingGlassDock from '@/components/FloatingGlassDock';
 import { useTheme } from '@/lib/themeContext';
 import { tunnelStream, TunnelResult } from '@/lib/streamTunnel';
-import EpisodeDiscussion from '@/components/EpisodeDiscussion';
+import CommunityDiscussionView from '@/components/CommunityDiscussionView';
+import DownloadManagerModal from '@/components/DownloadManagerModal';
+import PlayerSettingsModal from '@/components/PlayerSettingsModal';
+
+function formatSeconds(sec?: number): string {
+  if (!sec || sec <= 0) return '00:00';
+  const mins = Math.floor(sec / 60);
+  const remSec = Math.floor(sec % 60);
+  return `${mins}:${remSec.toString().padStart(2, '0')}`;
+}
 
 function WatchContent() {
   const router = useRouter();
@@ -54,16 +79,30 @@ function WatchContent() {
   const [tunnelResult, setTunnelResult] = useState<TunnelResult | null>(null);
   const [isTunneling, setIsTunneling] = useState(false);
 
-  // Visual settings
+  // Visual settings & automations
   const [serverPing, setServerPing] = useState<number>(36);
   const [lightsOff, setLightsOff] = useState(false); // Mode Bioskop
   const [autoNext, setAutoNext] = useState(true);
   const [watchedEpisodes, setWatchedEpisodes] = useState<string[]>([]);
+  const [isWatchLater, setIsWatchLater] = useState(false);
+
+  // Modals & Prompts
+  const [isDownloadOpen, setIsDownloadOpen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [resumePromptSec, setResumePromptSec] = useState<number | null>(null);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const iframeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const toastTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Load episode data
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
+    toastTimeoutRef.current = setTimeout(() => setToastMessage(null), 2500);
+  };
+
+  // Load episode data & history resume point
   useEffect(() => {
     if (!episodeId) {
       setLoading(false);
@@ -71,12 +110,10 @@ function WatchContent() {
       return;
     }
 
-    async function loadEpisode() {
+    async function loadData() {
       try {
         setLoading(true);
         setError(null);
-        setXframeBlocked(false);
-        setIframeLoaded(false);
 
         const data = await getEpisodeDetail(episodeId);
         setDetail(data);
@@ -85,14 +122,25 @@ function WatchContent() {
         const history = getWatchHistory();
         setWatchedEpisodes(history.map((h) => h.episodeId));
 
-        // Save to watch history
+        // Check Watch Later status
+        if (data.animeId) {
+          setIsWatchLater(isAnimeWatchLater(data.animeId));
+        }
+
+        // Check resume timestamp
+        const resumeSec = getEpisodeResumeTime(episodeId);
+        if (resumeSec > 20) {
+          setResumePromptSec(resumeSec);
+        }
+
+        // Save initial entry to history
         saveWatchHistory({
           animeId: data.animeId || '',
           episodeId: episodeId,
           animeTitle: data.info?.title || data.title.split(' Episode')[0] || data.title,
           episodeTitle: data.title,
           poster: data.info?.poster || '',
-          progressPercent: 85,
+          lastSeconds: resumeSec || 0,
           currentEpisodeNumber: data.title.match(/Episode\s*(\d+)/i)?.[1] || 1,
           totalEpisodes: data.info?.episodeList?.length || 12,
         });
@@ -109,42 +157,33 @@ function WatchContent() {
       }
     }
 
-    loadEpisode();
+    loadData();
 
     return () => {
       if (iframeTimeoutRef.current) clearTimeout(iframeTimeoutRef.current);
+      if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
     };
   }, [episodeId]);
 
-  // Server selection prioritizing vidhide -> odcdn -> mega
-  const pickBestServer = async (episodeData: EpisodeDetail) => {
-    const qualities = episodeData.server?.qualities || [];
-    const allServers: { server: QualityServer; quality: string }[] = [];
+  const pickBestServer = async (data: EpisodeDetail) => {
+    const qualities = data.server?.qualities || [];
+    let defaultUrl = data.defaultStreamingUrl || '';
 
-    qualities.forEach((q) => {
-      q.serverList?.forEach((srv) => {
-        allServers.push({ server: srv, quality: q.title });
-      });
-    });
+    // Priority 1: High quality 720p or 480p server
+    const targetGroup =
+      qualities.find((q) => q.title.includes('720p')) ||
+      qualities.find((q) => q.title.includes('480p')) ||
+      qualities[0];
 
-    const defaultUrl = (episodeData.defaultStreamingUrl || '').trim();
-    const isProblematicDefault =
-      !defaultUrl ||
-      /desustream|ondesuhd|odstream/i.test(defaultUrl) ||
-      defaultUrl.includes('//') && !defaultUrl.startsWith('http');
-
-    if (allServers.length > 0) {
-      const vidhide720 = allServers.find(
-        (s) => /vidhide/i.test(s.server.title) && /720/i.test(s.quality)
-      );
-      const vidhideAny = allServers.find((s) => /vidhide/i.test(s.server.title));
-      const odcdnAny = allServers.find((s) => /odcdn/i.test(s.server.title));
-      const megaAny = allServers.find((s) => /mega/i.test(s.server.title));
-
-      const preferred = vidhide720 || vidhideAny || odcdnAny || megaAny;
+    if (targetGroup && targetGroup.serverList.length > 0) {
+      const preferred =
+        targetGroup.serverList.find((s) => /vidhide/i.test(s.title)) ||
+        targetGroup.serverList.find((s) => /ondesuhd/i.test(s.title)) ||
+        targetGroup.serverList.find((s) => /desustream/i.test(s.title)) ||
+        targetGroup.serverList[0];
 
       if (preferred) {
-        await handleSelectServer(preferred.server, preferred.quality);
+        await handleSelectServer(preferred, targetGroup.title);
         return;
       }
     }
@@ -249,103 +288,171 @@ function WatchContent() {
               if (!iframeLoaded) {
                 setXframeBlocked(true);
               }
-            }, 10000);
+            }, 6000);
           }
         }
       } else {
-        alert('Gagal mengambil url dari server ini, silakan coba server lain.');
+        await executeTunneling(detail?.defaultStreamingUrl || '', 'Fallback Default');
       }
-    } catch (err) {
-      alert('Server sedang sibuk, silakan pilih server alternatif di bawah.');
+    } catch (err: any) {
+      console.error('[Watch] Switch server error', err);
+      setError('Gagal beralih server video');
     } finally {
-      setTimeout(() => setSwitchingServer(false), 400);
+      setSwitchingServer(false);
+    }
+  };
+
+  // Video Time Update: Save current playback second to Watch History continuously
+  const handleVideoTimeUpdate = () => {
+    if (!videoRef.current || !detail) return;
+    const current = Math.floor(videoRef.current.currentTime);
+    const duration = Math.floor(videoRef.current.duration || 1440);
+
+    if (current > 0 && current % 4 === 0) {
+      saveWatchHistory({
+        animeId: detail.animeId || '',
+        episodeId,
+        animeTitle: detail.info?.title || detail.title.split(' Episode')[0] || detail.title,
+        episodeTitle: detail.title,
+        poster: detail.info?.poster || '',
+        lastSeconds: current,
+        durationSeconds: duration,
+        progressPercent: Math.min(100, Math.round((current / duration) * 100)),
+        currentEpisodeNumber: detail.title.match(/Episode\s*(\d+)/i)?.[1] || 1,
+        totalEpisodes: detail.info?.episodeList?.length || 12,
+      });
+    }
+  };
+
+  // Resume playback from saved seconds
+  const handleResumePlayback = () => {
+    if (resumePromptSec && videoRef.current) {
+      videoRef.current.currentTime = resumePromptSec;
+      showToast(`Melanjutkan dari menit ${formatSeconds(resumePromptSec)}`);
+    }
+    setResumePromptSec(null);
+  };
+
+  // Skip Intro (+85s)
+  const handleSkipIntro = () => {
+    if (videoRef.current) {
+      videoRef.current.currentTime += 85;
+    }
+    showToast('⏩ Melompati Lagu Intro (+85 Detik)');
+  };
+
+  // Skip Outro (+90s)
+  const handleSkipOutro = () => {
+    if (videoRef.current) {
+      videoRef.current.currentTime += 90;
+    } else if (autoNext && detail?.hasNextEpisode && detail?.nextEpisode) {
+      router.push(`/watch?id=${detail.nextEpisode.episodeId}`);
+    }
+    showToast('⏩ Melompati Outro (+90 Detik)');
+  };
+
+  // Seek -10s / +10s
+  const handleSeek = (seconds: number) => {
+    if (videoRef.current) {
+      videoRef.current.currentTime += seconds;
+    }
+    showToast(`${seconds > 0 ? '+' : ''}${seconds} Detik`);
+  };
+
+  // Toggle Watch Later playlist
+  const handleToggleWatchLater = () => {
+    if (!detail) return;
+    const animeId = detail.animeId || episodeId;
+    if (isWatchLater) {
+      removeWatchLater(animeId);
+      setIsWatchLater(false);
+      showToast('Dihapus dari Tonton Nanti');
+    } else {
+      saveWatchLater({
+        animeId,
+        title: detail.info?.title || detail.title.split(' Episode')[0] || detail.title,
+        poster: detail.info?.poster || '',
+        episodes: detail.info?.episodeList?.length || '12',
+        score: detail.info?.score || '8.5',
+      });
+      setIsWatchLater(true);
+      showToast('📌 Ditambahkan ke Tonton Nanti');
+    }
+  };
+
+  const handlePlayNative = () => {
+    if (streamUrl) {
+      window.open(streamUrl, '_blank', 'noopener,noreferrer');
     }
   };
 
   const handleSwitchToVidhide = () => {
     if (!detail?.server?.qualities) return;
-    const allServers: { server: QualityServer; quality: string }[] = [];
-    detail.server.qualities.forEach((q) => {
-      q.serverList?.forEach((srv) => {
-        allServers.push({ server: srv, quality: q.title });
-      });
-    });
-
-    const vidhide = allServers.find((s) => /vidhide/i.test(s.server.title));
-    if (vidhide) {
-      handleSelectServer(vidhide.server, vidhide.quality);
-    } else {
-      alert('Server Vidhide tidak tersedia untuk episode ini.');
+    for (const group of detail.server.qualities) {
+      const vidhide = group.serverList.find((s) => /vidhide/i.test(s.title));
+      if (vidhide) {
+        handleSelectServer(vidhide, group.title);
+        return;
+      }
     }
-  };
-
-  const handlePlayNative = () => {
-    if (!streamUrl) return;
-    window.open(streamUrl, '_blank');
   };
 
   if (loading) {
     return (
-      <div className="space-y-6 max-w-5xl mx-auto py-8 animate-fade-in-up">
-        <div className="aspect-video w-full rounded-3xl oled-shimmer" />
-        <div className="h-8 w-2/3 rounded-xl oled-shimmer" />
-        <div className="h-24 w-full rounded-2xl oled-shimmer" />
+      <div className="py-24 text-center space-y-4">
+        <RefreshCw className="w-10 h-10 animate-spin mx-auto text-cyan-400 drop-shadow-[0_0_15px_rgba(0,240,255,0.8)]" />
+        <div className="space-y-1">
+          <p className="font-cinematic font-bold text-sm text-white">Memuat Pemutar Video Nexus</p>
+          <p className="text-xs text-zinc-500">Mengkoneksikan multi-tunnel streaming...</p>
+        </div>
       </div>
     );
   }
 
   if (error || !detail) {
     return (
-      <div className="p-8 rounded-3xl card-frosted-obsidian border border-red-500/30 text-center space-y-4 max-w-md mx-auto my-16 animate-fade-in-up">
-        <h2 className="font-cinematic font-bold text-lg text-white">Gagal Memutar Episode</h2>
-        <p className="text-xs text-zinc-400">{error || 'Episode tidak ditemukan'}</p>
+      <div className="p-8 rounded-3xl card-frosted-obsidian border border-red-500/30 text-center space-y-4 max-w-md mx-auto my-12">
+        <Tv className="w-10 h-10 text-red-400 mx-auto" />
+        <p className="text-sm font-bold text-red-300">{error || 'Episode tidak ditemukan'}</p>
         <Link
           href="/"
-          className="inline-block px-6 py-2.5 rounded-full bg-white text-black font-extrabold text-xs hover:bg-zinc-200 transition-all shadow-md spring-press"
+          className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-full bg-white text-black font-bold text-xs hover:bg-zinc-200 transition-all spring-press"
         >
+          <ChevronLeft className="w-4 h-4" />
           Kembali ke Beranda
         </Link>
       </div>
     );
   }
 
+  // Flatten server list for settings modal
+  const allServers =
+    detail.server?.qualities?.flatMap((q) =>
+      q.serverList.map((s) => ({
+        title: `${s.title} (${q.title})`,
+        serverId: s.serverId,
+      }))
+    ) || [];
+
   return (
-    <div className="space-y-6 max-w-5xl mx-auto pb-24 animate-fade-in-up relative">
-      {/* Lights Off Cinema Dimmer Overlay */}
-      {lightsOff && (
-        <div
-          onClick={() => setLightsOff(false)}
-          className="fixed inset-0 z-40 bg-black/95 backdrop-blur-md transition-opacity duration-500 cursor-pointer pointer-events-auto"
-          title="Klik di mana saja untuk menyalakan lampu bioskop"
-        />
+    <div className="space-y-6 max-w-6xl mx-auto pb-28 animate-fade-in-up font-sans">
+      {/* Toast Notification Banner */}
+      {toastMessage && (
+        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-[100] px-4 py-2 rounded-full bg-black/90 border border-cyan-400/60 shadow-[0_0_25px_rgba(0,240,255,0.4)] text-xs text-white font-extrabold animate-fade-in-up flex items-center gap-2">
+          <span className="w-2 h-2 rounded-full bg-cyan-400 animate-ping" />
+          <span>{toastMessage}</span>
+        </div>
       )}
 
-      {/* Top Breadcrumb & Status Row */}
-      <div className="flex flex-wrap items-center justify-between gap-3 relative z-50">
-        <div className="flex items-center gap-2 min-w-0">
-          {detail.animeId ? (
-            <Link
-              href={`/anime?id=${detail.animeId}`}
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full card-frosted-obsidian hover:border-white/20 text-zinc-300 hover:text-white text-xs font-semibold spring-press shrink-0"
-            >
-              <ChevronLeft className="w-4 h-4" />
-              Kembali ke Seri
-            </Link>
-          ) : (
-            <Link
-              href="/"
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full card-frosted-obsidian hover:border-white/20 text-zinc-300 hover:text-white text-xs font-semibold spring-press shrink-0"
-            >
-              <ChevronLeft className="w-4 h-4" />
-              Beranda
-            </Link>
-          )}
-
-          <span className="hidden sm:inline-block text-xs text-zinc-600">|</span>
-          <span className="text-xs text-zinc-300 font-cinematic font-bold truncate max-w-xs sm:max-w-md">
-            {detail.title}
-          </span>
-        </div>
+      {/* Top Header Bar */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <Link
+          href={detail.animeId ? `/anime?id=${detail.animeId}` : '/'}
+          className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full card-frosted-obsidian hover:border-white/20 text-zinc-300 hover:text-white text-xs font-semibold spring-press"
+        >
+          <ChevronLeft className="w-4 h-4" />
+          <span>Kembali</span>
+        </Link>
 
         {/* Action Controls: Auto-Next & Latency */}
         <div className="flex items-center gap-2">
@@ -371,9 +478,36 @@ function WatchContent() {
         </div>
       </div>
 
+      {/* Resume Playback Prompt Banner (Feature 1: Watch History) */}
+      {resumePromptSec && (
+        <div className="p-3.5 rounded-2xl bg-cyan-950/60 border border-cyan-400/40 flex items-center justify-between gap-3 text-xs animate-fade-in shadow-[0_0_20px_rgba(0,240,255,0.15)]">
+          <div className="flex items-center gap-2 min-w-0">
+            <Clock className="w-4 h-4 text-cyan-400 shrink-0" />
+            <p className="text-zinc-200 truncate">
+              Riwayat sebelumnya berhenti di menit <strong className="text-cyan-300">{formatSeconds(resumePromptSec)}</strong>. Lanjutkan?
+            </p>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              type="button"
+              onClick={handleResumePlayback}
+              className="px-3.5 py-1.5 rounded-full bg-cyan-400 text-black font-black text-xs hover:bg-cyan-300 spring-press shadow-md"
+            >
+              ▶ Lanjutkan
+            </button>
+            <button
+              type="button"
+              onClick={() => setResumePromptSec(null)}
+              className="px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-zinc-300 text-xs font-semibold"
+            >
+              Mulai Awal
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Video Player Box with Ambient Glow */}
       <div className="relative">
-        {/* Dynamic Ambilight Glow Aura - strictly outside and pointer-events-none */}
         {!lightsOff && (
           <div className="player-ambilight-glow pointer-events-none" />
         )}
@@ -394,7 +528,6 @@ function WatchContent() {
                 {activeServerTitle}
               </span>
 
-              {/* Glowing Tunnel Indicator */}
               {tunnelResult?.tunnelActive && (
                 <span className="hidden sm:inline-flex items-center gap-1 text-[10px] px-2.5 py-0.5 rounded-full bg-cyan-950/70 text-cyan-300 border border-cyan-500/40 font-bold shadow-[0_0_12px_rgba(6,182,212,0.3)] animate-pulse">
                   <Zap className="w-3 h-3 text-cyan-400" />
@@ -413,10 +546,10 @@ function WatchContent() {
                     ? 'bg-amber-400 text-black shadow-lg shadow-amber-400/30 border-amber-300'
                     : 'card-frosted-obsidian text-zinc-300 hover:text-white border-white/10'
                 }`}
-                title="Mode Bioskop: Padamkan lampu di sekitar video"
+                title="Mode Bioskop"
               >
                 {lightsOff ? <Sun className="w-3.5 h-3.5 fill-black" /> : <Moon className="w-3.5 h-3.5" />}
-                <span className="hidden sm:inline">{lightsOff ? 'Lampu Nyala' : 'Mode Bioskop'}</span>
+                <span className="hidden sm:inline">{lightsOff ? 'Lampu Nyala' : 'Bioskop'}</span>
               </button>
 
               {/* Buka Tab Baru */}
@@ -424,22 +557,19 @@ function WatchContent() {
                 type="button"
                 onClick={handlePlayNative}
                 className="px-3 py-1.5 rounded-full text-xs font-bold flex items-center gap-1.5 spring-press bg-white/10 hover:bg-white/20 text-white border border-white/20 shadow-sm"
-                title="Buka Tab Baru / Eksternal"
+                title="Buka Tab Baru"
               >
                 <ExternalLink className="w-3.5 h-3.5 text-cyan-400" />
-                <span className="hidden sm:inline">Buka Tab Baru</span>
+                <span className="hidden sm:inline">Buka Tab</span>
               </button>
             </div>
           </div>
 
-          {/* Clean 16:9 Video Player Canvas (100% Free of Obstructing Overlays) */}
+          {/* Clean 16:9 Video Player Canvas */}
           <div className="relative w-full aspect-video bg-black flex items-center justify-center overflow-hidden">
-            {/* Loading / Switching Screen */}
             {(switchingServer || isTunneling || (!iframeLoaded && !xframeBlocked)) && (
               <div className="absolute inset-0 z-10 bg-black flex flex-col items-center justify-center gap-3 text-white pointer-events-none">
-                <div className="relative w-12 h-12 flex items-center justify-center">
-                  <RefreshCw className="w-8 h-8 animate-spin text-cyan-400 drop-shadow-[0_0_12px_rgba(0,240,255,0.7)]" />
-                </div>
+                <RefreshCw className="w-8 h-8 animate-spin text-cyan-400 drop-shadow-[0_0_12px_rgba(0,240,255,0.7)]" />
                 <div className="text-center space-y-1">
                   <p className="text-xs font-bold tracking-wide">
                     {isTunneling ? 'Mempersiapkan Stream Tunnel...' : 'Menghubungkan ke Pemutar...'}
@@ -449,18 +579,15 @@ function WatchContent() {
               </div>
             )}
 
-            {/* X-Frame Blocked Warning Overlay */}
             {xframeBlocked && (
               <div className="absolute inset-0 z-20 bg-black/90 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center space-y-3 animate-fade-in-up">
-                <div className="w-12 h-12 rounded-2xl bg-amber-500/20 border border-amber-500/40 text-amber-400 flex items-center justify-center shadow-lg">
-                  <ShieldAlert className="w-6 h-6" />
-                </div>
+                <ShieldAlert className="w-8 h-8 text-amber-400 mx-auto" />
                 <div className="max-w-md space-y-1">
                   <h3 className="font-cinematic font-bold text-base text-white">
                     Server Membatasi Pemutaran Tersemat
                   </h3>
                   <p className="text-xs text-zinc-400">
-                    Server ini membatasi iframe langsung. Beralih ke server Vidhide atau buka di tab baru:
+                    Beralih ke server Vidhide atau buka di tab eksternal:
                   </p>
                 </div>
 
@@ -470,7 +597,7 @@ function WatchContent() {
                     className="px-5 py-2 rounded-full bg-white text-black font-extrabold text-xs hover:bg-zinc-200 shadow-md spring-press flex items-center gap-1.5"
                   >
                     <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-                    Ganti ke Server Vidhide (Rekomendasi)
+                    Ganti ke Server Vidhide
                   </button>
 
                   <button
@@ -484,7 +611,6 @@ function WatchContent() {
               </div>
             )}
 
-            {/* Stream Player Canvas: Pure HTML5 Video or Clean Iframe */}
             {streamUrl ? (
               isDirectVideo ? (
                 <video
@@ -493,6 +619,7 @@ function WatchContent() {
                   controls
                   autoPlay
                   playsInline
+                  onTimeUpdate={handleVideoTimeUpdate}
                   className="w-full h-full bg-black object-contain"
                   onEnded={() => {
                     if (autoNext && detail.hasNextEpisode && detail.nextEpisode) {
@@ -529,7 +656,94 @@ function WatchContent() {
             )}
           </div>
 
-          {/* Side-by-Side Prev / Next Episode Navigation Buttons */}
+          {/* Quick Utility Action Bar: Skip Intro/Outro, -10s, +10s, Subtitle Settings, Download, Watch Later */}
+          <div className="p-3 bg-[#050508]/98 border-t border-white/[0.08] flex items-center justify-between gap-2 overflow-x-auto no-scrollbar">
+            <div className="flex items-center gap-1.5 shrink-0">
+              {/* Skip Intro (+85s) Button */}
+              <button
+                type="button"
+                onClick={handleSkipIntro}
+                className="px-3 py-1.5 rounded-xl bg-cyan-500/15 hover:bg-cyan-500/25 border border-cyan-400/30 text-cyan-300 font-extrabold text-[11px] flex items-center gap-1 spring-press transition-all"
+                title="Lewati Opening (+85 Detik)"
+              >
+                <FastForward className="w-3.5 h-3.5" />
+                <span>Lewati Intro (+85s)</span>
+              </button>
+
+              {/* Skip Outro (+90s) Button */}
+              <button
+                type="button"
+                onClick={handleSkipOutro}
+                className="px-3 py-1.5 rounded-xl bg-purple-500/15 hover:bg-purple-500/25 border border-purple-400/30 text-purple-300 font-extrabold text-[11px] flex items-center gap-1 spring-press transition-all"
+                title="Lewati Ending (+90 Detik)"
+              >
+                <FastForward className="w-3.5 h-3.5" />
+                <span>Lewati Outro (+90s)</span>
+              </button>
+
+              {/* Seek -10s */}
+              <button
+                type="button"
+                onClick={() => handleSeek(-10)}
+                className="px-2.5 py-1.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-zinc-300 hover:text-white border border-white/[0.08] text-[11px] font-bold spring-press"
+                title="Mundur 10 Detik"
+              >
+                <Rewind className="w-3 h-3 inline mr-0.5" />
+                -10s
+              </button>
+
+              {/* Seek +10s */}
+              <button
+                type="button"
+                onClick={() => handleSeek(10)}
+                className="px-2.5 py-1.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-zinc-300 hover:text-white border border-white/[0.08] text-[11px] font-bold spring-press"
+                title="Maju 10 Detik"
+              >
+                +10s
+                <FastForward className="w-3 h-3 inline ml-0.5" />
+              </button>
+            </div>
+
+            <div className="flex items-center gap-1.5 shrink-0">
+              {/* Watch Later Toggle (Feature 3) */}
+              <button
+                type="button"
+                onClick={handleToggleWatchLater}
+                className={`px-3 py-1.5 rounded-xl text-[11px] font-bold border transition-all flex items-center gap-1 spring-press ${
+                  isWatchLater
+                    ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 shadow-sm'
+                    : 'bg-white/[0.04] hover:bg-white/[0.08] text-zinc-300 hover:text-white border-white/[0.08]'
+                }`}
+                title="Simpan ke Tonton Nanti"
+              >
+                {isWatchLater ? <BookmarkCheck className="w-3.5 h-3.5 text-amber-400" /> : <ListPlus className="w-3.5 h-3.5" />}
+                <span className="hidden sm:inline">{isWatchLater ? 'Tersimpan' : 'Tonton Nanti'}</span>
+              </button>
+
+              {/* Download Episode Trigger (Feature 4) */}
+              <button
+                type="button"
+                onClick={() => setIsDownloadOpen(true)}
+                className="px-3 py-1.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-zinc-300 hover:text-white border border-white/[0.08] text-[11px] font-bold flex items-center gap-1 spring-press"
+                title="Unduh Episode untuk Ditonton Offline"
+              >
+                <Download className="w-3.5 h-3.5 text-cyan-400" />
+                <span className="hidden sm:inline">Unduh</span>
+              </button>
+
+              {/* Subtitle & Server Settings Trigger (Feature 7) */}
+              <button
+                type="button"
+                onClick={() => setIsSettingsOpen(true)}
+                className="p-1.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-zinc-300 hover:text-white border border-white/[0.08] spring-press"
+                title="Pengaturan Subtitle & Server"
+              >
+                <Sliders className="w-4 h-4 text-cyan-400" />
+              </button>
+            </div>
+          </div>
+
+          {/* Prev / Next Episode Navigation Buttons */}
           <div className="grid grid-cols-2 gap-3 p-4 bg-[#030306]/95 border-t border-white/[0.08]">
             {detail.hasPrevEpisode && detail.prevEpisode ? (
               <Link
@@ -570,7 +784,7 @@ function WatchContent() {
         </div>
       </div>
 
-      {/* Multi-Quality & Multi-Server Matrix (Vidhide, Ondesuhd, Desustream, Odstream, Odcdn, Mega) */}
+      {/* Multi-Quality & Multi-Server Matrix */}
       {detail.server?.qualities && detail.server.qualities.length > 0 && (
         <div className="p-6 rounded-3xl card-frosted-obsidian border border-white/[0.08] space-y-4 shadow-[0_20px_50px_rgba(0,0,0,0.95)]">
           <div className="flex items-center justify-between">
@@ -681,8 +895,47 @@ function WatchContent() {
         </div>
       )}
 
-      {/* Episode Community Discussion & Reactions Section */}
-      <EpisodeDiscussion episodeId={episodeId} episodeTitle={detail.title} />
+      {/* Feature 10: Community Comments & Discussion with Spoiler Tags */}
+      <CommunityDiscussionView
+        targetId={episodeId}
+        targetTitle={`${detail.info?.title || detail.title} - ${detail.title}`}
+      />
+
+      {/* Feature 4: Download Manager Modal */}
+      <DownloadManagerModal
+        isOpen={isDownloadOpen}
+        onClose={() => setIsDownloadOpen(false)}
+        initialDownload={
+          isDownloadOpen
+            ? {
+                animeId: detail.animeId || '',
+                episodeId: episodeId,
+                animeTitle: detail.info?.title || detail.title.split(' Episode')[0] || detail.title,
+                episodeTitle: detail.title,
+                poster: detail.info?.poster || '',
+                quality: activeQuality,
+                serverName: activeServerTitle,
+                downloadUrl: streamUrl,
+              }
+            : undefined
+        }
+      />
+
+      {/* Feature 7: Subtitle & Server Switcher Modal */}
+      <PlayerSettingsModal
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
+        currentServer={activeServerTitle}
+        availableServers={allServers}
+        onServerChange={(serverId) => {
+          const matched = detail.server?.qualities
+            ?.flatMap((q) => q.serverList.map((s) => ({ s, qTitle: q.title })))
+            .find((item) => item.s.serverId === serverId);
+          if (matched) {
+            handleSelectServer(matched.s, matched.qTitle);
+          }
+        }}
+      />
     </div>
   );
 }

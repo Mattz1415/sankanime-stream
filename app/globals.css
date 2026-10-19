@@ -399,53 +399,25 @@ body {
   transform: scale(1);
 }
 
-/* Hide Miku floating overlay on chat tab if needed */
-body[data-nexus-tab="chat"] .miku-floating-hidden {
-  display: none !important;
-  pointer-events: none !important;
+/* Community Spoiler Tag (Tap to Reveal) */
+.spoiler-text {
+  background-color: #27272a;
+  color: transparent;
+  border-radius: 6px;
+  padding: 0 4px;
+  user-select: none;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
 }
 
-/* Miku VTuber Breathing Animation */
-@keyframes mikuBreathe {
-  0%, 100% {
-    transform: translateY(0px);
-  }
-  50% {
-    transform: translateY(-5px);
-  }
+.spoiler-text:hover {
+  background-color: #3f3f46;
 }
 
-.animate-miku-breathe {
-  animation: mikuBreathe 3.6s ease-in-out infinite;
-}
-
-/* Miku Auto-Pointing Target Element Glowing Highlight */
-@keyframes mikuTargetPulse {
-  0%, 100% {
-    box-shadow: 0 0 25px rgba(0, 240, 255, 0.9), inset 0 0 12px rgba(0, 240, 255, 0.5);
-    border-color: #00f0ff !important;
-  }
-  50% {
-    box-shadow: 0 0 45px rgba(0, 240, 255, 1), inset 0 0 22px rgba(0, 240, 255, 0.8);
-    border-color: #ffffff !important;
-  }
-}
-
-.miku-target-highlight {
-  animation: mikuTargetPulse 1.2s ease-in-out infinite !important;
-  position: relative !important;
-  z-index: 50 !important;
-  transition: all 0.3s ease !important;
-}
-
-/* Live2D Canvas Transparency & Zero Background */
-canvas.live2d-canvas,
-.live2d-container canvas,
-.live2d-canvas-wrapper canvas {
-  background-color: transparent !important;
-  background: transparent !important;
-  outline: none !important;
-  border: none !important;
+.spoiler-text.revealed {
+  background-color: rgba(255, 255, 255, 0.08);
+  color: inherit;
+  user-select: text;
 }
 
 

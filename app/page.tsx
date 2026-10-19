@@ -35,6 +35,9 @@ import AnimeGachaModal from '@/components/AnimeGachaModal';
 import AnimeStoriesBar from '@/components/AnimeStoriesBar';
 import TopTenShelf from '@/components/TopTenShelf';
 import ReleaseCountdownBanner from '@/components/ReleaseCountdownBanner';
+import DownloadManagerModal from '@/components/DownloadManagerModal';
+import ThemeCustomizerModal from '@/components/ThemeCustomizerModal';
+import AdvancedFilterModal from '@/components/AdvancedFilterModal';
 import { getHomeData, getSchedule } from '@/lib/clientApi';
 import { getWatchHistory } from '@/lib/storage';
 import { HomeData, ScheduleDay, WatchHistoryItem } from '@/lib/types';
@@ -72,6 +75,9 @@ export default function HomePage() {
   // Modals state
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
   const [isGachaOpen, setIsGachaOpen] = useState(false);
+  const [isThemeOpen, setIsThemeOpen] = useState(false);
+  const [isDownloadOpen, setIsDownloadOpen] = useState(false);
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
 
   const { accentColor } = useTheme();
 
@@ -128,6 +134,9 @@ export default function HomePage() {
         onSelectCategory={(cat) => setActiveCategory(cat)}
         onOpenProfile={() => setActiveTab('profil')}
         onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
+        onOpenTheme={() => setIsThemeOpen(true)}
+        onOpenDownloads={() => setIsDownloadOpen(true)}
+        onOpenGacha={() => setIsGachaOpen(true)}
       />
 
       {/* Main Container */}
@@ -487,6 +496,30 @@ export default function HomePage() {
         isOpen={isGachaOpen}
         onClose={() => setIsGachaOpen(false)}
         initialPool={[...(data?.ongoing?.animeList || []), ...(data?.complete?.animeList || [])]}
+      />
+
+      {/* OLED Theme Customizer Modal */}
+      <ThemeCustomizerModal
+        isOpen={isThemeOpen}
+        onClose={() => setIsThemeOpen(false)}
+      />
+
+      {/* Download Manager Modal */}
+      <DownloadManagerModal
+        isOpen={isDownloadOpen}
+        onClose={() => setIsDownloadOpen(false)}
+      />
+
+      {/* Advanced Filter Modal */}
+      <AdvancedFilterModal
+        isOpen={isFilterOpen}
+        onClose={() => setIsFilterOpen(false)}
+        filters={{ genres: [], status: 'all', year: 'Semua', sortBy: 'relevance' }}
+        onApply={(f) => {
+          const q = f.genres[0] || '';
+          window.location.href = `/search?q=${encodeURIComponent(q)}`;
+        }}
+        onReset={() => {}}
       />
     </div>
   );

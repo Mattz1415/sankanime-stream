@@ -2,13 +2,17 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { Search, Sparkles } from 'lucide-react';
+import { Search, Sparkles, Palette, Download, Dice5 } from 'lucide-react';
+import { useTheme } from '@/lib/themeContext';
 
 interface FluentHeaderProps {
   activeCategory: 'Anime' | 'Komik' | 'Donghua';
   onSelectCategory: (cat: 'Anime' | 'Komik' | 'Donghua') => void;
   onOpenProfile?: () => void;
   onOpenCommandPalette?: () => void;
+  onOpenTheme?: () => void;
+  onOpenDownloads?: () => void;
+  onOpenGacha?: () => void;
 }
 
 export default function FluentHeader({
@@ -16,8 +20,12 @@ export default function FluentHeader({
   onSelectCategory,
   onOpenProfile,
   onOpenCommandPalette,
+  onOpenTheme,
+  onOpenDownloads,
+  onOpenGacha,
 }: FluentHeaderProps) {
   const categories: Array<'Anime' | 'Komik' | 'Donghua'> = ['Anime', 'Komik', 'Donghua'];
+  const { accentColor } = useTheme();
 
   return (
     <header className="sticky top-0 z-40 w-full bg-[#000000]/95 border-b border-white/[0.08] px-4 sm:px-6 lg:px-8 py-3">
@@ -55,15 +63,54 @@ export default function FluentHeader({
           })}
         </div>
 
-        {/* Right Action Icons: Command Palette Search & Avatar */}
-        <div className="flex items-center gap-2">
+        {/* Right Action Icons: Gacha, Downloads, Theme, Search & Avatar */}
+        <div className="flex items-center gap-1.5 sm:gap-2">
+          {/* Random Anime Picker (Gacha Roulette) Button */}
+          {onOpenGacha && (
+            <button
+              type="button"
+              onClick={onOpenGacha}
+              className="w-9 h-9 rounded-full bg-white/[0.05] hover:bg-amber-400/20 border border-white/[0.08] hover:border-amber-400/40 flex items-center justify-center text-amber-300 spring-press shadow-sm transition-all"
+              title="Acak Anime (Random Anime Picker)"
+              aria-label="Acak Anime"
+            >
+              <Dice5 className="w-4 h-4" />
+            </button>
+          )}
+
+          {/* Download Manager Trigger Button */}
+          {onOpenDownloads && (
+            <button
+              type="button"
+              onClick={onOpenDownloads}
+              className="w-9 h-9 rounded-full bg-white/[0.05] hover:bg-cyan-500/20 border border-white/[0.08] hover:border-cyan-400/40 flex items-center justify-center text-cyan-300 spring-press shadow-sm transition-all"
+              title="Download Manager (Offline Episodes)"
+              aria-label="Download Manager"
+            >
+              <Download className="w-4 h-4" />
+            </button>
+          )}
+
+          {/* OLED Theme Customizer Trigger Button */}
+          {onOpenTheme && (
+            <button
+              type="button"
+              onClick={onOpenTheme}
+              className="w-9 h-9 rounded-full bg-white/[0.05] hover:bg-white/[0.12] border border-white/[0.08] hover:border-white/25 flex items-center justify-center text-zinc-300 hover:text-white spring-press shadow-sm transition-all"
+              title="Kustomisasi Tema OLED"
+              aria-label="Kustomisasi Tema"
+            >
+              <Palette className="w-4 h-4" style={{ color: accentColor }} />
+            </button>
+          )}
+
           {/* Command Palette Trigger Button */}
           <button
             id="search-trigger"
             type="button"
             onClick={onOpenCommandPalette}
             className="h-9 px-3 rounded-full bg-white/[0.05] hover:bg-white/[0.12] border border-white/[0.08] hover:border-white/25 flex items-center gap-2 text-zinc-300 hover:text-white spring-press shadow-sm"
-            title="Command Palette Search (Ctrl+K)"
+            title="Cari Anime (Ctrl+K)"
             aria-label="Cari Anime"
           >
             <Search className="w-3.5 h-3.5 text-cyan-400" />
@@ -90,7 +137,6 @@ export default function FluentHeader({
                 className="w-full h-full object-cover"
               />
             </div>
-            {/* Online Green Pulsing Indicator */}
             <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-400 border-2 border-black animate-pulse" />
           </button>
         </div>

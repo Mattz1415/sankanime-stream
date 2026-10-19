@@ -28,7 +28,12 @@ export default function LanjutNontonCard({
   const episodeId = historyItem?.episodeId || (fallbackAnime ? `episode-${fallbackAnime.animeId}-1` : '');
   const poster = historyItem?.poster || fallbackAnime?.poster || '';
   const progressPercent = historyItem?.progressPercent || 72;
-  const progressLabel = historyItem?.currentEpisodeNumber
+  const lastSecondsFormatted = historyItem?.lastSeconds
+    ? `${Math.floor(historyItem.lastSeconds / 60)}:${String(historyItem.lastSeconds % 60).padStart(2, '0')}`
+    : null;
+  const progressLabel = lastSecondsFormatted
+    ? `Terhenti di ${lastSecondsFormatted} • ${progressPercent}% selesai`
+    : historyItem?.currentEpisodeNumber
     ? `Episode ${historyItem.currentEpisodeNumber} / ${historyItem.totalEpisodes || '12'} • ${progressPercent}% selesai`
     : `Episode Terkini • ${progressPercent}% ditonton`;
 
