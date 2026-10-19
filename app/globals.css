@@ -438,3 +438,14 @@ body[data-nexus-tab="chat"] .miku-floating-hidden {
   transition: all 0.3s ease !important;
 }
 
+/* Live2D Canvas Transparency & Zero Background */
+canvas.live2d-canvas,
+.live2d-container canvas,
+.live2d-canvas-wrapper canvas {
+  background-color: transparent !important;
+  background: transparent !important;
+  outline: none !important;
+  border: none !important;
+}
+
+

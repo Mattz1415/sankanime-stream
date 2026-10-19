@@ -23,6 +23,13 @@
 		],
 		"Physics": "RetrynowMiku.physics3.json",
 		"DisplayInfo": "RetrynowMiku.cdi3.json",
+		"Motions": {
+			"Idle": [
+				{
+					"File": "Scene1.motion3.json"
+				}
+			]
+		},
 		"Expressions": [
 			{ "Name": "Open Arms", "File": "Open Arms.exp3.json" },
 			{ "Name": "Fanged Smile", "File": "Fanged Smile.exp3.json" },
@@ -58,7 +65,8 @@
 			{ "Name": "School Uniform", "File": "School Uniform.exp3.json" },
 			{ "Name": "Squinny Eyes", "File": "Squinny Eyes.exp3.json" },
 			{ "Name": "Uniform Magic Eyes", "File": "Uniform Magic Eyes.exp3.json" },
-			{ "Name": "Wide Mouth", "File": "Wide Mouth.exp3.json" }
+			{ "Name": "Wide Mouth", "File": "Wide Mouth.exp3.json" },
+			{ "Name": "Watermark", "File": "Watermark.exp3.json" }
 		]
 	},
 	"Groups": [

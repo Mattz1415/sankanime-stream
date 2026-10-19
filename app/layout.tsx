@@ -31,6 +31,9 @@ export default function RootLayout({
     <html lang="id" className="dark">
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+        <script src="/live2d/live2dcubismcore.min.js" async={false} />
+        <script src="/live2d/pixi.min.js" async={false} />
+        <script src="/live2d/cubism4.min.js" async={false} />
       </head>
       <body className="bg-[#000000] text-zinc-100 min-h-screen flex flex-col antialiased selection:bg-white selection:text-black">
         <ThemeProvider>

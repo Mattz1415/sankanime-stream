@@ -20,7 +20,26 @@ export type MikuExpressionKey =
   | 'Yandere'
   | 'hammer'
   | 'baseball bat'
-  | 'crowbar';
+  | 'crowbar'
+  | 'axe'
+  | 'hoe'
+  | 'saw'
+  | 'scissors'
+  | 'shovel'
+  | 'wrench'
+  | 'pliers'
+  | 'utility knife'
+  | 'stun baton'
+  | 'staff (upside down)'
+  | 'side Blush'
+  | 'Item Behind Back'
+  | 'Item Behind Back2'
+  | 'Pink Paint'
+  | 'School Uniform'
+  | 'Squinny Eyes'
+  | 'Uniform Magic Eyes'
+  | 'Wide Mouth'
+  | 'Watermark';
 
 export interface MikuExpressionInfo {
   name: MikuExpressionKey;
@@ -114,6 +133,15 @@ export const MIKU_EXPRESSIONS: Record<MikuExpressionKey, MikuExpressionInfo> = {
     bubbleTone: 'border-indigo-400/40 shadow-indigo-500/20',
     glowColor: '#6366f1',
   },
+  'staff (upside down)': {
+    name: 'staff (upside down)',
+    file: 'staff (upside down).exp3.json',
+    category: 'POINT',
+    label: 'Tongkat Ajaib',
+    badgeEmoji: '🪄',
+    bubbleTone: 'border-cyan-400/40 shadow-cyan-500/20',
+    glowColor: '#00f0ff',
+  },
   'Gloom': {
     name: 'Gloom',
     file: 'Gloom.exp3.json',
@@ -176,6 +204,168 @@ export const MIKU_EXPRESSIONS: Record<MikuExpressionKey, MikuExpressionInfo> = {
     badgeEmoji: '🛠️',
     bubbleTone: 'border-orange-400/50 shadow-orange-500/30',
     glowColor: '#f97316',
+  },
+  'axe': {
+    name: 'axe',
+    file: 'axe.exp3.json',
+    category: 'PLAYFUL',
+    label: 'Kapak Jahil',
+    badgeEmoji: '🪓',
+    bubbleTone: 'border-red-500/40 shadow-red-500/20',
+    glowColor: '#ef4444',
+  },
+  'hoe': {
+    name: 'hoe',
+    file: 'hoe.exp3.json',
+    category: 'PLAYFUL',
+    label: 'Cangkul',
+    badgeEmoji: '⛏️',
+    bubbleTone: 'border-amber-500/40 shadow-amber-500/20',
+    glowColor: '#d97706',
+  },
+  'saw': {
+    name: 'saw',
+    file: 'saw.exp3.json',
+    category: 'PLAYFUL',
+    label: 'Gergaji',
+    badgeEmoji: '🪚',
+    bubbleTone: 'border-orange-500/40 shadow-orange-500/20',
+    glowColor: '#ea580c',
+  },
+  'scissors': {
+    name: 'scissors',
+    file: 'scissors.exp3.json',
+    category: 'PLAYFUL',
+    label: 'Gunting',
+    badgeEmoji: '✂️',
+    bubbleTone: 'border-pink-500/40 shadow-pink-500/20',
+    glowColor: '#ec4899',
+  },
+  'shovel': {
+    name: 'shovel',
+    file: 'shovel.exp3.json',
+    category: 'PLAYFUL',
+    label: 'Sekop',
+    badgeEmoji: '🪄',
+    bubbleTone: 'border-yellow-500/40 shadow-yellow-500/20',
+    glowColor: '#eab308',
+  },
+  'wrench': {
+    name: 'wrench',
+    file: 'wrench.exp3.json',
+    category: 'PLAYFUL',
+    label: 'Kunci Pas',
+    badgeEmoji: '🔧',
+    bubbleTone: 'border-cyan-500/40 shadow-cyan-500/20',
+    glowColor: '#06b6d4',
+  },
+  'pliers': {
+    name: 'pliers',
+    file: 'pliers.exp3.json',
+    category: 'PLAYFUL',
+    label: 'Tang',
+    badgeEmoji: '🗜️',
+    bubbleTone: 'border-violet-500/40 shadow-violet-500/20',
+    glowColor: '#8b5cf6',
+  },
+  'utility knife': {
+    name: 'utility knife',
+    file: 'utility knife.exp3.json',
+    category: 'PLAYFUL',
+    label: 'Pisau Cutter',
+    badgeEmoji: '🔪',
+    bubbleTone: 'border-rose-500/40 shadow-rose-500/20',
+    glowColor: '#f43f5e',
+  },
+  'stun baton': {
+    name: 'stun baton',
+    file: 'stun baton.exp3.json',
+    category: 'PLAYFUL',
+    label: 'Tongkat Listrik',
+    badgeEmoji: '⚡',
+    bubbleTone: 'border-yellow-400/50 shadow-yellow-500/30',
+    glowColor: '#facc15',
+  },
+  'side Blush': {
+    name: 'side Blush',
+    file: 'side Blush.exp3.json',
+    category: 'GREET',
+    label: 'Pipi Merona',
+    badgeEmoji: '😳',
+    bubbleTone: 'border-pink-400/40 shadow-pink-500/20',
+    glowColor: '#f472b6',
+  },
+  'Item Behind Back': {
+    name: 'Item Behind Back',
+    file: 'Item Behind Back.exp3.json',
+    category: 'PLAYFUL',
+    label: 'Sembunyi Barang',
+    badgeEmoji: '🤫',
+    bubbleTone: 'border-purple-400/40 shadow-purple-500/20',
+    glowColor: '#a855f7',
+  },
+  'Item Behind Back2': {
+    name: 'Item Behind Back2',
+    file: 'Item Behind Back2.exp3.json',
+    category: 'PLAYFUL',
+    label: 'Sembunyi Barang 2',
+    badgeEmoji: '🤫',
+    bubbleTone: 'border-violet-400/40 shadow-violet-500/20',
+    glowColor: '#7c3aed',
+  },
+  'Pink Paint': {
+    name: 'Pink Paint',
+    file: 'Pink Paint.exp3.json',
+    category: 'GREET',
+    label: 'Cat Pink Ceria',
+    badgeEmoji: '🎨',
+    bubbleTone: 'border-pink-400/40 shadow-pink-500/20',
+    glowColor: '#ec4899',
+  },
+  'School Uniform': {
+    name: 'School Uniform',
+    file: 'School Uniform.exp3.json',
+    category: 'GREET',
+    label: 'Seragam Sekolah',
+    badgeEmoji: '🎒',
+    bubbleTone: 'border-sky-400/40 shadow-sky-500/20',
+    glowColor: '#38bdf8',
+  },
+  'Squinny Eyes': {
+    name: 'Squinny Eyes',
+    file: 'Squinny Eyes.exp3.json',
+    category: 'SEARCH',
+    label: 'Mata Menyipit Curiga',
+    badgeEmoji: '😑',
+    bubbleTone: 'border-zinc-400/40 shadow-zinc-500/20',
+    glowColor: '#a1a1aa',
+  },
+  'Uniform Magic Eyes': {
+    name: 'Uniform Magic Eyes',
+    file: 'Uniform Magic Eyes.exp3.json',
+    category: 'GREET',
+    label: 'Mata Sihir Berkilau',
+    badgeEmoji: '🔮',
+    bubbleTone: 'border-cyan-400/40 shadow-cyan-500/20',
+    glowColor: '#00f0ff',
+  },
+  'Wide Mouth': {
+    name: 'Wide Mouth',
+    file: 'Wide Mouth.exp3.json',
+    category: 'GREET',
+    label: 'Mulut Terbuka Lebar',
+    badgeEmoji: '😮',
+    bubbleTone: 'border-emerald-400/40 shadow-emerald-500/20',
+    glowColor: '#10b981',
+  },
+  'Watermark': {
+    name: 'Watermark',
+    file: 'Watermark.exp3.json',
+    category: 'GREET',
+    label: 'Watermark Miku',
+    badgeEmoji: '✨',
+    bubbleTone: 'border-cyan-400/40 shadow-cyan-500/20',
+    glowColor: '#00f0ff',
   },
   'Yandere': {
     name: 'Yandere',
