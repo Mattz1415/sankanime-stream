@@ -20,11 +20,11 @@ export default function FluentHeader({
   const categories: Array<'Anime' | 'Komik' | 'Donghua'> = ['Anime', 'Komik', 'Donghua'];
 
   return (
-    <header className="sticky top-0 z-40 w-full backdrop-blur-2xl bg-[#000000]/90 border-b border-white/[0.08] px-4 sm:px-6 lg:px-8 py-3 transition-all">
+    <header className="sticky top-0 z-40 w-full bg-[#000000]/95 border-b border-white/[0.08] px-4 sm:px-6 lg:px-8 py-3">
       <div className="max-w-7xl mx-auto flex items-center justify-between gap-3">
         {/* Brand / Logo */}
         <Link href="/" className="flex items-center gap-2 group flex-shrink-0 spring-press">
-          <div className="w-9 h-9 rounded-2xl bg-gradient-to-tr from-white/20 to-white/5 border border-white/20 flex items-center justify-center backdrop-blur-md shadow-lg group-hover:border-white/40 transition-all">
+          <div className="w-9 h-9 rounded-2xl bg-gradient-to-tr from-white/20 to-white/5 border border-white/20 flex items-center justify-center shadow-lg group-hover:border-white/40 transition-transform">
             <span className="font-cinematic font-black text-lg text-white">N</span>
           </div>
           <div className="hidden sm:block">
@@ -85,6 +85,7 @@ export default function FluentHeader({
                 src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80"
                 alt="Avatar"
                 loading="lazy"
+                decoding="async"
                 className="w-full h-full object-cover"
               />
             </div>

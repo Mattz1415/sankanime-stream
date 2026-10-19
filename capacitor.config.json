@@ -4,7 +4,7 @@
   "webDir": "out",
   "android": {
     "allowMixedContent": true,
-    "captureInput": true,
+    "captureInput": false,
     "webContentsDebuggingEnabled": true
   },
   "plugins": {

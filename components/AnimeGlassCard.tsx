@@ -11,7 +11,7 @@ interface AnimeGlassCardProps {
   index?: number;
 }
 
-export default function AnimeGlassCard({ anime, index = 0 }: AnimeGlassCardProps) {
+function RawAnimeGlassCard({ anime, index = 0 }: AnimeGlassCardProps) {
   const { accentColor } = useTheme();
   const animeId = anime.animeId || anime.slug || anime.href?.split('/').filter(Boolean).pop() || '';
   const staggerClass = `stagger-${(index % 12) + 1}`;
@@ -30,6 +30,7 @@ export default function AnimeGlassCard({ anime, index = 0 }: AnimeGlassCardProps
           src={anime.poster}
           alt={anime.title}
           loading="lazy"
+          decoding="async"
           className="w-full h-full object-cover group-hover:scale-108 transition-transform duration-500 ease-out"
         />
 
@@ -54,7 +55,7 @@ export default function AnimeGlassCard({ anime, index = 0 }: AnimeGlassCardProps
         )}
 
         {/* Floating Play Button on Hover */}
-        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 z-10">
+        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10 pointer-events-none">
           <div className="w-11 h-11 rounded-full bg-white text-black flex items-center justify-center shadow-[0_0_25px_rgba(255,255,255,0.6)] transform translate-y-2 group-hover:translate-y-0 transition-transform duration-300 scale-90 group-hover:scale-100">
             <Play className="w-4 h-4 fill-black ml-0.5" />
           </div>
@@ -89,3 +90,6 @@ export default function AnimeGlassCard({ anime, index = 0 }: AnimeGlassCardProps
     </Link>
   );
 }
+
+export const AnimeGlassCard = React.memo(RawAnimeGlassCard);
+export default AnimeGlassCard;

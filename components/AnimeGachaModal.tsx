@@ -191,13 +191,13 @@ export default function AnimeGachaModal({ isOpen, onClose, initialPool }: AnimeG
 
   return (
     <div
-      className={`fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/92 backdrop-blur-3xl overflow-y-auto animate-fade-in-up ${
+      className={`fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/95 overflow-y-auto animate-fade-in-up ${
         shake ? 'animate-screen-shake' : ''
       }`}
     >
       {/* Radial Background Particle Flare */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] bg-gradient-to-r from-cyan-500/15 via-purple-500/15 to-amber-500/15 rounded-full filter blur-[120px] opacity-70" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[360px] h-[360px] bg-gradient-to-r from-cyan-500/10 via-purple-500/10 to-amber-500/10 rounded-full opacity-50" />
       </div>
 
       {/* Close Button Top Right */}
@@ -273,6 +273,8 @@ export default function AnimeGachaModal({ isOpen, onClose, initialPool }: AnimeG
                     <img
                       src={item.poster}
                       alt={item.title}
+                      loading="lazy"
+                      decoding="async"
                       className="w-full h-full object-cover"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent" />
@@ -309,6 +311,8 @@ export default function AnimeGachaModal({ isOpen, onClose, initialPool }: AnimeG
                   <img
                     src={selectedAnime.poster}
                     alt={selectedAnime.title}
+                    loading="lazy"
+                    decoding="async"
                     className="w-full h-full object-cover transform hover:scale-105 transition-transform duration-500"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black via-black/25 to-transparent" />

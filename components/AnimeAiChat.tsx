@@ -26,6 +26,7 @@ import {
 import { getHomeData } from '@/lib/clientApi';
 import { AnimeListItem } from '@/lib/types';
 import { RezeAvatar } from './RezeFloatingChat';
+import IsolatedChatInput from './IsolatedChatInput';
 
 interface GlobalChatMessage {
   id: string;
@@ -36,6 +37,126 @@ interface GlobalChatMessage {
   time: string;
   isOwner?: boolean;
 }
+
+const GlobalMessageItem = React.memo(function GlobalMessageItem({ msg }: { msg: GlobalChatMessage }) {
+  const isUser = msg.sender === 'Kepiskepsi';
+  return (
+    <div className={`flex items-start gap-3 animate-fade-in-up ${isUser ? 'flex-row-reverse' : ''}`}>
+      <div
+        className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 text-xs font-bold border ${
+          isUser
+            ? 'bg-cyan-500/20 border-cyan-400 text-cyan-300'
+            : msg.badge === 'OWNER'
+            ? 'bg-red-500/20 border-red-500 text-red-300'
+            : 'bg-white/10 border-white/20 text-white'
+        }`}
+      >
+        {isUser ? 'K' : msg.sender.charAt(0).toUpperCase()}
+      </div>
+
+      <div
+        className={`max-w-[80%] rounded-2xl p-3.5 text-xs leading-relaxed shadow-md ${
+          isUser
+            ? 'bg-white text-black font-semibold'
+            : 'bg-white/[0.06] border border-white/[0.08] text-zinc-200'
+        }`}
+      >
+        <div className="flex items-center gap-2 mb-1">
+          <span className={`font-bold ${isUser ? 'text-zinc-900' : 'text-zinc-300'}`}>
+            @{msg.sender}
+          </span>
+          {msg.badge && (
+            <span
+              className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider text-black"
+              style={{ backgroundColor: msg.badgeColor || '#fff' }}
+            >
+              {msg.badge}
+            </span>
+          )}
+        </div>
+        <p className="whitespace-pre-line">{msg.text}</p>
+        <span
+          className={`block text-[10px] mt-1 text-right ${
+            isUser ? 'text-zinc-500' : 'text-zinc-500'
+          }`}
+        >
+          {msg.time}
+        </span>
+      </div>
+    </div>
+  );
+});
+
+const RezeMessageItem = React.memo(function RezeMessageItem({ msg }: { msg: RezeChatMessage }) {
+  const isUser = msg.sender === 'user';
+  return (
+    <div className={`flex items-start gap-3 animate-fade-in-up ${isUser ? 'flex-row-reverse' : ''}`}>
+      {!isUser && <RezeAvatar className="w-8 h-8 mt-1 shrink-0" />}
+
+      <div className="max-w-[80%] space-y-1">
+        <div
+          className={`rounded-2xl p-4 text-xs leading-relaxed shadow-md ${
+            isUser
+              ? 'bg-gradient-to-tr from-pink-600 to-purple-600 text-white font-medium rounded-tr-xs'
+              : 'bg-white/[0.05] border border-white/[0.08] text-zinc-200 rounded-tl-xs backdrop-blur-md'
+          }`}
+        >
+          <p className="whitespace-pre-line">{msg.text}</p>
+
+          {/* Mini Recommended Anime Card */}
+          {msg.matchedAnime && (
+            <div className="mt-3 p-2.5 rounded-2xl bg-black/70 border border-pink-500/30 flex items-center gap-3 shadow-lg hover:border-pink-500/60 transition-transform">
+              {msg.matchedAnime.poster ? (
+                <img
+                  src={msg.matchedAnime.poster}
+                  alt={msg.matchedAnime.title}
+                  loading="lazy"
+                  decoding="async"
+                  className="w-12 h-16 object-cover rounded-xl border border-white/10 shrink-0"
+                />
+              ) : (
+                <div className="w-12 h-16 rounded-xl bg-pink-950/40 border border-pink-500/30 flex items-center justify-center shrink-0">
+                  <Film className="w-5 h-5 text-pink-400" />
+                </div>
+              )}
+
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[9px] px-2 py-0.5 rounded-full bg-pink-500/20 text-pink-300 font-bold border border-pink-500/30">
+                    REKOMENDASI REZE
+                  </span>
+                  {msg.matchedAnime.score && (
+                    <span className="text-[10px] text-amber-300 font-bold">
+                      ★ {msg.matchedAnime.score}
+                    </span>
+                  )}
+                </div>
+                <h5 className="font-cinematic font-bold text-xs text-white truncate mt-1">
+                  {msg.matchedAnime.title}
+                </h5>
+                <Link
+                  href={
+                    msg.matchedAnime.animeId
+                      ? `/anime?id=${msg.matchedAnime.animeId}`
+                      : '/'
+                  }
+                  className="inline-flex items-center gap-1 mt-1 text-[11px] font-bold text-pink-400 hover:text-pink-300 spring-press"
+                >
+                  <Play className="w-3 h-3 fill-current" />
+                  <span>Tonton Sekarang</span>
+                </Link>
+              </div>
+            </div>
+          )}
+        </div>
+
+        <span className={`block text-[10px] px-1 text-zinc-500 ${isUser ? 'text-right' : 'text-left'}`}>
+          {msg.time}
+        </span>
+      </div>
+    </div>
+  );
+});
 
 const PINNED_MESSAGE: GlobalChatMessage = {
   id: 'pinned-1',
@@ -83,12 +204,10 @@ const REZE_QUICK_REPLIES = [
 export default function AnimeAiChat() {
   const [activeTab, setActiveTab] = useState<'global' | 'ai'>('global');
   const [globalMessages, setGlobalMessages] = useState<GlobalChatMessage[]>(DEFAULT_GLOBAL_MESSAGES);
-  const [globalInput, setGlobalInput] = useState('');
   const { accentColor } = useTheme();
 
   // Reze AI states
   const [rezeMessages, setRezeMessages] = useState<RezeChatMessage[]>([]);
-  const [rezeInput, setRezeInput] = useState('');
   const [isRezeTyping, setIsRezeTyping] = useState(false);
   const [knownAnimeList, setKnownAnimeList] = useState<AnimeListItem[]>([]);
 
@@ -127,21 +246,21 @@ export default function AnimeAiChat() {
     }
   }, [rezeMessages, isRezeTyping, activeTab]);
 
-  const handleSendGlobal = () => {
-    if (!globalInput.trim()) return;
+  const handleSendGlobal = (text: string) => {
+    const trimmed = text.trim();
+    if (!trimmed) return;
 
     const newMsg: GlobalChatMessage = {
       id: Date.now().toString(),
       sender: 'Kepiskepsi',
       badge: 'KAMU',
       badgeColor: '#00f0ff',
-      text: globalInput.trim(),
+      text: trimmed,
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     };
 
     const updated = [...globalMessages, newMsg];
     setGlobalMessages(updated);
-    setGlobalInput('');
 
     try {
       localStorage.setItem('kpanime_global_chats', JSON.stringify(updated));
@@ -172,8 +291,8 @@ export default function AnimeAiChat() {
     }, 1500);
   };
 
-  const handleSendReze = async (textToSend?: string) => {
-    const promptText = (textToSend || rezeInput).trim();
+  const handleSendReze = async (textToSend: string) => {
+    const promptText = textToSend.trim();
     if (!promptText || isRezeTyping) return;
 
     const userMessage: RezeChatMessage = {
@@ -186,7 +305,6 @@ export default function AnimeAiChat() {
     const newHistory = [...rezeMessages, userMessage];
     setRezeMessages(newHistory);
     saveRezeChatHistory(newHistory);
-    setRezeInput('');
     setIsRezeTyping(true);
 
     try {
@@ -290,79 +408,18 @@ export default function AnimeAiChat() {
 
           {/* Real-time Global Chat Feed */}
           <div className="p-4 sm:p-6 rounded-3xl glass-obsidian border border-white/[0.08] min-h-[350px] max-h-[460px] overflow-y-auto space-y-3.5 shadow-inner">
-            {globalMessages.map((msg) => {
-              const isUser = msg.sender === 'Kepiskepsi';
-              return (
-                <div
-                  key={msg.id}
-                  className={`flex items-start gap-3 animate-fade-in-up ${isUser ? 'flex-row-reverse' : ''}`}
-                >
-                  <div
-                    className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 text-xs font-bold border ${
-                      isUser
-                        ? 'bg-cyan-500/20 border-cyan-400 text-cyan-300'
-                        : msg.badge === 'OWNER'
-                        ? 'bg-red-500/20 border-red-500 text-red-300'
-                        : 'bg-white/10 border-white/20 text-white'
-                    }`}
-                  >
-                    {isUser ? 'K' : msg.sender.charAt(0).toUpperCase()}
-                  </div>
-
-                  <div
-                    className={`max-w-[80%] rounded-2xl p-3.5 text-xs leading-relaxed shadow-md ${
-                      isUser
-                        ? 'bg-white text-black font-semibold'
-                        : 'bg-white/[0.06] border border-white/[0.08] text-zinc-200'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className={`font-bold ${isUser ? 'text-zinc-900' : 'text-zinc-300'}`}>
-                        @{msg.sender}
-                      </span>
-                      {msg.badge && (
-                        <span
-                          className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider text-black"
-                          style={{ backgroundColor: msg.badgeColor || '#fff' }}
-                        >
-                          {msg.badge}
-                        </span>
-                      )}
-                    </div>
-                    <p className="whitespace-pre-line">{msg.text}</p>
-                    <span
-                      className={`block text-[10px] mt-1 text-right ${
-                        isUser ? 'text-zinc-500' : 'text-zinc-500'
-                      }`}
-                    >
-                      {msg.time}
-                    </span>
-                  </div>
-                </div>
-              );
-            })}
+            {globalMessages.map((msg) => (
+              <GlobalMessageItem key={msg.id} msg={msg} />
+            ))}
             <div ref={globalMessagesEndRef} />
           </div>
 
-          {/* Global Input Bar */}
-          <div className="flex items-center gap-2 p-2 rounded-2xl glass-obsidian border border-white/[0.1] shadow-lg">
-            <input
-              type="text"
-              value={globalInput}
-              onChange={(e) => setGlobalInput(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleSendGlobal()}
-              placeholder="Tulis pesan ke chat global sebagai Kepiskepsi..."
-              className="flex-1 bg-transparent px-3.5 py-2.5 text-xs sm:text-sm text-white placeholder-zinc-500 outline-none"
-            />
-            <button
-              onClick={handleSendGlobal}
-              disabled={!globalInput.trim()}
-              className="px-5 py-2.5 rounded-xl bg-white text-black hover:bg-zinc-200 disabled:opacity-40 disabled:hover:bg-white font-extrabold text-xs flex items-center gap-1.5 spring-press shadow-md"
-            >
-              <span>Kirim</span>
-              <Send className="w-3.5 h-3.5" />
-            </button>
-          </div>
+          {/* Isolated Global Input Bar */}
+          <IsolatedChatInput
+            theme="white"
+            onSend={handleSendGlobal}
+            placeholder="Tulis pesan ke chat global sebagai Kepiskepsi..."
+          />
         </div>
       )}
 
@@ -405,83 +462,9 @@ export default function AnimeAiChat() {
 
           {/* Reze Chat Messages Feed */}
           <div className="p-4 sm:p-6 rounded-3xl glass-obsidian border border-white/[0.08] min-h-[380px] max-h-[480px] overflow-y-auto space-y-4 shadow-inner">
-            {rezeMessages.map((msg) => {
-              const isUser = msg.sender === 'user';
-              return (
-                <div
-                  key={msg.id}
-                  className={`flex items-start gap-3 animate-fade-in-up ${
-                    isUser ? 'flex-row-reverse' : ''
-                  }`}
-                >
-                  {!isUser && <RezeAvatar className="w-8 h-8 mt-1 shrink-0" />}
-
-                  <div className="max-w-[80%] space-y-1">
-                    <div
-                      className={`rounded-2xl p-4 text-xs leading-relaxed shadow-md ${
-                        isUser
-                          ? 'bg-gradient-to-tr from-pink-600 to-purple-600 text-white font-medium rounded-tr-xs'
-                          : 'bg-white/[0.05] border border-white/[0.08] text-zinc-200 rounded-tl-xs backdrop-blur-md'
-                      }`}
-                    >
-                      <p className="whitespace-pre-line">{msg.text}</p>
-
-                      {/* Mini Recommended Anime Card */}
-                      {msg.matchedAnime && (
-                        <div className="mt-3 p-2.5 rounded-2xl bg-black/70 border border-pink-500/30 flex items-center gap-3 shadow-lg hover:border-pink-500/60 transition-all">
-                          {msg.matchedAnime.poster ? (
-                            <img
-                              src={msg.matchedAnime.poster}
-                              alt={msg.matchedAnime.title}
-                              className="w-12 h-16 object-cover rounded-xl border border-white/10 shrink-0"
-                            />
-                          ) : (
-                            <div className="w-12 h-16 rounded-xl bg-pink-950/40 border border-pink-500/30 flex items-center justify-center shrink-0">
-                              <Film className="w-5 h-5 text-pink-400" />
-                            </div>
-                          )}
-
-                          <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-1.5">
-                              <span className="text-[9px] px-2 py-0.5 rounded-full bg-pink-500/20 text-pink-300 font-bold border border-pink-500/30">
-                                REKOMENDASI REZE
-                              </span>
-                              {msg.matchedAnime.score && (
-                                <span className="text-[10px] text-amber-300 font-bold">
-                                  ★ {msg.matchedAnime.score}
-                                </span>
-                              )}
-                            </div>
-                            <h5 className="font-cinematic font-bold text-xs text-white truncate mt-1">
-                              {msg.matchedAnime.title}
-                            </h5>
-                            <Link
-                              href={
-                                msg.matchedAnime.animeId
-                                  ? `/anime?id=${msg.matchedAnime.animeId}`
-                                  : '/'
-                              }
-                              className="inline-flex items-center gap-1 mt-1 text-[11px] font-bold text-pink-400 hover:text-pink-300 spring-press"
-                            >
-                              <Play className="w-3 h-3 fill-current" />
-                              <span>Tonton Sekarang</span>
-                            </Link>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-
-                    <span
-                      className={`block text-[10px] px-1 text-zinc-500 ${
-                        isUser ? 'text-right' : 'text-left'
-                      }`}
-                    >
-                      {msg.time}
-                    </span>
-                  </div>
-                </div>
-              );
-            })}
+            {rezeMessages.map((msg) => (
+              <RezeMessageItem key={msg.id} msg={msg} />
+            ))}
 
             {/* Reze Typing Indicator */}
             {isRezeTyping && (
@@ -514,26 +497,13 @@ export default function AnimeAiChat() {
             ))}
           </div>
 
-          {/* Reze Input Bar */}
-          <div className="flex items-center gap-2 p-2 rounded-2xl glass-obsidian border border-white/[0.1] shadow-lg">
-            <input
-              type="text"
-              value={rezeInput}
-              onChange={(e) => setRezeInput(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleSendReze()}
-              disabled={isRezeTyping}
-              placeholder="Kirim pesan manis atau tanya anime ke Reze..."
-              className="flex-1 bg-transparent px-3.5 py-2.5 text-xs sm:text-sm text-white placeholder-zinc-500 outline-none"
-            />
-            <button
-              onClick={() => handleSendReze()}
-              disabled={!rezeInput.trim() || isRezeTyping}
-              className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-pink-600 to-purple-600 hover:brightness-110 disabled:opacity-40 disabled:hover:brightness-100 text-white font-extrabold text-xs flex items-center gap-1.5 spring-press shadow-md"
-            >
-              <span>Kirim</span>
-              <Send className="w-3.5 h-3.5" />
-            </button>
-          </div>
+          {/* Isolated Reze Input Bar */}
+          <IsolatedChatInput
+            theme="pink"
+            onSend={handleSendReze}
+            disabled={isRezeTyping}
+            placeholder="Kirim pesan manis atau tanya anime ke Reze..."
+          />
         </div>
       )}
     </div>

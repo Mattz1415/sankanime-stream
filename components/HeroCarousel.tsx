@@ -69,6 +69,7 @@ export default function HeroCarousel({ featuredList }: HeroCarouselProps) {
           src={currentAnime.poster}
           alt={currentAnime.title}
           loading="eager"
+          decoding="async"
           className="w-full h-full object-cover object-center filter brightness-[0.92] animate-ken-burns"
         />
 
@@ -78,7 +79,7 @@ export default function HeroCarousel({ featuredList }: HeroCarouselProps) {
 
         {/* Dynamic Theme Glow Accent at Top Left */}
         <div
-          className="absolute -top-20 -left-20 w-80 h-80 rounded-full opacity-30 filter blur-[90px] pointer-events-none transition-all duration-700"
+          className="absolute -top-20 -left-20 w-80 h-80 rounded-full opacity-25 filter blur-[40px] pointer-events-none transition-opacity duration-700"
           style={{ backgroundColor: accentColor }}
         />
       </div>
@@ -87,7 +88,7 @@ export default function HeroCarousel({ featuredList }: HeroCarouselProps) {
       <div className="absolute top-4 right-4 sm:top-6 sm:right-6 z-20 flex items-center gap-2">
         <button
           onClick={cyclePalette}
-          className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-black/60 hover:bg-black/85 backdrop-blur-2xl border border-white/15 text-white text-xs font-semibold shadow-lg hover:border-white/30 spring-press group/palette"
+          className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-black/85 hover:bg-black/95 border border-white/15 text-white text-xs font-semibold shadow-lg hover:border-white/30 spring-press group/palette"
           title={`Tema: ${palette} (Klik untuk ganti warna)`}
         >
           <Palette className="w-3.5 h-3.5 transition-transform group-hover/palette:rotate-45" style={{ color: accentColor }} />
@@ -158,7 +159,7 @@ export default function HeroCarousel({ featuredList }: HeroCarouselProps) {
 
             <button
               onClick={handleToggleSave}
-              className={`inline-flex items-center gap-2 px-5 sm:px-6 py-3 rounded-full backdrop-blur-xl border text-xs sm:text-sm font-semibold spring-press transition-all ${
+              className={`inline-flex items-center gap-2 px-5 sm:px-6 py-3 rounded-full border text-xs sm:text-sm font-semibold spring-press transition-transform ${
                 isSaved
                   ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-300 shadow-lg'
                   : 'bg-white/10 hover:bg-white/20 border-white/20 text-white'
@@ -189,7 +190,7 @@ export default function HeroCarousel({ featuredList }: HeroCarouselProps) {
                 <button
                   key={`${item.animeId}-${idx}`}
                   onClick={() => setCurrentIndex(idx)}
-                  className={`relative w-14 sm:w-16 h-10 sm:h-12 rounded-xl overflow-hidden shrink-0 transition-all duration-300 spring-press border ${
+                  className={`relative w-14 sm:w-16 h-10 sm:h-12 rounded-xl overflow-hidden shrink-0 transition-transform duration-300 spring-press border ${
                     isActive
                       ? 'border-white ring-2 ring-white/50 scale-105 shadow-[0_0_15px_rgba(255,255,255,0.4)]'
                       : 'border-white/15 opacity-50 hover:opacity-90'
@@ -199,6 +200,8 @@ export default function HeroCarousel({ featuredList }: HeroCarouselProps) {
                   <img
                     src={item.poster}
                     alt={item.title}
+                    loading="lazy"
+                    decoding="async"
                     className="w-full h-full object-cover"
                   />
                   <div className="absolute inset-0 bg-black/30" />

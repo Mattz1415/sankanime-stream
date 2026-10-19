@@ -106,6 +106,7 @@ public class MainActivity extends BridgeActivity {
             if (getBridge() != null && getBridge().getWebView() != null) {
                 WebView webView = getBridge().getWebView();
                 webView.setBackgroundColor(Color.BLACK);
+                webView.setLayerType(View.LAYER_TYPE_HARDWARE, null);
 
                 // Set custom WebChromeClient to support native fullscreen onShowCustomView
                 if (customChromeClient == null) {

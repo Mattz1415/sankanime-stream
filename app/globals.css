@@ -48,75 +48,66 @@ body {
   font-family: 'Georgia', 'Playfair Display', 'Merriweather', 'Noto Serif', serif;
 }
 
-/* Multi-Layer Frosted Obsidian Card with Specular Highlight */
+/* Multi-Layer Frosted Obsidian Card with Specular Highlight (High Performance OLED) */
 .card-frosted-obsidian {
-  background: rgba(8, 8, 12, 0.72);
-  backdrop-filter: blur(36px);
-  -webkit-backdrop-filter: blur(36px);
+  background: rgba(8, 8, 12, 0.95);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.95), inset 0 1px 0 0 rgba(255, 255, 255, 0.1);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.95), inset 0 1px 0 0 rgba(255, 255, 255, 0.08);
 }
 
-/* Obsidian Glassmorphism Panels */
+/* Obsidian Panels (High Performance OLED) */
 .glass-obsidian {
-  background: rgba(5, 5, 8, 0.85);
-  backdrop-filter: blur(40px);
-  -webkit-backdrop-filter: blur(40px);
+  background: rgba(5, 5, 8, 0.95);
   border: 1px solid rgba(255, 255, 255, 0.09);
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.98), inset 0 1px 0 0 rgba(255, 255, 255, 0.08);
 }
 
 .glass-obsidian-card {
-  background: linear-gradient(145deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.01) 100%);
-  backdrop-filter: blur(28px);
-  -webkit-backdrop-filter: blur(28px);
+  background: rgba(8, 8, 12, 0.95);
   border: 1px solid rgba(255, 255, 255, 0.08);
   box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.06);
-  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
-  will-change: transform, box-shadow;
-  perspective: 1000px;
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.25s ease, box-shadow 0.25s ease;
+  will-change: transform;
 }
 
 .glass-obsidian-card:hover {
-  background: linear-gradient(145deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.03) 100%);
+  background: rgba(12, 12, 18, 0.98);
   border-color: rgba(255, 255, 255, 0.25);
-  transform: translateY(-6px) scale(1.02);
-  box-shadow: 0 28px 60px -12px rgba(0, 0, 0, 0.98), 0 0 28px -4px var(--theme-glow, rgba(0, 240, 255, 0.35));
+  transform: translateY(-4px);
+  box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.98), 0 0 20px -4px var(--theme-glow, rgba(0, 240, 255, 0.35));
 }
 
-/* Floating Glass Dock (Bottom Nav) */
+/* Floating Glass Dock (Bottom Nav - Lightweight blur) */
 .glass-dock {
-  background: rgba(2, 2, 5, 0.88);
-  backdrop-filter: blur(40px);
-  -webkit-backdrop-filter: blur(40px);
+  background: rgba(2, 2, 5, 0.92);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   border: 1px solid rgba(255, 255, 255, 0.12);
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.98), 0 0 30px rgba(0, 0, 0, 0.9), inset 0 1px 0 0 rgba(255, 255, 255, 0.1);
 }
 
 /* Glass Pill Switcher */
 .glass-pill-container {
-  background: rgba(5, 5, 8, 0.85);
-  backdrop-filter: blur(28px);
-  -webkit-backdrop-filter: blur(28px);
+  background: rgba(8, 8, 12, 0.95);
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-/* Dynamic Ambilight & Ambient Glow */
+/* Dynamic Ambilight & Ambient Glow (Lightweight GPU Offload) */
 .ambient-glow {
   position: absolute;
   border-radius: 9999px;
-  filter: blur(100px);
-  opacity: 0.35;
+  filter: blur(40px);
+  opacity: 0.25;
   pointer-events: none;
-  transition: all 0.8s ease-in-out;
+  transition: opacity 0.5s ease-in-out;
 }
 
 .player-ambilight-glow {
   position: absolute;
-  inset: -12px;
-  border-radius: 2rem;
+  inset: -8px;
+  border-radius: 1.5rem;
   background: radial-gradient(circle at center, var(--theme-glow, rgba(0, 240, 255, 0.35)) 0%, transparent 70%);
-  filter: blur(35px);
+  filter: blur(20px);
   opacity: 0.75;
   pointer-events: none;
   z-index: 0;
@@ -139,9 +130,7 @@ body {
 .holographic-bento-hub {
   position: relative;
   border-radius: 1.5rem;
-  background: rgba(6, 6, 12, 0.75);
-  backdrop-filter: blur(32px);
-  -webkit-backdrop-filter: blur(32px);
+  background: rgba(6, 6, 12, 0.95);
   overflow: hidden;
 }
 

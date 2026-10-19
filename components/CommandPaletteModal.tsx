@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { searchAnime } from '@/lib/clientApi';
 import { AnimeListItem } from '@/lib/types';
+import IsolatedSearchInput from './IsolatedSearchInput';
 
 interface CommandPaletteModalProps {
   isOpen: boolean;
@@ -42,7 +43,6 @@ const SORT_OPTIONS = ['Populer', 'Terbaru', 'Rating'];
 
 export default function CommandPaletteModal({ isOpen, onClose }: CommandPaletteModalProps) {
   const router = useRouter();
-  const inputRef = useRef<HTMLInputElement>(null);
 
   const [query, setQuery] = useState('');
   const [selectedGenre, setSelectedGenre] = useState('Semua');
@@ -56,6 +56,17 @@ export default function CommandPaletteModal({ isOpen, onClose }: CommandPaletteM
   // Global Ctrl+K / Cmd+K listener
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // CRITICAL: Never intercept Backspace, Delete, or Android IME composition
+      if (
+        e.key === 'Backspace' ||
+        e.key === 'Delete' ||
+        e.keyCode === 8 ||
+        e.keyCode === 46 ||
+        e.isComposing ||
+        (e as any).keyCode === 229
+      ) {
+        return;
+      }
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault();
         if (isOpen) {
@@ -72,11 +83,9 @@ export default function CommandPaletteModal({ isOpen, onClose }: CommandPaletteM
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
 
-  // Auto focus input on open
+  // Initial suggestions if query is empty
   useEffect(() => {
     if (isOpen) {
-      setTimeout(() => inputRef.current?.focus(), 50);
-      // Load initial suggestions if query is empty
       if (!query.trim()) {
         loadSuggestions();
       }
@@ -158,60 +167,34 @@ export default function CommandPaletteModal({ isOpen, onClose }: CommandPaletteM
       return 0; // Default order
     });
 
-  // Handle arrow key navigation in list
-  const handleInputKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      setSelectedIndex((prev) => (prev + 1) % Math.max(1, filteredResults.length));
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      setSelectedIndex((prev) => (prev - 1 + filteredResults.length) % Math.max(1, filteredResults.length));
-    } else if (e.key === 'Enter') {
-      e.preventDefault();
-      const selected = filteredResults[selectedIndex];
-      if (selected && selected.animeId) {
-        router.push(`/anime?id=${selected.animeId}`);
-        onClose();
-      }
+  const handleSelectCurrent = () => {
+    const selected = filteredResults[selectedIndex];
+    if (selected && selected.animeId) {
+      router.push(`/anime?id=${selected.animeId}`);
+      onClose();
     }
   };
 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center p-3 sm:p-6 sm:pt-20 bg-black/85 backdrop-blur-2xl animate-fade-in-up">
+    <div className="fixed inset-0 z-50 flex items-start justify-center p-3 sm:p-6 sm:pt-20 bg-black/90 animate-fade-in-up">
       {/* Backdrop tap to close */}
       <div className="fixed inset-0" onClick={onClose} />
 
       {/* Command Palette Card */}
       <div className="relative w-full max-w-2xl rounded-3xl bg-[#050508]/95 border border-white/[0.12] shadow-[0_24px_80px_rgba(0,0,0,0.98),inset_0_1px_0_0_rgba(255,255,255,0.1)] overflow-hidden flex flex-col max-h-[85vh]">
-        {/* Input Bar */}
-        <div className="p-4 sm:p-5 border-b border-white/[0.08] flex items-center gap-3">
-          <Search className="w-5 h-5 text-cyan-400 shrink-0" />
-          <input
-            ref={inputRef}
-            type="text"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            onKeyDown={handleInputKeyDown}
-            placeholder="Cari judul anime, genre, atau karakter... (Ctrl+K)"
-            className="flex-1 bg-transparent border-0 text-white placeholder-zinc-500 text-sm sm:text-base focus:outline-none focus:ring-0"
-          />
-          {query && (
-            <button
-              onClick={() => setQuery('')}
-              className="p-1 rounded-full text-zinc-400 hover:text-white hover:bg-white/10 spring-press"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          )}
-          <button
-            onClick={onClose}
-            className="px-2.5 py-1 rounded-lg text-xs bg-white/10 hover:bg-white/15 text-zinc-300 hover:text-white font-mono"
-          >
-            ESC
-          </button>
-        </div>
+        {/* Isolated Input Bar (Zero parent re-render during typing) */}
+        <IsolatedSearchInput
+          value={query}
+          onQueryChange={setQuery}
+          onArrowDown={() => setSelectedIndex((prev) => (prev + 1) % Math.max(1, filteredResults.length))}
+          onArrowUp={() => setSelectedIndex((prev) => (prev - 1 + filteredResults.length) % Math.max(1, filteredResults.length))}
+          onEnter={handleSelectCurrent}
+          onClose={onClose}
+          placeholder="Cari judul anime, genre, atau karakter... (Ctrl+K)"
+          autoFocus={isOpen}
+        />
 
         {/* Multi-Filter Pills */}
         <div className="p-3 px-4 border-b border-white/[0.06] bg-black/40 space-y-2 text-xs">
@@ -298,6 +281,7 @@ export default function CommandPaletteModal({ isOpen, onClose }: CommandPaletteM
                       src={anime.poster || 'https://images.unsplash.com/photo-1578632767115-351597cf2477?w=100&auto=format&fit=crop&q=80'}
                       alt={anime.title}
                       loading="lazy"
+                      decoding="async"
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform"
                     />
                   </div>

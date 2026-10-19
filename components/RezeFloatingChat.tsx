@@ -24,6 +24,7 @@ import {
 } from '@/lib/rezeAiService';
 import { getHomeData } from '@/lib/clientApi';
 import { AnimeListItem } from '@/lib/types';
+import IsolatedChatInput from './IsolatedChatInput';
 
 export function RezeAvatar({ className = 'w-10 h-10' }: { className?: string }) {
   return (
@@ -69,14 +70,12 @@ export default function RezeFloatingChat() {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<RezeChatMessage[]>([]);
-  const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [knownAnimeList, setKnownAnimeList] = useState<AnimeListItem[]>([]);
   const [showTooltip, setShowTooltip] = useState(true);
   const [isOnChatTab, setIsOnChatTab] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
 
   // Detect if user is on Chat tab or /chat route
   useEffect(() => {
@@ -125,15 +124,8 @@ export default function RezeFloatingChat() {
     }
   }, [messages, isTyping, isOpen]);
 
-  // Focus input on open
-  useEffect(() => {
-    if (isOpen) {
-      setTimeout(() => inputRef.current?.focus(), 200);
-    }
-  }, [isOpen]);
-
-  const handleSend = async (textToSend?: string) => {
-    const messageText = (textToSend || input).trim();
+  const handleSend = async (textToSend: string) => {
+    const messageText = textToSend.trim();
     if (!messageText || isTyping) return;
 
     const userMessage: RezeChatMessage = {
@@ -146,7 +138,6 @@ export default function RezeFloatingChat() {
     const newHistory = [...messages, userMessage];
     setMessages(newHistory);
     saveRezeChatHistory(newHistory);
-    setInput('');
     setIsTyping(true);
 
     try {
@@ -207,11 +198,11 @@ export default function RezeFloatingChat() {
 
       {/* Fullscreen / Floating Glass OLED Chat Modal */}
       {isOpen && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-2xl flex items-end sm:items-center justify-center p-0 sm:p-4 animate-fade-in-up">
+        <div className="fixed inset-0 z-50 bg-black/90 flex items-end sm:items-center justify-center p-0 sm:p-4 animate-fade-in-up">
           {/* Modal Container */}
           <div className="relative w-full sm:max-w-md h-[90vh] sm:h-[640px] bg-[#020204]/98 border border-white/[0.12] sm:rounded-3xl rounded-t-3xl shadow-[0_25px_80px_rgba(0,0,0,0.98),inset_0_1px_0_0_rgba(255,255,255,0.15)] flex flex-col overflow-hidden">
             {/* Header: Reze status + model badge + controls */}
-            <div className="px-4 py-3 bg-[#030306]/95 border-b border-white/[0.08] backdrop-blur-xl flex items-center justify-between gap-2">
+            <div className="px-4 py-3 bg-[#030306]/95 border-b border-white/[0.08] flex items-center justify-between gap-2">
               <div className="flex items-center gap-2.5">
                 <div className="relative">
                   <RezeAvatar className="w-9 h-9" />
@@ -299,6 +290,8 @@ export default function RezeFloatingChat() {
                               <img
                                 src={msg.matchedAnime.poster}
                                 alt={msg.matchedAnime.title}
+                                loading="lazy"
+                                decoding="async"
                                 className="w-10 h-14 object-cover rounded-lg border border-white/10 shrink-0"
                               />
                             ) : (
@@ -381,33 +374,14 @@ export default function RezeFloatingChat() {
               ))}
             </div>
 
-            {/* Bottom Glass Input Bar */}
-            <div className="p-3 bg-[#030306]/98 border-t border-white/[0.08] flex items-center gap-2">
-              <input
-                ref={inputRef}
-                type="text"
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    handleSend();
-                  }
-                }}
+            {/* Bottom Isolated Input Bar */}
+            <div className="p-3 bg-[#030306]/98 border-t border-white/[0.08]">
+              <IsolatedChatInput
+                theme="pink"
+                onSend={handleSend}
                 disabled={isTyping}
                 placeholder="Ketik pesan untuk Reze..."
-                className="flex-1 bg-white/[0.04] border border-white/[0.1] rounded-2xl px-4 py-2.5 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-pink-500/50 transition-colors"
               />
-
-              <button
-                type="button"
-                onClick={() => handleSend()}
-                disabled={!input.trim() || isTyping}
-                className="p-2.5 rounded-2xl bg-gradient-to-r from-pink-600 to-purple-600 text-white font-bold hover:brightness-110 disabled:opacity-40 disabled:hover:brightness-100 spring-press transition-all shadow-md shadow-pink-600/30 shrink-0"
-                title="Kirim pesan"
-              >
-                <Send className="w-4 h-4" />
-              </button>
             </div>
           </div>
         </div>

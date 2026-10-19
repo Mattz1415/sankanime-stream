@@ -10,7 +10,7 @@ interface AnimeCardProps {
   showStatus?: boolean;
 }
 
-export default function AnimeCard({ anime, showStatus = true }: AnimeCardProps) {
+function RawAnimeCard({ anime, showStatus = true }: AnimeCardProps) {
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageError, setImageError] = useState(false);
 
@@ -20,7 +20,7 @@ export default function AnimeCard({ anime, showStatus = true }: AnimeCardProps) 
   return (
     <Link
       href={`/anime?id=${animeId}`}
-      className="group relative flex flex-col rounded-2xl glass-card overflow-hidden transition-all duration-300 flutter-button"
+      className="group relative flex flex-col rounded-2xl glass-card overflow-hidden transition-transform duration-300 flutter-button"
     >
       {/* Poster Image Container */}
       <div className="relative aspect-[3/4] w-full overflow-hidden bg-[#0c1017]">
@@ -32,6 +32,7 @@ export default function AnimeCard({ anime, showStatus = true }: AnimeCardProps) 
           src={imageError ? 'https://images.unsplash.com/photo-1578632767115-351597cf2477?w=500&auto=format&fit=crop&q=60' : anime.poster}
           alt={anime.title}
           loading="lazy"
+          decoding="async"
           onLoad={() => setImageLoaded(true)}
           onError={() => {
             setImageError(true);
@@ -114,3 +115,6 @@ export default function AnimeCard({ anime, showStatus = true }: AnimeCardProps) 
     </Link>
   );
 }
+
+export const AnimeCard = React.memo(RawAnimeCard);
+export default AnimeCard;
