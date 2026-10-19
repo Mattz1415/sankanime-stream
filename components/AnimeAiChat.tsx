@@ -212,7 +212,7 @@ export default function AnimeAiChat() {
   };
 
   return (
-    <div className="w-full max-w-4xl mx-auto space-y-4 animate-fade-in-up">
+    <div className="w-full max-w-4xl mx-auto space-y-4 animate-fade-in-up pb-28 sm:pb-32">
       {/* Top Switcher: CHAT GLOBAL vs REZE AI */}
       <div className="p-4 sm:p-5 rounded-3xl glass-obsidian border border-white/[0.08] flex flex-wrap items-center justify-between gap-3 shadow-[0_20px_50px_rgba(0,0,0,0.95)]">
         <div>

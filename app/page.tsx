@@ -102,6 +102,12 @@ export default function HomePage() {
     setHistory(getWatchHistory());
   };
 
+  useEffect(() => {
+    if (typeof document !== 'undefined') {
+      document.body.setAttribute('data-nexus-tab', activeTab);
+    }
+  }, [activeTab]);
+
   // Filter schedule based on selected day
   const filteredScheduleList = React.useMemo(() => {
     if (!schedule.length) return [];

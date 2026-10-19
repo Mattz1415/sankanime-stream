@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import {
   MessageCircleHeart,
   X,
@@ -65,15 +66,33 @@ const QUICK_REPLIES = [
 ];
 
 export default function RezeFloatingChat() {
+  const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<RezeChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [knownAnimeList, setKnownAnimeList] = useState<AnimeListItem[]>([]);
   const [showTooltip, setShowTooltip] = useState(true);
+  const [isOnChatTab, setIsOnChatTab] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Detect if user is on Chat tab or /chat route
+  useEffect(() => {
+    const checkChatStatus = () => {
+      const activeTab = document.body.getAttribute('data-nexus-tab');
+      const isChat = activeTab === 'chat' || window.location.pathname.includes('/chat');
+      setIsOnChatTab(isChat);
+    };
+
+    checkChatStatus();
+
+    const observer = new MutationObserver(checkChatStatus);
+    observer.observe(document.body, { attributes: true, attributeFilter: ['data-nexus-tab'] });
+
+    return () => observer.disconnect();
+  }, [pathname]);
 
   // Load chat history & sample catalog
   useEffect(() => {
@@ -139,7 +158,7 @@ export default function RezeFloatingChat() {
       setMessages(updatedWithReply);
       saveRezeChatHistory(updatedWithReply);
     } catch {
-      // Fallback already guaranteed inside sendRezeChatMessage
+      // Handled inside sendRezeChatMessage
     } finally {
       setIsTyping(false);
     }
@@ -152,11 +171,13 @@ export default function RezeFloatingChat() {
     }
   };
 
+  const shouldHideFloating = isOpen || isOnChatTab || pathname?.includes('/chat');
+
   return (
     <>
-      {/* Floating Avatar Trigger Button */}
-      {!isOpen && (
-        <div className="fixed bottom-24 right-4 sm:right-6 z-40 flex items-center gap-2 animate-fade-in-up">
+      {/* Floating Avatar Trigger Button (Hidden on Chat Tab to prevent covering Send button) */}
+      {!shouldHideFloating && (
+        <div className="reze-floating-trigger fixed bottom-24 right-4 sm:right-6 z-40 flex items-center gap-2 animate-fade-in-up">
           {/* Cute Tooltip Pill */}
           {showTooltip && (
             <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#030306]/95 border border-pink-500/40 text-pink-300 text-xs font-bold shadow-[0_0_20px_rgba(236,72,153,0.4)] backdrop-blur-xl animate-bounce">

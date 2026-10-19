@@ -409,3 +409,10 @@ body {
   height: 100%;
   transform: scale(1);
 }
+
+/* Hide Reze floating button on chat tab / view so it never covers the Send button */
+body[data-nexus-tab="chat"] .reze-floating-trigger {
+  display: none !important;
+  pointer-events: none !important;
+}
+
