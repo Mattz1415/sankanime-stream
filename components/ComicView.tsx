@@ -17,6 +17,7 @@ import { ComicItem, ComicDetail } from '@/lib/types';
 import { getSafeImageUrl, handleSmartImageError } from '@/lib/imageHelper';
 import SmartImage from './SmartImage';
 import VerticalComicReader from './VerticalComicReader';
+import ErrorBoundary from './ErrorBoundary';
 
 export default function ComicView() {
   const [popularList, setPopularList] = useState<ComicItem[]>([]);

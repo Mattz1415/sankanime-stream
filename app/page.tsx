@@ -43,6 +43,7 @@ import DonghuaView from '@/components/DonghuaView';
 import ComicView from '@/components/ComicView';
 import ManhwaView from '@/components/ManhwaView';
 import LK21MovieView from '@/components/LK21MovieView';
+import ErrorBoundary from '@/components/ErrorBoundary';
 import { getHomeData, getSchedule } from '@/lib/clientApi';
 import { getWatchHistory } from '@/lib/storage';
 import { HomeData, ScheduleDay, WatchHistoryItem, MediaCategory } from '@/lib/types';
@@ -159,10 +160,26 @@ export default function HomePage() {
       {/* Main Container */}
       <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 safe-dock-padding space-y-8">
         {/* Category Views: Donghua, Komik, Manhwa, LK21 Film */}
-        {activeTab === 'jelajah' && activeCategory === 'Donghua' && <DonghuaView />}
-        {activeTab === 'jelajah' && activeCategory === 'Komik' && <ComicView />}
-        {activeTab === 'jelajah' && activeCategory === 'Manhwa' && <ManhwaView />}
-        {activeTab === 'jelajah' && activeCategory === 'LK21 Film' && <LK21MovieView />}
+        {activeTab === 'jelajah' && activeCategory === 'Donghua' && (
+          <ErrorBoundary fallbackTitle="Kendala Memuat Donghua" fallbackMessage="Koleksi Donghua sedang disinkronkan. Silakan coba muat ulang.">
+            <DonghuaView />
+          </ErrorBoundary>
+        )}
+        {activeTab === 'jelajah' && activeCategory === 'Komik' && (
+          <ErrorBoundary fallbackTitle="Kendala Memuat Komik" fallbackMessage="Koleksi Komik & Manga sedang disinkronkan. Silakan coba muat ulang.">
+            <ComicView />
+          </ErrorBoundary>
+        )}
+        {activeTab === 'jelajah' && activeCategory === 'Manhwa' && (
+          <ErrorBoundary fallbackTitle="Kendala Memuat Manhwa" fallbackMessage="Koleksi Manhwa dari multi-source agregator sedang disinkronkan. Silakan coba muat ulang.">
+            <ManhwaView />
+          </ErrorBoundary>
+        )}
+        {activeTab === 'jelajah' && activeCategory === 'LK21 Film' && (
+          <ErrorBoundary fallbackTitle="Kendala Memuat LK21 Film" fallbackMessage="Katalog film LK21 sedang disinkronkan. Silakan coba muat ulang.">
+            <LK21MovieView />
+          </ErrorBoundary>
+        )}
 
         {/* Tab 1: JELAJAH (Main Home Feed for Anime) */}
         {activeTab === 'jelajah' && activeCategory === 'Anime' && (
@@ -469,16 +486,32 @@ export default function HomePage() {
         )}
 
         {/* Tab 2: LIST (Directory) */}
-        {activeTab === 'list' && <AnimeListView />}
+        {activeTab === 'list' && (
+          <ErrorBoundary fallbackTitle="Kendala Memuat Daftar Anime">
+            <AnimeListView />
+          </ErrorBoundary>
+        )}
 
         {/* Tab 3: RIWAYAT (History & Watchlist) */}
-        {activeTab === 'riwayat' && <HistoryBookmarksView />}
+        {activeTab === 'riwayat' && (
+          <ErrorBoundary fallbackTitle="Kendala Memuat Riwayat">
+            <HistoryBookmarksView />
+          </ErrorBoundary>
+        )}
 
         {/* Tab 4: CHAT (Community & AI) */}
-        {activeTab === 'chat' && <AnimeAiChat />}
+        {activeTab === 'chat' && (
+          <ErrorBoundary fallbackTitle="Kendala Memuat Diskusi">
+            <AnimeAiChat />
+          </ErrorBoundary>
+        )}
 
         {/* Tab 5: PROFIL (User Profile) */}
-        {activeTab === 'profil' && <UserProfileView />}
+        {activeTab === 'profil' && (
+          <ErrorBoundary fallbackTitle="Kendala Memuat Profil">
+            <UserProfileView />
+          </ErrorBoundary>
+        )}
       </main>
 
       {/* Floating Glass Dock (Bottom Navigation) */}

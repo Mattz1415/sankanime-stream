@@ -47,6 +47,7 @@ import { tunnelStream, TunnelResult } from '@/lib/streamTunnel';
 import CommunityDiscussionView from '@/components/CommunityDiscussionView';
 import DownloadManagerModal from '@/components/DownloadManagerModal';
 import PlayerSettingsModal from '@/components/PlayerSettingsModal';
+import ErrorBoundary from '@/components/ErrorBoundary';
 
 function formatSeconds(sec?: number): string {
   if (!sec || sec <= 0) return '00:00';
@@ -851,7 +852,9 @@ export default function WatchPage() {
       }
     >
       <div className="min-h-screen px-4 sm:px-6 lg:px-8 py-6">
-        <WatchContent />
+        <ErrorBoundary fallbackTitle="Kendala Memuat Pemutar Video">
+          <WatchContent />
+        </ErrorBoundary>
         <FloatingGlassDock />
       </div>
     </Suspense>

@@ -21,6 +21,7 @@ import { ComicItem, ComicDetail } from '@/lib/types';
 import { getSafeImageUrl, handleSmartImageError } from '@/lib/imageHelper';
 import SmartImage from './SmartImage';
 import VerticalComicReader from './VerticalComicReader';
+import ErrorBoundary from './ErrorBoundary';
 
 type GenreFilter = 'Semua' | 'Hits' | 'Romance' | 'Action' | 'Isekai';
 

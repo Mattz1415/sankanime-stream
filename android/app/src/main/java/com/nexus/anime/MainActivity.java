@@ -289,7 +289,9 @@ public class MainActivity extends BridgeActivity {
                                               hostLower.contains("otakudesu") ||
                                               hostLower.contains("anoboy") ||
                                               hostLower.contains("desustream") ||
-                                              hostLower.contains("myanimelist");
+                                              hostLower.contains("myanimelist") ||
+                                              hostLower.contains("kuuhaku") ||
+                                              hostLower.contains("shiro");
 
                     if (isImage || isHotlinkedHost) {
                         try {
@@ -311,6 +313,8 @@ public class MainActivity extends BridgeActivity {
                                 conn.setRequestProperty("Referer", "https://mangadex.org/");
                             } else if (hostLower.contains("myanimelist")) {
                                 conn.setRequestProperty("Referer", "https://myanimelist.net/");
+                            } else if (hostLower.contains("shiro") || hostLower.contains("kuuhaku")) {
+                                conn.setRequestProperty("Referer", "https://shiro.kuuhaku.space/");
                             } else {
                                 conn.setRequestProperty("Referer", uri.getScheme() + "://" + host + "/");
                             }

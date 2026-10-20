@@ -42,6 +42,7 @@ import { useTheme } from '@/lib/themeContext';
 import AnimeReviewSection from '@/components/AnimeReviewSection';
 import AnimeGlassCard from '@/components/AnimeGlassCard';
 import SmartImage from '@/components/SmartImage';
+import ErrorBoundary from '@/components/ErrorBoundary';
 import { getSafeImageUrl, handleSmartImageError } from '@/lib/imageHelper';
 
 const WATCHLIST_CATEGORIES: WatchlistCategory[] = [
@@ -659,7 +660,9 @@ export default function AnimePage() {
       }
     >
       <div className="min-h-screen px-4 sm:px-6 lg:px-8 py-6">
-        <AnimeDetailContent />
+        <ErrorBoundary fallbackTitle="Kendala Memuat Detail Anime">
+          <AnimeDetailContent />
+        </ErrorBoundary>
         <FloatingGlassDock />
       </div>
     </Suspense>

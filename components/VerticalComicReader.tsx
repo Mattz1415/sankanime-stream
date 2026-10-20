@@ -16,6 +16,8 @@ import {
 } from 'lucide-react';
 import { fetchComicChapter } from '@/lib/mediaApi';
 import { ComicChapterData } from '@/lib/types';
+import ChapterPageImage from './ChapterPageImage';
+import ErrorBoundary from './ErrorBoundary';
 
 interface VerticalComicReaderProps {
   comicTitle: string;
@@ -49,7 +51,7 @@ export default function VerticalComicReader({
         setLoading(true);
         setError(null);
         setFailedImages({});
-        const res = await fetchComicChapter(chapterSlug);
+        const res = await fetchComicChapter(chapterSlug, comicTitle);
         if (isMounted) {
           setData(res);
         }
@@ -273,44 +275,16 @@ export default function VerticalComicReader({
             className="w-full max-w-3xl flex flex-col items-center transition-transform duration-200"
             style={{ transform: `scale(${zoomLevel})`, transformOrigin: 'top center' }}
           >
-            {data.images.map((imgUrl, idx) => {
-              const isFailed = failedImages[idx];
-              return (
-                <div key={idx} className="w-full relative min-h-[250px] bg-[#020204] flex items-center justify-center">
-                  {isFailed ? (
-                    <div className="py-16 text-center space-y-2">
-                      <p className="text-xs text-zinc-500">Halaman {idx + 1} sedang dipersiapkan</p>
-                      <button
-                        onClick={() => handleRetryImage(idx)}
-                        className="px-3.5 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-xs font-semibold text-white spring-press inline-flex items-center gap-1"
-                      >
-                        <RefreshCw className="w-3 h-3" />
-                        Coba Muat Ulang
-                      </button>
-                    </div>
-                  ) : (
-                    <img
-                      src={imgUrl}
-                      alt={`Halaman ${idx + 1}`}
-                      loading="lazy"
-                      referrerPolicy="no-referrer"
-                      onError={(e) => {
-                        const target = e.currentTarget;
-                        const originalUrl = imgUrl;
-                        if (!target.src.includes('wsrv.nl') && !originalUrl.includes('wsrv.nl')) {
-                          target.src = `https://wsrv.nl/?url=${encodeURIComponent(originalUrl)}&w=1000&output=webp`;
-                        } else if (!target.src.includes('images.weserv.nl')) {
-                          target.src = `https://images.weserv.nl/?url=${encodeURIComponent(originalUrl)}&w=1000&output=webp`;
-                        } else {
-                          setFailedImages((prev) => ({ ...prev, [idx]: true }));
-                        }
-                      }}
-                      className="w-full h-auto block select-none pointer-events-none"
-                    />
-                  )}
-                </div>
-              );
-            })}
+            {data.images.map((imgUrl, idx) => (
+              <div key={`${chapterSlug}-${idx}`} className="w-full relative min-h-[300px] bg-[#020204] flex items-center justify-center">
+                <ChapterPageImage
+                  src={imgUrl}
+                  pageNumber={idx + 1}
+                  total={data.images.length}
+                  alt={`${currentChapterName} Halaman ${idx + 1}`}
+                />
+              </div>
+            ))}
 
             {/* Bottom Chapter End Navigator */}
             <div className="w-full p-8 mt-6 rounded-3xl card-frosted-obsidian border border-white/[0.08] text-center space-y-4 max-w-xl mx-auto my-12">
