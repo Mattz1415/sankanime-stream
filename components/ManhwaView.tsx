@@ -322,7 +322,7 @@ export default function ManhwaView() {
                 onClick={() => handleOpenDetail(item)}
                 className="group cursor-pointer rounded-2xl overflow-hidden card-frosted-obsidian border border-white/[0.08] hover:border-purple-400/60 hover:shadow-[0_0_25px_rgba(168,85,247,0.3)] transition-all duration-300 spring-press flex flex-col"
               >
-                <div className="relative aspect-[3/4] w-full bg-[#0a0a10] overflow-hidden">
+                <div className="relative aspect-[2/3] w-full bg-[#0a0a10] overflow-hidden">
                   <SmartImage
                     item={item}
                     src={item.image}
@@ -331,7 +331,7 @@ export default function ManhwaView() {
                     type="manhwa"
                     className="w-full h-full object-cover group-hover:scale-108 transition-transform duration-500 ease-out"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent opacity-85 group-hover:opacity-90 transition-opacity" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent opacity-90 group-hover:opacity-95 transition-opacity" />
 
                   {/* Chapter badge */}
                   <div className="absolute top-2 left-2 z-10 pointer-events-none">

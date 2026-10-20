@@ -39,6 +39,8 @@ const SECURE_ENDPOINTS_RAW: Record<string, string> = {
   SHIRO_BASE: 'aHR0cHM6Ly9zaGlyby5rdXVoYWt1LnNwYWNlL21hbmh3YXM=', // https://shiro.kuuhaku.space/manhwas
   KOMIKU_BASE: 'aHR0cHM6Ly9rb21pa3Uub3Jn', // https://komiku.org
   KOMIKU_API_BASE: 'aHR0cHM6Ly9rb21pa3UtcmVzdC1hcGkudmVyY2VsLmFwcA==', // https://komiku-rest-api.vercel.app
+  ZERONEWATCH_BASE: 'aHR0cHM6Ly96ZXJvbmV3YXRjaC1hcGkudmVyY2VsLmFwcA==', // https://zeronewatch-api.vercel.app
+  DRAKORKITA_BASE: 'aHR0cHM6Ly9kcmFrb3JraXRhLmZ1bg==', // https://drakorkita.fun
 };
 
 export function getSecureEndpoint(key: keyof typeof SECURE_ENDPOINTS_RAW): string {

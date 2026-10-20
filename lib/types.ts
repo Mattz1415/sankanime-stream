@@ -214,7 +214,52 @@ export interface ServerStreamResult {
   rawHtml?: string;
 }
 
-export type MediaCategory = 'Anime' | 'Donghua' | 'Komik' | 'Manhwa' | 'LK21 Film';
+export type MediaCategory = 'Anime' | 'Donghua' | 'Drakor' | 'Manhwa' | 'Komik' | 'Film' | 'LK21 Film';
+
+// Drakor (K-Drama) Types
+export interface DrakorItem {
+  id: string;
+  title: string;
+  alterTitle?: string;
+  endpoint: string;
+  thumbnail: string;
+  poster?: string;
+  eps?: string;
+  rating?: string;
+  year?: string;
+  time?: string;
+  quality?: string;
+  status?: string;
+  synopsis?: string;
+  genres?: string[];
+  type?: 'Series' | 'Movie';
+  tmdbId?: string | number;
+  updatedAt?: string;
+}
+
+export interface DrakorEpisode {
+  episodeNumber: number | string;
+  title: string;
+  endpoint?: string;
+  streamUrl?: string;
+  servers?: Array<{ name: string; url: string }>;
+}
+
+export interface DrakorDetail {
+  id: string;
+  title: string;
+  alterTitle?: string;
+  thumbnail: string;
+  synopsis: string;
+  rating: string;
+  status: string;
+  year: string;
+  genres: string[];
+  totalEpisodes: number | string;
+  network?: string;
+  cast?: string[];
+  episodes: DrakorEpisode[];
+}
 
 // Donghua Types
 export interface DonghuaItem {

@@ -7,6 +7,9 @@ import {
   ComicDetail,
   ComicChapterData,
   MovieItem,
+  DrakorItem,
+  DrakorEpisode,
+  DrakorDetail,
 } from './types';
 import {
   safeLogError,
@@ -1134,8 +1137,8 @@ export async function fetchManhwaList(page: number = 1): Promise<ComicItem[]> {
   const limit = 24;
   const offset = (page - 1) * limit;
 
-  // 6 APIs aggregation with Promise.allSettled and AbortController timeout (8s)
-  const [mdSettled, sankaSettled, kuroSettled, komikuSettled, shiroSettled] = await Promise.allSettled([
+  // 7 APIs aggregation with Promise.allSettled and AbortController timeout (8s)
+  const [mdSettled, sankaSettled, kuroSettled, komikuSettled, shiroSettled, zeroneSettled] = await Promise.allSettled([
     // 1. MangaDex Korean hits
     fetchWithTimeout(
       `https://api.mangadex.org/manga?originalLanguage[]=ko&order[followedCount]=desc&limit=${limit}&offset=${offset}&includes[]=cover_art`,
@@ -1158,6 +1161,9 @@ export async function fetchManhwaList(page: number = 1): Promise<ComicItem[]> {
 
     // 5. SHIRO-MANHWA-API Recommendations
     page === 1 ? fetchShiroRecommendations('action').catch(() => []) : Promise.resolve([]),
+
+    // 6. ZeroneWatch Komiku Manhwa Booster
+    fetchZeroneKomikuManhwa(page).catch(() => []),
   ]);
 
   const mdData = mdSettled.status === 'fulfilled' ? mdSettled.value?.data || [] : [];
@@ -1209,6 +1215,7 @@ export async function fetchManhwaList(page: number = 1): Promise<ComicItem[]> {
 
   const komikuItems: ComicItem[] = komikuSettled.status === 'fulfilled' ? komikuSettled.value || [] : [];
   const shiroItems: ComicItem[] = shiroSettled.status === 'fulfilled' ? shiroSettled.value || [] : [];
+  const zeroneItems: ComicItem[] = zeroneSettled.status === 'fulfilled' ? zeroneSettled.value || [] : [];
 
   // Deduplicate and merge results
   const seen = new Set<string>();
@@ -1221,8 +1228,8 @@ export async function fetchManhwaList(page: number = 1): Promise<ComicItem[]> {
     combined.push(item);
   }
 
-  // 2. Add from MangaDex, Komiku, Kurokami, Sanka, Shiro
-  for (const list of [mdItems, komikuItems, kuroItems, sankaItems, shiroItems]) {
+  // 2. Add from MangaDex, Komiku, Kurokami, Sanka, Shiro, ZeroneWatch
+  for (const list of [mdItems, komikuItems, kuroItems, sankaItems, shiroItems, zeroneItems]) {
     for (const item of list) {
       const key = normalizeTitle(item.title);
       if (key && !seen.has(key)) {
@@ -2117,3 +2124,795 @@ export function getMovieServers(movieId: string): Array<{ name: string; url: str
     },
   ];
 }
+
+/* =========================================================================
+   8. ZERONEWATCH & DRAKOR (K-DRAMA SUB INDO) MODULE
+   ========================================================================= */
+
+const ZERONEWATCH_BASE_URL = getSecureEndpoint('ZERONEWATCH_BASE') || 'https://zeronewatch-api.vercel.app';
+const DRAKORKITA_BASE_URL = getSecureEndpoint('DRAKORKITA_BASE') || 'https://drakorkita.fun';
+const TMDB_DRAKOR_API_KEY = '15d2ea6d0dc1d476efbca3eba2b9bbfb';
+
+/**
+ * Supplementary ZeroneWatch Booster Scrapers
+ */
+export async function fetchZeroneKuramanime(page: number = 1): Promise<any[]> {
+  try {
+    const res = await fetchWithTimeout(`${ZERONEWATCH_BASE_URL}/kuramanime/ongoing/popular?page=${page}`, {}, 5000);
+    if (!res.ok) return [];
+    const json = await res.json();
+    return json.data || json.results || [];
+  } catch {
+    return [];
+  }
+}
+
+export async function fetchZeroneWibudesu(page: number = 1): Promise<any[]> {
+  try {
+    const res = await fetchWithTimeout(`${ZERONEWATCH_BASE_URL}/wibudesu/ongoing?page=${page}`, {}, 5000);
+    if (!res.ok) return [];
+    const json = await res.json();
+    return json.data || json.results || [];
+  } catch {
+    return [];
+  }
+}
+
+export async function fetchZeroneKomikuManhwa(page: number = 1): Promise<ComicItem[]> {
+  try {
+    const res = await fetchWithTimeout(`${ZERONEWATCH_BASE_URL}/komiku/manhwa?page=${page}`, {}, 5000);
+    if (!res.ok) return [];
+    const json = await res.json();
+    const items = json.data || json.results || [];
+    return items.map((c: any) => ({
+      title: c.title || 'Manhwa',
+      slug: c.endpoint || c.link?.split('/').filter(Boolean).pop() || '',
+      image: c.thumbnail || c.image || '',
+      chapter: c.chapter || 'Latest',
+      type: 'Manhwa' as const,
+      score: '9.3',
+      description: c.description || 'Zerone Manhwa',
+    }));
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Curated Top Hit Drakor (K-Drama) Dataset with Verified TMDB IDs & Posters
+ */
+export const CURATED_DRAKOR_LIST: DrakorItem[] = [
+  {
+    id: 'drakor-215720',
+    title: 'Queen of Tears',
+    alterTitle: '눈물의 여왕',
+    endpoint: 'queen-of-tears',
+    thumbnail: 'https://image.tmdb.org/t/p/w500/7ZXLZ3KYL3IVvsSHBZaHjcNQzNU.jpg',
+    eps: '16 Episode',
+    rating: '8.4',
+    year: '2024',
+    status: 'Completed',
+    synopsis: 'Ratu department store dan pangeran supermarket melewati krisis pernikahan hebat—hingga cinta secara ajaib bersemi kembali di tengah intrik keluarga chaebol.',
+    genres: ['Romance', 'Comedy', 'Drama'],
+    type: 'Series',
+    tmdbId: 215720,
+  },
+  {
+    id: 'drakor-230923',
+    title: 'Lovely Runner',
+    alterTitle: '선재 업고 튀어',
+    endpoint: 'lovely-runner',
+    thumbnail: 'https://image.tmdb.org/t/p/w500/adcdNzLJ8LOjWJjNFrapXGzFco3.jpg',
+    eps: '16 Episode',
+    rating: '8.6',
+    year: '2024',
+    status: 'Completed',
+    synopsis: 'Tepat setelah Ryu Sun-jae mengakhiri hidupnya, Im Sol sang penggemar berat terlempar kembali ke masa SMA demi menyelamatkan takdir idolanya.',
+    genres: ['Romance', 'Fantasy', 'Comedy', 'Time Travel'],
+    type: 'Series',
+    tmdbId: 230923,
+  },
+  {
+    id: 'drakor-253905',
+    title: 'When the Phone Rings',
+    alterTitle: '지금 거신 전화는',
+    endpoint: 'when-the-phone-rings',
+    thumbnail: 'https://image.tmdb.org/t/p/w500/glWP5Y7CVeqrOjJpLckQjuLFjQJ.jpg',
+    eps: '12 Episode',
+    rating: '8.3',
+    year: '2024',
+    status: 'Ongoing',
+    synopsis: 'Pernikahan politik dingin antara seorang juru bicara presiden yang ambisius dan istri penerjemah bahasa isyarat terguncang saat panggilan telepon penculik misterius masuk.',
+    genres: ['Thriller', 'Romance', 'Mystery', 'Drama'],
+    type: 'Series',
+    tmdbId: 253905,
+  },
+  {
+    id: 'drakor-235577',
+    title: 'The Judge from Hell',
+    alterTitle: '지옥에서 온 판사',
+    endpoint: 'the-judge-from-hell',
+    thumbnail: 'https://image.tmdb.org/t/p/w500/9vhLHbUiiP9HiXfJw5OUC7KoaJG.jpg',
+    eps: '14 Episode',
+    rating: '8.6',
+    year: '2024',
+    status: 'Completed',
+    synopsis: 'Iblis dari neraka yang merasuki tubuh hakim elit Kang Bit-na bertemu detektif berhati hangat Han Da-on saat menjalankan misi menghukum para penjahat keji.',
+    genres: ['Fantasy', 'Action', 'Crime', 'Romance'],
+    type: 'Series',
+    tmdbId: 235577,
+  },
+  {
+    id: 'drakor-221851',
+    title: 'Marry My Husband',
+    alterTitle: '내 남편과 결혼해줘',
+    endpoint: 'marry-my-husband',
+    thumbnail: 'https://image.tmdb.org/t/p/w500/899KcBqooj8nEyPcAEU3h7AdfUo.jpg',
+    eps: '16 Episode',
+    rating: '8.5',
+    year: '2024',
+    status: 'Completed',
+    synopsis: 'Dikhianati dan dibunuh oleh suami serta sahabatnya sendiri saat menderita kanker, Kang Ji-won kembali 10 tahun ke masa lalu untuk membalaskan dendamnya.',
+    genres: ['Revenge', 'Drama', 'Fantasy', 'Romance'],
+    type: 'Series',
+    tmdbId: 221851,
+  },
+  {
+    id: 'drakor-126485',
+    title: 'Moving',
+    alterTitle: '무빙',
+    endpoint: 'moving',
+    thumbnail: 'https://image.tmdb.org/t/p/w500/vf9SNXNAFqzKBGksFwrXhkg9cb7.jpg',
+    eps: '20 Episode',
+    rating: '8.5',
+    year: '2023',
+    status: 'Completed',
+    synopsis: 'Anak-anak SMA dengan kekuatan super rahasia dan orang tua mereka yang menyimpan masa lalu kelam bersatu menghadapi ancaman agen pembunuh bayaran.',
+    genres: ['Action', 'Sci-Fi', 'Supernatural', 'Drama'],
+    type: 'Series',
+    tmdbId: 126485,
+  },
+  {
+    id: 'drakor-136283',
+    title: 'The Glory',
+    alterTitle: '더 글로리',
+    endpoint: 'the-glory',
+    thumbnail: 'https://image.tmdb.org/t/p/w500/uUM4LVlPgIrww07OoEKrGWlS1Ej.jpg',
+    eps: '16 Episode',
+    rating: '8.5',
+    year: '2022',
+    status: 'Completed',
+    synopsis: 'Bertahun-tahun setelah bertahan dari perundungan brutal di masa SMA, Moon Dong-eun merancang skenario balas dendam dingin tanpa ampun kepada para pelaku.',
+    genres: ['Thriller', 'Drama', 'Psychological'],
+    type: 'Series',
+    tmdbId: 136283,
+  },
+  {
+    id: 'drakor-135157',
+    title: 'Alchemy of Souls',
+    alterTitle: '환혼',
+    endpoint: 'alchemy-of-souls',
+    thumbnail: 'https://image.tmdb.org/t/p/w500/gvOZN1NlAoL8iz9ghpES1zWA3w3.jpg',
+    eps: '30 Episode',
+    rating: '8.6',
+    year: '2022',
+    status: 'Completed',
+    synopsis: 'Nasib para penyihir muda di negeri fiksi Daeho terpelintir akibat sihir terlarang hwanhonsool yang memungkinkan pertukaran jiwa.',
+    genres: ['Fantasy', 'Action', 'Romance', 'Historical'],
+    type: 'Series',
+    tmdbId: 135157,
+  },
+  {
+    id: 'drakor-212204',
+    title: 'Twinkling Watermelon',
+    alterTitle: '반짝이는 워터멜론',
+    endpoint: 'twinkling-watermelon',
+    thumbnail: 'https://image.tmdb.org/t/p/w500/bwTzW1wTgUxUOQruhT8DvinUYgR.jpg',
+    eps: '16 Episode',
+    rating: '8.8',
+    year: '2023',
+    status: 'Completed',
+    synopsis: 'Eun Gyeol, siswa SMA CODA berbakat musik, terlempar kembali ke tahun 1995 dan berteman dengan versi muda ayahnya dalam band anak muda yang hangat.',
+    genres: ['Youth', 'Romance', 'Fantasy', 'Music'],
+    type: 'Series',
+    tmdbId: 212204,
+  },
+  {
+    id: 'drakor-210702',
+    title: 'Revenant',
+    alterTitle: '악귀',
+    endpoint: 'revenant',
+    thumbnail: 'https://image.tmdb.org/t/p/w500/o2Sk7VEZpR5WOCjtjO6ClGBKSji.jpg',
+    eps: '12 Episode',
+    rating: '7.9',
+    year: '2023',
+    status: 'Completed',
+    synopsis: 'Seorang wanita yang dirasuki oleh iblis misterius dan seorang profesor folklor yang bisa melihat roh jahat mengungkap kematian berantai tak wajar.',
+    genres: ['Horror', 'Mystery', 'Supernatural', 'Thriller'],
+    type: 'Series',
+    tmdbId: 210702,
+  },
+  {
+    id: 'drakor-117376',
+    title: 'Vincenzo',
+    alterTitle: '빈센조',
+    endpoint: 'vincenzo',
+    thumbnail: 'https://image.tmdb.org/t/p/w500/qbkSS1cTjT4DzIwD44bdhTuYgdT.jpg',
+    eps: '20 Episode',
+    rating: '8.5',
+    year: '2021',
+    status: 'Completed',
+    synopsis: 'Pengacara mafia keturunan Korea-Italia kembali ke Seoul untuk mengamankan emas tersembunyi, lalu terlibat perang melawan konglomerat korup Babel Group.',
+    genres: ['Action', 'Comedy', 'Law', 'Crime'],
+    type: 'Series',
+    tmdbId: 117376,
+  },
+  {
+    id: 'drakor-94796',
+    title: 'Crash Landing on You',
+    alterTitle: '사랑의 불시착',
+    endpoint: 'crash-landing-on-you',
+    thumbnail: 'https://image.tmdb.org/t/p/w500/fgBNLPr6mC8pxuR79ENAJY4nBmj.jpg',
+    eps: '16 Episode',
+    rating: '8.5',
+    year: '2019',
+    status: 'Completed',
+    synopsis: 'Insiden paralayang membawa pewaris kaya Korea Selatan mendarat darurat di Korea Utara dan jatuh hati pada perwira tentara yang melindunginya.',
+    genres: ['Romance', 'Comedy', 'Drama', 'Military'],
+    type: 'Series',
+    tmdbId: 94796,
+  },
+  {
+    id: 'drakor-154825',
+    title: 'Business Proposal',
+    alterTitle: '사내맞선',
+    endpoint: 'business-proposal',
+    thumbnail: 'https://image.tmdb.org/t/p/w500/iLh7L8ZuvgdxFaM9sImyv2iKYLe.jpg',
+    eps: '12 Episode',
+    rating: '8.5',
+    year: '2022',
+    status: 'Completed',
+    synopsis: 'Menggantikan temannya dalam kencan buta untuk mengusir sang pria, Shin Ha-ri terkejut mendapati kencannya adalah CEO perusahaan tempat ia bekerja.',
+    genres: ['Romance', 'Comedy', 'Workplace'],
+    type: 'Series',
+    tmdbId: 154825,
+  },
+  {
+    id: 'drakor-215072',
+    title: 'A Shop for Killers',
+    alterTitle: '킬러들의 쇼핑몰',
+    endpoint: 'a-shop-for-killers',
+    thumbnail: 'https://image.tmdb.org/t/p/w500/7yUY1HUyQuybbvkAAhLzQ7x1l9g.jpg',
+    eps: '8 Episode',
+    rating: '8.5',
+    year: '2024',
+    status: 'Completed',
+    synopsis: 'Seorang keponakan yang kehilangan orang tuanya dan dibesarkan oleh pamannya yang mengelola pusat perbelanjaan senjata rahasia menghadapi serbuan tentara bayaran elit.',
+    genres: ['Action', 'Thriller', 'Mystery'],
+    type: 'Series',
+    tmdbId: 215072,
+  },
+  {
+    id: 'drakor-96648',
+    title: 'Sweet Home',
+    alterTitle: '스위트홈',
+    endpoint: 'sweet-home',
+    thumbnail: 'https://image.tmdb.org/t/p/w500/zcugNxDg59YwIf3dUHsrHmO7pc1.jpg',
+    eps: '26 Episode',
+    rating: '8.2',
+    year: '2020',
+    status: 'Completed',
+    synopsis: 'Ketika manusia mulai berubah menjadi monster ganas berlandaskan nafsu terdalam mereka, penghuni apartemen kumuh Green Home berjuang bertahan hidup.',
+    genres: ['Horror', 'Action', 'Sci-Fi', 'Apocalyptic'],
+    type: 'Series',
+    tmdbId: 96648,
+  },
+  {
+    id: 'drakor-93405',
+    title: 'Squid Game',
+    alterTitle: '오징어 게임',
+    endpoint: 'squid-game',
+    thumbnail: 'https://image.tmdb.org/t/p/w500/1QdXdRYfktUSONkl1oD5gc6Be0s.jpg',
+    eps: '9 Episode',
+    rating: '7.9',
+    year: '2021',
+    status: 'Ongoing',
+    synopsis: 'Ratusan peserta yang terlilit hutang kepalang menerima undangan bertanding dalam permainan anak-anak tradisional demi hadiah 45.6 miliar won yang mematikan.',
+    genres: ['Survival', 'Thriller', 'Mystery', 'Drama'],
+    type: 'Series',
+    tmdbId: 93405,
+  },
+  {
+    id: 'drakor-96102',
+    title: 'Hospital Playlist',
+    alterTitle: '슬기로운 의사생활',
+    endpoint: 'hospital-playlist',
+    thumbnail: 'https://image.tmdb.org/t/p/w500/8MSjQkH2FrG0t4l84L5HmiSFrS7.jpg',
+    eps: '24 Episode',
+    rating: '8.6',
+    year: '2020',
+    status: 'Completed',
+    synopsis: 'Kisah hangat persahabatan 5 dokter spesialis yang telah berteman sejak sekolah kedokteran tahun 1999 dan membentuk band musik di sela kesibukan rumah sakit.',
+    genres: ['Medical', 'Life', 'Romance', 'Comedy'],
+    type: 'Series',
+    tmdbId: 96102,
+  },
+  {
+    id: 'drakor-65143',
+    title: 'Descendants of the Sun',
+    alterTitle: '태양의 후예',
+    endpoint: 'descendants-of-the-sun',
+    thumbnail: 'https://image.tmdb.org/t/p/w500/xxGomfml0x9iyPBS4StBjbRRu65.jpg',
+    eps: '16 Episode',
+    rating: '8.3',
+    year: '2016',
+    status: 'Completed',
+    synopsis: 'Kisah cinta antara kapten pasukan khusus militer Korea Selatan dan seorang dokter bedah sukarelawan di negeri konflik fiksi Urk.',
+    genres: ['Romance', 'Action', 'Medical', 'Drama'],
+    type: 'Series',
+    tmdbId: 65143,
+  },
+  {
+    id: 'drakor-67915',
+    title: 'Goblin: The Lonely and Great God',
+    alterTitle: '쓸쓸하고 찬란하神-도깨비',
+    endpoint: 'goblin',
+    thumbnail: 'https://image.tmdb.org/t/p/w500/sPkxHNw5BFvuCFGWw825TS7n6X3.jpg',
+    eps: '16 Episode',
+    rating: '8.7',
+    year: '2016',
+    status: 'Completed',
+    synopsis: 'Seorang jenderal perang terkutuk hidup abadi selama 900 tahun sebagai Goblin pencari pengantin manusia yang mampu mencabut pedang di dadanya.',
+    genres: ['Fantasy', 'Romance', 'Comedy', 'Drama'],
+    type: 'Series',
+    tmdbId: 67915,
+  },
+  {
+    id: 'drakor-96162',
+    title: 'Itaewon Class',
+    alterTitle: '이태원 클라쓰',
+    endpoint: 'itaewon-class',
+    thumbnail: 'https://image.tmdb.org/t/p/w500/qg7q0piY0fTt2enlIRHwKKRwNjS.jpg',
+    eps: '16 Episode',
+    rating: '8.3',
+    year: '2020',
+    status: 'Completed',
+    synopsis: 'Di jalanan kosmopolitan Itaewon, mantan narapidana Park Sae-royi bersama krunya membangun kedai DanBam demi meruntuhkan tahta konglomerat makanan Jangga.',
+    genres: ['Drama', 'Business', 'Romance', 'Youth'],
+    type: 'Series',
+    tmdbId: 96162,
+  },
+  {
+    id: 'drakor-99966',
+    title: 'All of Us Are Dead',
+    alterTitle: '지금 우리 학교는',
+    endpoint: 'all-of-us-are-dead',
+    thumbnail: 'https://image.tmdb.org/t/p/w500/pTEFqAjLd5YTsMD6NSUxV6Dq7A6.jpg',
+    eps: '12 Episode',
+    rating: '8.3',
+    year: '2022',
+    status: 'Ongoing',
+    synopsis: 'Gedung SMA Hyosan menjadi titik nol merebaknya wabah virus zombi. Murid-murid yang terjebak harus berjuang mati-matian tanpa sinyal dan bantuan.',
+    genres: ['Zombie', 'Horror', 'Action', 'Thriller'],
+    type: 'Series',
+    tmdbId: 99966,
+  },
+  {
+    id: 'drakor-200709',
+    title: 'Weak Hero Class 1',
+    alterTitle: '약한영웅 Class 1',
+    endpoint: 'weak-hero-class-1',
+    thumbnail: 'https://image.tmdb.org/t/p/w500/hS9VVF5ffTVWNoC9B48QNsZFGy9.jpg',
+    eps: '8 Episode',
+    rating: '8.7',
+    year: '2022',
+    status: 'Completed',
+    synopsis: 'Yeon Si-eun, murid cerdas bertubuh ringkih, menggunakan kecerdasan analitis, psikologi, dan hukum fisika untuk melawan geng perundung kejam di sekolahnya.',
+    genres: ['Action', 'Youth', 'Drama', 'Psychological'],
+    type: 'Series',
+    tmdbId: 200709,
+  },
+  {
+    id: 'drakor-218230',
+    title: "Death's Game",
+    alterTitle: '이재, 곧 죽습니다',
+    endpoint: 'deaths-game',
+    thumbnail: 'https://image.tmdb.org/t/p/w500/ecM5MY9g2mF6x5SrB2QWOYkcH98.jpg',
+    eps: '8 Episode',
+    rating: '8.4',
+    year: '2023',
+    status: 'Completed',
+    synopsis: 'Setelah bunuh diri karena putus asa, Choi Yee-jae dihukum oleh Sang Maut untuk mengalami 12 kematian mengerikan di dalam tubuh orang yang berbeda.',
+    genres: ['Fantasy', 'Action', 'Thriller', 'Drama'],
+    type: 'Series',
+    tmdbId: 218230,
+  },
+  {
+    id: 'drakor-222233',
+    title: 'Doctor Slump',
+    alterTitle: '닥터슬럼프',
+    endpoint: 'doctor-slump',
+    thumbnail: 'https://image.tmdb.org/t/p/w500/iOWmbZEbhvrYyWm6O4W3oHf2S9B.jpg',
+    eps: '16 Episode',
+    rating: '8.1',
+    year: '2024',
+    status: 'Completed',
+    synopsis: 'Dua dokter brilian yang merupakan rival bebuyutan semasa sekolah bertemu kembali saat sama-sama berada di titik terendah dalam karir medis mereka.',
+    genres: ['Romance', 'Medical', 'Comedy', 'Drama'],
+    type: 'Series',
+    tmdbId: 222233,
+  },
+  {
+    id: 'drakor-218539',
+    title: 'My Demon',
+    alterTitle: '마이 데몬',
+    endpoint: 'my-demon',
+    thumbnail: 'https://image.tmdb.org/t/p/w500/xBnscv5BrJREKVSvh0le61y4KDk.jpg',
+    eps: '16 Episode',
+    rating: '8.5',
+    year: '2023',
+    status: 'Completed',
+    synopsis: 'Iblis berusia 200 tahun mendadak kehilangan kekuatan magisnya setelah kekuatannya berpindah kepada seorang pewaris konglomerat yang arogan.',
+    genres: ['Fantasy', 'Romance', 'Comedy'],
+    type: 'Series',
+    tmdbId: 218539,
+  },
+  {
+    id: 'drakor-112888',
+    title: 'True Beauty',
+    alterTitle: '여신강림',
+    endpoint: 'true-beauty',
+    thumbnail: 'https://image.tmdb.org/t/p/w500/I9WCyKUbKAiu95tAitaHOx8EVO.jpg',
+    eps: '16 Episode',
+    rating: '8.3',
+    year: '2020',
+    status: 'Completed',
+    synopsis: 'Siswa SMA yang minder dengan penampilannya menguasai seni rias wajah hingga menjadi "Dewi" di sekolah barunya, dan diperebutkan dua cowok populer.',
+    genres: ['Romance', 'Comedy', 'Youth', 'School'],
+    type: 'Series',
+    tmdbId: 112888,
+  },
+];
+
+function mapZeroneDrakorItem(raw: any): DrakorItem {
+  return {
+    id: raw.id || `drakor-${raw.endpoint || Math.random().toString(36).substring(7)}`,
+    title: raw.title || 'K-Drama',
+    alterTitle: raw.alterTitle || raw.original_title || '',
+    endpoint: raw.endpoint || raw.link?.split('/').filter(Boolean).pop() || '',
+    thumbnail: raw.thumbnail || raw.poster || raw.image || '',
+    eps: raw.eps || raw.episode || 'Sub Indo',
+    rating: raw.rating || '8.5',
+    year: raw.year || raw.release || '2024',
+    status: raw.status || 'Ongoing',
+    synopsis: raw.synopsis || raw.overview || 'Drama Korea pilihan Subtitle Indonesia.',
+    genres: Array.isArray(raw.genres) ? raw.genres : (raw.genre ? [raw.genre] : ['Drama', 'Romance']),
+    type: raw.type || 'Series',
+    tmdbId: raw.tmdbId,
+  };
+}
+
+/**
+ * Fetch Ongoing Drakor (ZeroneWatch + Curated Ongoing)
+ */
+export async function fetchDrakorOngoing(page: number = 1): Promise<DrakorItem[]> {
+  const settled = await Promise.allSettled([
+    fetchWithTimeout(`${ZERONEWATCH_BASE_URL}/drakorkita/series/ongoing?page=${page}`, {}, 6000)
+      .then((r) => (r.ok ? r.json() : null))
+      .catch(() => null),
+  ]);
+
+  const rawItems = settled[0].status === 'fulfilled' && settled[0].value ? settled[0].value.data || settled[0].value.results || [] : [];
+  const fetchedList: DrakorItem[] = rawItems.map(mapZeroneDrakorItem);
+
+  const seen = new Set<string>();
+  const combined: DrakorItem[] = [];
+
+  // Ongoing items from curated list
+  const ongoingCurated = CURATED_DRAKOR_LIST.filter((d) => d.status === 'Ongoing');
+  for (const item of ongoingCurated) {
+    seen.add(normalizeTitle(item.title));
+    combined.push(item);
+  }
+
+  // Fetched items
+  for (const item of fetchedList) {
+    const key = normalizeTitle(item.title);
+    if (!seen.has(key)) {
+      seen.add(key);
+      combined.push(item);
+    }
+  }
+
+  // If ongoing curated is small, supplement with high-rating 2024 hits
+  if (combined.length < 12) {
+    for (const item of CURATED_DRAKOR_LIST) {
+      const key = normalizeTitle(item.title);
+      if (!seen.has(key)) {
+        seen.add(key);
+        combined.push(item);
+      }
+    }
+  }
+
+  return combined;
+}
+
+/**
+ * Fetch Popular Drakor
+ */
+export async function fetchDrakorPopular(page: number = 1): Promise<DrakorItem[]> {
+  const settled = await Promise.allSettled([
+    fetchWithTimeout(`${ZERONEWATCH_BASE_URL}/drakorkita/series?page=${page}`, {}, 6000)
+      .then((r) => (r.ok ? r.json() : null))
+      .catch(() => null),
+  ]);
+
+  const rawItems = settled[0].status === 'fulfilled' && settled[0].value ? settled[0].value.data || settled[0].value.results || [] : [];
+  const fetchedList: DrakorItem[] = rawItems.map(mapZeroneDrakorItem);
+
+  const seen = new Set<string>();
+  const combined: DrakorItem[] = [];
+
+  // Curated popular hits sorted by rating
+  const sortedCurated = [...CURATED_DRAKOR_LIST].sort((a, b) => parseFloat(b.rating || '0') - parseFloat(a.rating || '0'));
+  for (const item of sortedCurated) {
+    seen.add(normalizeTitle(item.title));
+    combined.push(item);
+  }
+
+  for (const item of fetchedList) {
+    const key = normalizeTitle(item.title);
+    if (!seen.has(key)) {
+      seen.add(key);
+      combined.push(item);
+    }
+  }
+
+  return combined;
+}
+
+/**
+ * Fetch Completed Drakor
+ */
+export async function fetchDrakorCompleted(page: number = 1): Promise<DrakorItem[]> {
+  const settled = await Promise.allSettled([
+    fetchWithTimeout(`${ZERONEWATCH_BASE_URL}/drakorkita/series/completed?page=${page}`, {}, 6000)
+      .then((r) => (r.ok ? r.json() : null))
+      .catch(() => null),
+  ]);
+
+  const rawItems = settled[0].status === 'fulfilled' && settled[0].value ? settled[0].value.data || settled[0].value.results || [] : [];
+  const fetchedList: DrakorItem[] = rawItems.map(mapZeroneDrakorItem);
+
+  const seen = new Set<string>();
+  const combined: DrakorItem[] = [];
+
+  const completedCurated = CURATED_DRAKOR_LIST.filter((d) => d.status === 'Completed');
+  for (const item of completedCurated) {
+    seen.add(normalizeTitle(item.title));
+    combined.push(item);
+  }
+
+  for (const item of fetchedList) {
+    const key = normalizeTitle(item.title);
+    if (!seen.has(key)) {
+      seen.add(key);
+      combined.push(item);
+    }
+  }
+
+  return combined;
+}
+
+/**
+ * Search Drakor (Local Curated + ZeroneWatch + TMDB Korean TV Search)
+ */
+export async function searchDrakor(query: string): Promise<DrakorItem[]> {
+  if (!query || !query.trim()) return CURATED_DRAKOR_LIST;
+  const q = query.toLowerCase().trim();
+
+  // 1. Local Curated Search
+  const localMatches = CURATED_DRAKOR_LIST.filter(
+    (d) =>
+      d.title.toLowerCase().includes(q) ||
+      d.alterTitle?.toLowerCase().includes(q) ||
+      d.synopsis?.toLowerCase().includes(q) ||
+      d.genres?.some((g) => g.toLowerCase().includes(q))
+  );
+
+  // 2. ZeroneWatch Drakorkita Search + TMDB TV Search
+  const [zeroneRes, tmdbRes] = await Promise.allSettled([
+    fetchWithTimeout(`${ZERONEWATCH_BASE_URL}/drakorkita/search?query=${encodeURIComponent(query)}`, {}, 6000)
+      .then((r) => (r.ok ? r.json() : null))
+      .catch(() => null),
+    fetchWithTimeout(
+      `https://api.themoviedb.org/3/search/tv?query=${encodeURIComponent(query)}&api_key=${TMDB_DRAKOR_API_KEY}`,
+      {},
+      6000
+    )
+      .then((r) => (r.ok ? r.json() : null))
+      .catch(() => null),
+  ]);
+
+  const remoteZerone: DrakorItem[] =
+    zeroneRes.status === 'fulfilled' && zeroneRes.value
+      ? (zeroneRes.value.data || zeroneRes.value.results || []).map(mapZeroneDrakorItem)
+      : [];
+
+  const tmdbTvItems: DrakorItem[] = [];
+  if (tmdbRes.status === 'fulfilled' && tmdbRes.value && Array.isArray(tmdbRes.value.results)) {
+    for (const tv of tmdbRes.value.results) {
+      if (tv.poster_path) {
+        tmdbTvItems.push({
+          id: `drakor-${tv.id}`,
+          title: tv.name || 'Drama Korea',
+          alterTitle: tv.original_name,
+          endpoint: tv.id.toString(),
+          thumbnail: `https://image.tmdb.org/t/p/w500${tv.poster_path}`,
+          eps: 'TV Series',
+          rating: tv.vote_average ? tv.vote_average.toFixed(1) : '8.5',
+          year: tv.first_air_date ? tv.first_air_date.slice(0, 4) : '2024',
+          status: 'Ongoing',
+          synopsis: tv.overview || 'Drama Korea Subtitle Indonesia.',
+          genres: ['K-Drama', 'TV'],
+          type: 'Series',
+          tmdbId: tv.id,
+        });
+      }
+    }
+  }
+
+  // Deduplicate results
+  const seen = new Set<string>();
+  const combined: DrakorItem[] = [];
+
+  for (const list of [localMatches, remoteZerone, tmdbTvItems]) {
+    for (const item of list) {
+      const key = normalizeTitle(item.title);
+      if (key && !seen.has(key)) {
+        seen.add(key);
+        combined.push(item);
+      }
+    }
+  }
+
+  return combined;
+}
+
+/**
+ * Fetch Drakor Detail (Full Episodes & Metadata)
+ */
+export async function fetchDrakorDetail(endpointOrId: string): Promise<DrakorDetail | null> {
+  const cleanId = endpointOrId.replace(/^drakor-/, '').trim();
+
+  // 1. Look in Curated list
+  const curated = CURATED_DRAKOR_LIST.find(
+    (d) =>
+      d.id === endpointOrId ||
+      d.endpoint === endpointOrId ||
+      String(d.tmdbId) === cleanId ||
+      d.title.toLowerCase() === endpointOrId.toLowerCase()
+  );
+
+  let tmdbId = curated?.tmdbId || (!isNaN(Number(cleanId)) ? Number(cleanId) : undefined);
+  let baseTitle = curated?.title || endpointOrId;
+  let alterTitle = curated?.alterTitle || '';
+  let thumbnail = curated?.thumbnail || '';
+  let synopsis = curated?.synopsis || 'Drama Korea terbaik dengan takarir bahasa Indonesia.';
+  let rating = curated?.rating || '8.5';
+  let year = curated?.year || '2024';
+  let status = curated?.status || 'Completed';
+  let genres = curated?.genres || ['Romance', 'Drama'];
+  let totalEps = 16;
+
+  if (curated?.eps) {
+    const matched = curated.eps.match(/(\d+)/);
+    if (matched) totalEps = parseInt(matched[1], 10);
+  }
+
+  // 2. If tmdbId not found yet, query TMDB search to obtain real TMDB ID & episode count
+  if (!tmdbId) {
+    try {
+      const res = await fetchWithTimeout(
+        `https://api.themoviedb.org/3/search/tv?query=${encodeURIComponent(baseTitle)}&api_key=${TMDB_DRAKOR_API_KEY}`,
+        {},
+        6000
+      );
+      if (res.ok) {
+        const json = await res.json();
+        const found = (json.results || []).find((r: any) => r.origin_country?.includes('KR') || r.original_language === 'ko') || json.results?.[0];
+        if (found) {
+          tmdbId = found.id;
+          baseTitle = found.name || baseTitle;
+          alterTitle = found.original_name || alterTitle;
+          thumbnail = found.poster_path ? `https://image.tmdb.org/t/p/w500${found.poster_path}` : thumbnail;
+          synopsis = found.overview || synopsis;
+          rating = found.vote_average ? found.vote_average.toFixed(1) : rating;
+          year = found.first_air_date ? found.first_air_date.slice(0, 4) : year;
+        }
+      }
+    } catch {}
+  }
+
+  // 3. If tmdbId is available, fetch exact total episodes from TMDB
+  if (tmdbId) {
+    try {
+      const res = await fetchWithTimeout(
+        `https://api.themoviedb.org/3/tv/${tmdbId}?api_key=${TMDB_DRAKOR_API_KEY}`,
+        {},
+        6000
+      );
+      if (res.ok) {
+        const tvData = await res.json();
+        if (tvData.number_of_episodes && tvData.number_of_episodes > 0) {
+          totalEps = Math.min(tvData.number_of_episodes, 40);
+        }
+        if (tvData.genres && Array.isArray(tvData.genres)) {
+          genres = tvData.genres.map((g: any) => g.name);
+        }
+      }
+    } catch {}
+  }
+
+  // 4. Generate episode list with direct fallback streams
+  const episodes: DrakorEpisode[] = [];
+  const targetTmdb = tmdbId || cleanId;
+  for (let i = 1; i <= totalEps; i++) {
+    episodes.push({
+      episodeNumber: i,
+      title: `Episode ${i}`,
+      endpoint: `ep-${i}`,
+      streamUrl: `https://vidsrc.icu/embed/tv/${targetTmdb}/1/${i}`,
+      servers: getDrakorStreamServers(targetTmdb, 1, i),
+    });
+  }
+
+  return {
+    id: curated?.id || `drakor-${targetTmdb}`,
+    title: baseTitle,
+    alterTitle,
+    thumbnail,
+    synopsis,
+    rating,
+    status,
+    year,
+    genres,
+    totalEpisodes: totalEps,
+    episodes,
+  };
+}
+
+/**
+ * Multi-Server Stream Resolver for Drakor (K-Drama)
+ */
+export function getDrakorStreamServers(
+  drakorIdOrTmdb: string | number,
+  season: number = 1,
+  episode: number = 1
+): Array<{ name: string; url: string }> {
+  const cleanId = String(drakorIdOrTmdb).replace(/^drakor-/, '').trim();
+  return [
+    {
+      name: 'Server 1 (VidSrc ICU HD)',
+      url: `https://vidsrc.icu/embed/tv/${cleanId}/${season}/${episode}`,
+    },
+    {
+      name: 'Server 2 (VidSrc CC HD)',
+      url: `https://vidsrc.cc/v2/embed/tv/${cleanId}/${season}/${episode}`,
+    },
+    {
+      name: 'Server 3 (AutoEmbed CC)',
+      url: `https://autoembed.cc/embed/player.php?id=${cleanId}&season=${season}&episode=${episode}`,
+    },
+    {
+      name: 'Server 4 (MultiEmbed TV)',
+      url: `https://multiembed.mov/?video_id=${cleanId}&s=${season}&e=${episode}`,
+    },
+    {
+      name: 'Server 5 (VidSrc VIP)',
+      url: `https://vidsrc.me/embed/tv?imdb=${cleanId}&season=${season}&episode=${episode}`,
+    },
+  ];
+}
+

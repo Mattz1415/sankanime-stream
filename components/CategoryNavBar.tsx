@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { Tv, Sparkles, Heart, Layers, BookOpen, Film } from 'lucide-react';
 import { MediaCategory } from '@/lib/types';
 
 interface CategoryNavBarProps {
@@ -8,85 +9,70 @@ interface CategoryNavBarProps {
   onSelectCategory: (cat: MediaCategory) => void;
 }
 
-interface CategoryConfig {
+interface NavTabItem {
   id: MediaCategory;
-  name: string;
-  emoji: string;
-  badge: string;
-  glowColor: string;
-  neonText: string;
-  activeBg: string;
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+  activeGradient: string;
   activeBorder: string;
-  badgeBg: string;
-  badgeText: string;
-  neonBarBg: string;
+  activeGlow: string;
+  iconColor: string;
 }
 
-const CATEGORIES: CategoryConfig[] = [
+const CATEGORY_TABS: NavTabItem[] = [
   {
     id: 'Anime',
-    name: 'Anime',
-    emoji: '🎬',
-    badge: '1000+',
-    glowColor: 'rgba(6,182,212,0.35)',
-    neonText: 'text-cyan-300',
-    activeBg: 'bg-cyan-500/15',
-    activeBorder: 'border-cyan-400/60',
-    badgeBg: 'bg-cyan-400/20 border-cyan-400/30',
-    badgeText: 'text-cyan-300',
-    neonBarBg: 'bg-cyan-400',
+    label: 'Anime',
+    icon: Tv,
+    activeGradient: 'from-cyan-500/20 to-blue-500/20',
+    activeBorder: 'border-cyan-400/40',
+    activeGlow: 'rgba(6, 182, 212, 0.25)',
+    iconColor: 'text-cyan-400',
   },
   {
     id: 'Donghua',
-    name: 'Donghua',
-    emoji: '🐉',
-    badge: '3D HD',
-    glowColor: 'rgba(16,185,129,0.35)',
-    neonText: 'text-emerald-300',
-    activeBg: 'bg-emerald-500/15',
-    activeBorder: 'border-emerald-400/60',
-    badgeBg: 'bg-emerald-400/20 border-emerald-400/30',
-    badgeText: 'text-emerald-300',
-    neonBarBg: 'bg-emerald-400',
+    label: 'Donghua',
+    icon: Sparkles,
+    activeGradient: 'from-emerald-500/20 to-teal-500/20',
+    activeBorder: 'border-emerald-400/40',
+    activeGlow: 'rgba(16, 185, 129, 0.25)',
+    iconColor: 'text-emerald-400',
   },
   {
-    id: 'Komik',
-    name: 'Komik',
-    emoji: '📖',
-    badge: 'Manga',
-    glowColor: 'rgba(245,158,11,0.35)',
-    neonText: 'text-amber-300',
-    activeBg: 'bg-amber-500/15',
-    activeBorder: 'border-amber-400/60',
-    badgeBg: 'bg-amber-400/20 border-amber-400/30',
-    badgeText: 'text-amber-300',
-    neonBarBg: 'bg-amber-400',
+    id: 'Drakor',
+    label: 'Drakor',
+    icon: Heart,
+    activeGradient: 'from-pink-500/20 to-rose-500/20',
+    activeBorder: 'border-pink-400/40',
+    activeGlow: 'rgba(236, 72, 153, 0.25)',
+    iconColor: 'text-pink-400',
   },
   {
     id: 'Manhwa',
-    name: 'Manhwa',
-    emoji: '🇰🇷',
-    badge: 'Color Hits',
-    glowColor: 'rgba(168,85,247,0.45)',
-    neonText: 'text-purple-300',
-    activeBg: 'bg-purple-500/15',
-    activeBorder: 'border-purple-400/60',
-    badgeBg: 'bg-purple-400/20 border-purple-400/30',
-    badgeText: 'text-purple-300',
-    neonBarBg: 'bg-purple-400',
+    label: 'Manhwa',
+    icon: Layers,
+    activeGradient: 'from-purple-500/20 to-indigo-500/20',
+    activeBorder: 'border-purple-400/40',
+    activeGlow: 'rgba(168, 85, 247, 0.25)',
+    iconColor: 'text-purple-400',
   },
   {
-    id: 'LK21 Film',
-    name: 'LK21 Film',
-    emoji: '🍿',
-    badge: 'Free HD',
-    glowColor: 'rgba(244,63,94,0.35)',
-    neonText: 'text-rose-300',
-    activeBg: 'bg-rose-500/15',
-    activeBorder: 'border-rose-400/60',
-    badgeBg: 'bg-rose-400/20 border-rose-400/30',
-    badgeText: 'text-rose-300',
-    neonBarBg: 'bg-rose-400',
+    id: 'Komik',
+    label: 'Komik',
+    icon: BookOpen,
+    activeGradient: 'from-amber-500/20 to-orange-500/20',
+    activeBorder: 'border-amber-400/40',
+    activeGlow: 'rgba(245, 158, 11, 0.25)',
+    iconColor: 'text-amber-400',
+  },
+  {
+    id: 'Film',
+    label: 'Film',
+    icon: Film,
+    activeGradient: 'from-rose-500/20 to-red-500/20',
+    activeBorder: 'border-rose-400/40',
+    activeGlow: 'rgba(244, 63, 94, 0.25)',
+    iconColor: 'text-rose-400',
   },
 ];
 
@@ -94,59 +80,45 @@ export default function CategoryNavBar({
   activeCategory,
   onSelectCategory,
 }: CategoryNavBarProps) {
+  // Normalize LK21 Film to Film if active
+  const currentTab = activeCategory === 'LK21 Film' ? 'Film' : activeCategory;
+
   return (
     <nav
-      aria-label="Kategori Utama Nexus"
-      className="w-full bg-[#050508]/95 backdrop-blur-md border-b border-white/[0.08] sticky top-[57px] sm:top-[61px] z-30 px-2 sm:px-6 lg:px-8 py-2 transition-all"
+      aria-label="Kategori Media Nexus"
+      className="w-full sticky top-[57px] sm:top-[61px] z-30 px-3 sm:px-6 py-2 transition-all pointer-events-none"
     >
-      <div className="max-w-7xl mx-auto">
-        <div className="grid grid-cols-5 gap-1 sm:gap-2.5">
-          {CATEGORIES.map((cat) => {
-            const isActive = activeCategory === cat.id;
+      <div className="max-w-fit mx-auto pointer-events-auto">
+        {/* Apple TV+ Spatial Segmented Pill Bar */}
+        <div className="h-11 px-1.5 rounded-full bg-[#09090f]/95 backdrop-blur-2xl border border-white/[0.08] shadow-[0_10px_35px_rgba(0,0,0,0.85)] flex items-center gap-1 overflow-x-auto no-scrollbar">
+          {CATEGORY_TABS.map((tab) => {
+            const isActive = currentTab === tab.id;
+            const Icon = tab.icon;
 
             return (
               <button
-                key={cat.id}
+                key={tab.id}
                 type="button"
-                onClick={() => onSelectCategory(cat.id)}
+                onClick={() => onSelectCategory(tab.id)}
                 style={
                   isActive
                     ? {
-                        boxShadow: `0 0 20px ${cat.glowColor}`,
+                        boxShadow: `0 0 20px ${tab.activeGlow}`,
                       }
                     : undefined
                 }
-                className={`relative flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 px-1.5 sm:px-3 py-1.5 sm:py-2.5 rounded-2xl border transition-all duration-300 spring-press ${
+                className={`h-8 sm:h-8.5 px-3 sm:px-4 rounded-full flex items-center justify-center gap-1.5 text-[12px] sm:text-[13px] font-medium tracking-wide transition-all duration-300 whitespace-nowrap spring-press relative select-none ${
                   isActive
-                    ? `${cat.activeBg} ${cat.activeBorder} ${cat.neonText} font-black scale-[1.02]`
-                    : 'bg-white/[0.02] border-white/[0.05] text-zinc-400 hover:text-white hover:bg-white/[0.06] hover:border-white/10 font-bold'
+                    ? `bg-gradient-to-r ${tab.activeGradient} ${tab.activeBorder} border text-white font-semibold scale-[1.02]`
+                    : 'text-zinc-400 hover:text-zinc-200 hover:bg-white/[0.04]'
                 }`}
               >
-                {/* Emoji & Title */}
-                <div className="flex items-center gap-1 sm:gap-1.5 flex-shrink-0">
-                  <span className="text-sm sm:text-base leading-none select-none">{cat.emoji}</span>
-                  <span className="text-[11px] sm:text-xs tracking-tight whitespace-nowrap">
-                    {cat.name}
-                  </span>
-                </div>
-
-                {/* Content Badge */}
-                <span
-                  className={`text-[9px] sm:text-[10px] px-1.5 py-0.5 rounded-full font-bold border transition-all select-none leading-none ${
-                    isActive
-                      ? `${cat.badgeBg} ${cat.badgeText}`
-                      : 'bg-white/[0.05] border-white/10 text-zinc-500'
+                <Icon
+                  className={`w-3.5 h-3.5 transition-colors ${
+                    isActive ? tab.iconColor : 'text-zinc-400 group-hover:text-white'
                   }`}
-                >
-                  {cat.badge}
-                </span>
-
-                {/* Glowing Active Neon Bar */}
-                {isActive && (
-                  <span
-                    className={`absolute -bottom-[9px] left-1/2 -translate-x-1/2 w-8 sm:w-14 h-[3px] rounded-full ${cat.neonBarBg} shadow-[0_0_12px_currentColor]`}
-                  />
-                )}
+                />
+                <span>{tab.label}</span>
               </button>
             );
           })}

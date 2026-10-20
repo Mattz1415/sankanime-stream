@@ -28,7 +28,7 @@ function RawAnimeGlassCard({ anime, index = 0 }: AnimeGlassCardProps) {
       <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-white/30 to-transparent z-20 pointer-events-none" />
 
       {/* Poster Image Container */}
-      <div className="relative aspect-[3/4] w-full overflow-hidden bg-[#030306]">
+      <div className="relative aspect-[2/3] w-full overflow-hidden bg-[#030306]">
         <SmartImage
           item={anime}
           src={anime.poster}

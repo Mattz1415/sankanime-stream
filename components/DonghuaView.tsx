@@ -222,7 +222,7 @@ export default function DonghuaView() {
               onClick={() => handleOpenDetail(item)}
               className="group cursor-pointer rounded-2xl overflow-hidden card-frosted-obsidian border border-white/[0.08] hover:border-cyan-400/50 hover:shadow-[0_0_25px_rgba(0,240,255,0.2)] transition-all duration-300 spring-press flex flex-col"
             >
-              <div className="relative aspect-[3/4] w-full bg-zinc-900 overflow-hidden">
+              <div className="relative aspect-[2/3] w-full bg-zinc-900 overflow-hidden">
                 <SmartImage
                   item={item}
                   src={item.poster}
@@ -231,15 +231,15 @@ export default function DonghuaView() {
                   type="donghua"
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-black/30 opacity-80" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent opacity-90" />
 
-                <div className="absolute top-2 left-2">
-                  <span className="px-2 py-0.5 rounded-md bg-black/80 backdrop-blur-md text-[10px] font-bold text-cyan-300 border border-cyan-400/30">
+                <div className="absolute top-2.5 left-2.5 z-10 pointer-events-none">
+                  <span className="px-2 py-0.5 rounded-lg bg-black/80 backdrop-blur-md text-[10px] font-bold text-cyan-300 border border-cyan-400/30">
                     {item.currentEpisode || (item.status === 'Completed' ? 'Tamat' : 'Ongoing')}
                   </span>
                 </div>
 
-                <div className="absolute bottom-2 right-2 flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-black/80 backdrop-blur-md text-[10px] font-mono text-amber-300 font-bold border border-amber-400/30">
+                <div className="absolute top-2.5 right-2.5 z-10 pointer-events-none flex items-center gap-1 px-2 py-0.5 rounded-lg bg-black/85 backdrop-blur-md text-[10px] font-mono text-amber-300 font-bold border border-amber-400/30">
                   <Star className="w-3 h-3 fill-amber-300" />
                   <span>{item.rating || '8.8'}</span>
                 </div>

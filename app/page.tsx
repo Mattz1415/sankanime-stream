@@ -43,6 +43,7 @@ import DonghuaView from '@/components/DonghuaView';
 import ComicView from '@/components/ComicView';
 import ManhwaView from '@/components/ManhwaView';
 import LK21MovieView from '@/components/LK21MovieView';
+import DrakorView from '@/components/DrakorView';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import { getHomeData, getSchedule } from '@/lib/clientApi';
 import { getWatchHistory } from '@/lib/storage';
@@ -159,10 +160,15 @@ export default function HomePage() {
 
       {/* Main Container */}
       <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 safe-dock-padding space-y-8">
-        {/* Category Views: Donghua, Komik, Manhwa, LK21 Film */}
+        {/* Category Views: Donghua, Drakor, Komik, Manhwa, Film */}
         {activeTab === 'jelajah' && activeCategory === 'Donghua' && (
           <ErrorBoundary fallbackTitle="Kendala Memuat Donghua" fallbackMessage="Koleksi Donghua sedang disinkronkan. Silakan coba muat ulang.">
             <DonghuaView />
+          </ErrorBoundary>
+        )}
+        {activeTab === 'jelajah' && activeCategory === 'Drakor' && (
+          <ErrorBoundary fallbackTitle="Kendala Memuat Drakor" fallbackMessage="Katalog Drakor (K-Drama Sub Indo) sedang disinkronkan. Silakan coba muat ulang.">
+            <DrakorView />
           </ErrorBoundary>
         )}
         {activeTab === 'jelajah' && activeCategory === 'Komik' && (
@@ -175,8 +181,8 @@ export default function HomePage() {
             <ManhwaView />
           </ErrorBoundary>
         )}
-        {activeTab === 'jelajah' && activeCategory === 'LK21 Film' && (
-          <ErrorBoundary fallbackTitle="Kendala Memuat LK21 Film" fallbackMessage="Katalog film LK21 sedang disinkronkan. Silakan coba muat ulang.">
+        {activeTab === 'jelajah' && (activeCategory === 'Film' || activeCategory === 'LK21 Film') && (
+          <ErrorBoundary fallbackTitle="Kendala Memuat Film" fallbackMessage="Katalog film LK21 sedang disinkronkan. Silakan coba muat ulang.">
             <LK21MovieView />
           </ErrorBoundary>
         )}
