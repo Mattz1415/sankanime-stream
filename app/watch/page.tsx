@@ -48,6 +48,18 @@ import CommunityDiscussionView from '@/components/CommunityDiscussionView';
 import DownloadManagerModal from '@/components/DownloadManagerModal';
 import PlayerSettingsModal from '@/components/PlayerSettingsModal';
 import ErrorBoundary from '@/components/ErrorBoundary';
+import {
+  fetchSamehadakuEpisodeServers,
+  resolveSamehadakuPlayerAjax,
+  fetchSamehadakuEpisodeDetail,
+  resolveSamehadakuServerBridge,
+  searchSamehadaku,
+  fetchSamehadakuDetail,
+  resolveOtakudesuBase64Mirror,
+  generateVipStreams,
+  SamehadakuServerOption,
+  VipStreamOption,
+} from '@/services/wibuEngine';
 
 function formatSeconds(sec?: number): string {
   if (!sec || sec <= 0) return '00:00';
@@ -91,6 +103,13 @@ function WatchContent() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [resumePromptSec, setResumePromptSec] = useState<number | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  // Flutter UI + Apple Liquid Glass Provider Switcher & Resolution States
+  const [activeProvider, setActiveProvider] = useState<'otakudesu' | 'samehadaku' | 'kurama'>('otakudesu');
+  const [selectedResolution, setSelectedResolution] = useState<string>('720p');
+  const [samehadakuServers, setSamehadakuServers] = useState<SamehadakuServerOption[]>([]);
+  const [loadingSamehadaku, setLoadingSamehadaku] = useState<boolean>(false);
+  const [vipServers, setVipServers] = useState<VipStreamOption[]>([]);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const iframeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -167,6 +186,11 @@ function WatchContent() {
 
         // Ping calculation simulation
         setServerPing(Math.floor(25 + Math.random() * 20));
+
+        // Pre-populate VIP streams
+        const epNum = data.title.match(/Episode\s*(\d+)/i)?.[1] || 1;
+        const animeTitle = data.info?.title || data.title.split(' Episode')[0] || data.title;
+        setVipServers(generateVipStreams(animeTitle, epNum));
 
         // Server selection
         await pickBestServer(data);
@@ -271,6 +295,54 @@ function WatchContent() {
     }
   };
 
+  const loadSamehadakuForCurrentEpisode = async () => {
+    if (samehadakuServers.length > 0 || loadingSamehadaku) return;
+    setLoadingSamehadaku(true);
+    try {
+      // 1. Try episodeId directly
+      let epData = await fetchSamehadakuEpisodeDetail(episodeId);
+      if (!epData || !epData.servers || epData.servers.length === 0) {
+        // 2. Try normalized slug
+        const cleanSlug = episodeId.replace(/-sub-indo$/i, '').replace(/^otakudesu-/i, '');
+        epData = await fetchSamehadakuEpisodeDetail(cleanSlug);
+      }
+      if (!epData || !epData.servers || epData.servers.length === 0) {
+        // 3. Search anime on Samehadaku and find episode
+        const animeTitle = detail?.info?.title || detail?.title?.split(' Episode')[0] || '';
+        if (animeTitle) {
+          const searchResults = await searchSamehadaku(animeTitle);
+          if (searchResults.length > 0) {
+            const firstMatch = searchResults[0];
+            const animeDetail = await fetchSamehadakuDetail(firstMatch.slug);
+            if (animeDetail && animeDetail.episodes.length > 0) {
+              const epNum = detail?.title?.match(/Episode\s*(\d+)/i)?.[1] || '1';
+              const matchedEp =
+                animeDetail.episodes.find((e) => e.episodeNumber === epNum || e.slug.includes(epNum)) ||
+                animeDetail.episodes[0];
+              if (matchedEp) {
+                epData = await fetchSamehadakuEpisodeDetail(matchedEp.slug);
+              }
+            }
+          }
+        }
+      }
+      if (epData && epData.servers && epData.servers.length > 0) {
+        setSamehadakuServers(epData.servers);
+      }
+    } catch (e) {
+      console.warn('[Watch] Error loading Samehadaku servers', e);
+    } finally {
+      setLoadingSamehadaku(false);
+    }
+  };
+
+  const loadVipStreamsForEpisode = () => {
+    const animeTitle = detail?.info?.title || detail?.title?.split(' Episode')[0] || 'Anime';
+    const epNum = detail?.title?.match(/Episode\s*(\d+)/i)?.[1] || '1';
+    const vips = generateVipStreams(animeTitle, epNum);
+    setVipServers(vips);
+  };
+
   const handleSelectServer = async (server: QualityServer, quality: string) => {
     try {
       cleanupMediaInstances();
@@ -279,26 +351,52 @@ function WatchContent() {
 
       if (iframeTimeoutRef.current) clearTimeout(iframeTimeoutRef.current);
 
-      const resolved = await resolveServerStream(server.serverId);
-      if (resolved && resolved.url) {
+      let resolvedUrl: string | null = null;
+      let isDirect = false;
+
+      // Check Otakudesu 2-step Base64 Nonce Decoder
+      if (server.serverId && (server.serverId.startsWith('b64_') || server.serverId.includes('='))) {
+        try {
+          const cleanB64 = server.serverId.replace(/^b64_/, '');
+          resolvedUrl = await resolveOtakudesuBase64Mirror(cleanB64);
+        } catch {}
+      }
+
+      if (!resolvedUrl) {
+        try {
+          const resolved = await resolveServerStream(server.serverId);
+          if (resolved && resolved.url) {
+            resolvedUrl = resolved.url;
+            isDirect = !!resolved.isDirectVideo;
+          }
+        } catch {}
+      }
+
+      if (!resolvedUrl && server.serverId) {
+        try {
+          resolvedUrl = await resolveOtakudesuBase64Mirror(server.serverId);
+        } catch {}
+      }
+
+      if (resolvedUrl) {
         setActiveServerTitle(`${server.title} (${quality})`);
         setActiveQuality(quality);
 
-        if (resolved.isDirectVideo) {
-          setStreamUrl(resolved.url);
+        if (isDirect) {
+          setStreamUrl(resolvedUrl);
           setBlobSrcDoc('');
           setIsDirectVideo(true);
           setIframeLoaded(true);
           setTunnelResult({
             success: true,
             mode: 'direct',
-            streamUrl: resolved.url,
+            streamUrl: resolvedUrl,
             layer: 1,
             tunnelActive: true,
             message: 'Tunnel Active ⚡ (Layer 1: Direct Video)',
           });
         } else {
-          await executeTunneling(resolved.url, server.title);
+          await executeTunneling(resolvedUrl, server.title);
         }
       } else {
         await executeTunneling(detail?.defaultStreamingUrl || '', 'Fallback Default');
@@ -306,6 +404,54 @@ function WatchContent() {
     } catch (err: any) {
       console.error('[Watch] Switch server error', err);
       setError('Gagal beralih server video');
+    } finally {
+      setSwitchingServer(false);
+    }
+  };
+
+  const handleSelectSamehadakuServer = async (srv: SamehadakuServerOption) => {
+    try {
+      cleanupMediaInstances();
+      setSwitchingServer(true);
+      setIframeLoaded(false);
+      setActiveServerTitle(`Samehadaku ${srv.title} (${selectedResolution})`);
+      setActiveQuality(selectedResolution);
+
+      let resolvedUrl: string | null = null;
+      if (srv.post && srv.nume) {
+        resolvedUrl = await resolveSamehadakuPlayerAjax(srv.post, srv.nume, srv.type || 'east_player');
+      }
+      if (!resolvedUrl && srv.serverUrl) {
+        resolvedUrl = srv.serverUrl;
+      }
+      if (!resolvedUrl && srv.post) {
+        resolvedUrl = await resolveSamehadakuServerBridge(srv.post);
+      }
+
+      if (resolvedUrl) {
+        await executeTunneling(resolvedUrl, `Samehadaku ${srv.title}`);
+      } else {
+        showToast('Gagal memuat stream Samehadaku');
+      }
+    } catch (e) {
+      console.error('Error selecting Samehadaku server', e);
+      showToast('Kendala menghubungkan server Samehadaku');
+    } finally {
+      setSwitchingServer(false);
+    }
+  };
+
+  const handleSelectVipServer = async (vip: VipStreamOption) => {
+    try {
+      cleanupMediaInstances();
+      setSwitchingServer(true);
+      setIframeLoaded(false);
+      setActiveServerTitle(`${vip.serverName} (${vip.quality})`);
+      setActiveQuality(vip.quality);
+      await executeTunneling(vip.url, vip.serverName);
+    } catch (e) {
+      console.error('Error selecting VIP server', e);
+      showToast('Kendala menghubungkan server VIP');
     } finally {
       setSwitchingServer(false);
     }
@@ -398,13 +544,22 @@ function WatchContent() {
   }
 
   // Flatten server list for settings modal
-  const allServers =
-    detail.server?.qualities?.flatMap((q) =>
+  const allServers = [
+    ...(detail.server?.qualities?.flatMap((q) =>
       q.serverList.map((s) => ({
-        title: `${s.title} (${q.title})`,
+        title: `${s.title} (${q.title}) - Otakudesu`,
         serverId: s.serverId,
       }))
-    ) || [];
+    ) || []),
+    ...samehadakuServers.map((s) => ({
+      title: `${s.title} - Samehadaku Pro`,
+      serverId: `samehadaku-${s.post}-${s.nume}`,
+    })),
+    ...vipServers.map((v) => ({
+      title: `${v.serverName} (${v.quality})`,
+      serverId: `vip-${v.serverName}`,
+    })),
+  ];
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto pb-28 animate-fade-in-up font-sans">
@@ -685,66 +840,232 @@ function WatchContent() {
         </div>
       </div>
 
-      {/* Multi-Quality & Multi-Server Matrix */}
-      {detail.server?.qualities && detail.server.qualities.length > 0 && (
-        <div className="p-6 rounded-3xl card-frosted-obsidian border border-white/[0.08] space-y-4 shadow-[0_20px_50px_rgba(0,0,0,0.95)]">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Server className="w-4 h-4 text-cyan-400" />
-              <h3 className="font-cinematic font-bold text-sm text-white uppercase tracking-wider">
-                Pilihan Resolusi & Server Video
-              </h3>
-            </div>
-            <div className="flex items-center gap-1.5 text-[11px] text-zinc-400">
-              <Zap className="w-3.5 h-3.5 text-cyan-400" />
-              <span>Multi-Tunnel Ready</span>
-            </div>
+      {/* Flutter UI + Apple Liquid Glass: Multi-Provider & Resolution Matrix */}
+      <div className="p-6 rounded-3xl card-frosted-obsidian border border-white/[0.08] space-y-5 shadow-[0_20px_50px_rgba(0,0,0,0.95)]">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <Server className="w-4 h-4 text-cyan-400" />
+            <h3 className="font-cinematic font-bold text-sm text-white uppercase tracking-wider">
+              Pilihan Provider & Resolusi Video
+            </h3>
           </div>
-          <p className="text-xs text-zinc-400">
-            Pilih resolusi dan penyedia server cadangan di bawah jika mengalami kendala pemutaran:
-          </p>
+          <div className="flex items-center gap-2 text-[11px] text-zinc-400">
+            <span className="flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-cyan-950/60 text-cyan-300 border border-cyan-500/30 font-semibold font-mono">
+              <Zap className="w-3 h-3 text-cyan-400" />
+              <span>Multi-Source Engine</span>
+            </span>
+          </div>
+        </div>
 
-          <div className="space-y-3 pt-1">
-            {detail.server.qualities.map((group: QualityGroup, idx: number) => (
-              <div key={idx} className="flex flex-col sm:flex-row sm:items-center gap-2">
-                <span className="text-xs font-black px-3.5 py-1 rounded-full bg-white/10 text-white border border-white/20 w-fit">
-                  {group.title}
-                </span>
+        {/* Flutter CupertinoSlidingSegmentedControl Liquid Glass Provider Switcher */}
+        <div className="p-1.5 rounded-2xl bg-white/[0.04] backdrop-blur-2xl border border-white/[0.08] shadow-inner flex flex-col sm:flex-row items-center gap-1.5">
+          <button
+            type="button"
+            onClick={() => setActiveProvider('otakudesu')}
+            className={`w-full sm:flex-1 py-2.5 px-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 spring-press ${
+              activeProvider === 'otakudesu'
+                ? 'liquid-glass-convex bg-gradient-to-r from-cyan-500/30 to-blue-600/30 text-white border border-cyan-400/50 shadow-[0_0_20px_rgba(0,240,255,0.35)] scale-[1.01]'
+                : 'text-zinc-400 hover:text-white hover:bg-white/[0.04]'
+            }`}
+          >
+            <Zap className={`w-3.5 h-3.5 ${activeProvider === 'otakudesu' ? 'text-cyan-400' : 'text-zinc-500'}`} />
+            <span>Server Utama / Otakudesu</span>
+          </button>
 
+          <button
+            type="button"
+            onClick={() => {
+              setActiveProvider('samehadaku');
+              loadSamehadakuForCurrentEpisode();
+            }}
+            className={`w-full sm:flex-1 py-2.5 px-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 spring-press ${
+              activeProvider === 'samehadaku'
+                ? 'liquid-glass-convex bg-gradient-to-r from-emerald-500/30 to-teal-600/30 text-white border border-emerald-400/50 shadow-[0_0_20px_rgba(16,185,129,0.35)] scale-[1.01]'
+                : 'text-zinc-400 hover:text-white hover:bg-white/[0.04]'
+            }`}
+          >
+            <Sparkles className={`w-3.5 h-3.5 ${activeProvider === 'samehadaku' ? 'text-emerald-400' : 'text-zinc-500'}`} />
+            <span>Samehadaku Pro</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              setActiveProvider('kurama');
+              loadVipStreamsForEpisode();
+            }}
+            className={`w-full sm:flex-1 py-2.5 px-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-2 spring-press ${
+              activeProvider === 'kurama'
+                ? 'liquid-glass-convex bg-gradient-to-r from-purple-500/30 to-pink-600/30 text-white border border-purple-400/50 shadow-[0_0_20px_rgba(168,85,247,0.35)] scale-[1.01]'
+                : 'text-zinc-400 hover:text-white hover:bg-white/[0.04]'
+            }`}
+          >
+            <Play className={`w-3.5 h-3.5 ${activeProvider === 'kurama' ? 'text-purple-400' : 'text-zinc-500'}`} />
+            <span>Kurama / Multi-VIP</span>
+          </button>
+        </div>
+
+        {/* Apple Liquid Glass Resolution Pills Row */}
+        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1">
+          <span className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider shrink-0 mr-1">
+            Resolusi:
+          </span>
+          {['360p', '480p', '720p', '1080p FHD'].map((res) => {
+            const isResActive = selectedResolution === res;
+            return (
+              <button
+                key={res}
+                type="button"
+                onClick={() => setSelectedResolution(res)}
+                className={`px-3.5 py-1.5 rounded-full text-xs font-extrabold transition-all spring-press ${
+                  isResActive
+                    ? 'liquid-glass-pill bg-cyan-400 text-black border-cyan-300 shadow-[0_0_15px_rgba(0,240,255,0.6)] scale-105'
+                    : 'bg-white/[0.05] text-zinc-400 border border-white/[0.08] hover:text-white hover:bg-white/[0.1]'
+                }`}
+              >
+                {res}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Active Provider Server Panels */}
+        {activeProvider === 'otakudesu' && (
+          <div className="space-y-3 pt-1 border-t border-white/[0.06]">
+            {detail.server?.qualities && detail.server.qualities.length > 0 ? (
+              detail.server.qualities.map((group: QualityGroup, idx: number) => {
+                const matchesRes = group.title.toLowerCase().includes(selectedResolution.toLowerCase().replace(' fhd', ''));
+                return (
+                  <div key={idx} className={`flex flex-col sm:flex-row sm:items-center gap-2 p-2 rounded-2xl transition-all ${matchesRes ? 'bg-white/[0.03] border border-cyan-500/20' : ''}`}>
+                    <span className={`text-xs font-black px-3.5 py-1 rounded-full border w-fit ${
+                      matchesRes ? 'bg-cyan-500/20 text-cyan-300 border-cyan-400/40 shadow-sm' : 'bg-white/10 text-white border-white/20'
+                    }`}>
+                      {group.title}
+                    </span>
+
+                    <div className="flex flex-wrap gap-2">
+                      {group.serverList.map((srv: QualityServer) => {
+                        const isSelected =
+                          activeServerTitle.includes(srv.title) &&
+                          activeServerTitle.includes(group.title);
+                        const isVidhide = /vidhide/i.test(srv.title);
+                        const isTunnelServer = /desustream|ondesuhd|odstream/i.test(srv.title);
+
+                        return (
+                          <button
+                            key={srv.serverId}
+                            onClick={() => handleSelectServer(srv, group.title)}
+                            className={`px-3.5 py-1.5 rounded-full text-xs font-semibold spring-press transition-all flex items-center gap-1 ${
+                              isSelected
+                                ? 'bg-white text-black font-bold shadow-md scale-105'
+                                : isVidhide
+                                ? 'bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-300 border border-cyan-500/30'
+                                : isTunnelServer
+                                ? 'bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+                                : 'bg-white/[0.04] hover:bg-white/[0.1] text-zinc-300 hover:text-white border border-white/[0.06]'
+                            }`}
+                          >
+                            <span>{srv.title.toUpperCase()}</span>
+                            {isVidhide && <span className="text-[10px] text-cyan-400 font-bold">★</span>}
+                            {isTunnelServer && <span className="text-[10px] text-emerald-400 font-bold">⚡</span>}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })
+            ) : (
+              <p className="text-xs text-zinc-400">Tidak ada server Otakudesu tambahan. Default stream aktif.</p>
+            )}
+          </div>
+        )}
+
+        {activeProvider === 'samehadaku' && (
+          <div className="space-y-3 pt-1 border-t border-white/[0.06]">
+            {loadingSamehadaku ? (
+              <div className="py-6 flex items-center justify-center gap-2 text-xs text-emerald-400">
+                <RefreshCw className="w-4 h-4 animate-spin text-emerald-400" />
+                <span>Menghubungkan ke Samehadaku Pro via AJAX Nonce...</span>
+              </div>
+            ) : samehadakuServers.length > 0 ? (
+              <div className="flex flex-col gap-2">
+                <div className="text-[11px] text-zinc-400 flex items-center gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>Server Samehadaku (player_ajax POST ready):</span>
+                </div>
                 <div className="flex flex-wrap gap-2">
-                  {group.serverList.map((srv: QualityServer) => {
-                    const isSelected =
-                      activeServerTitle.includes(srv.title) &&
-                      activeServerTitle.includes(group.title);
-                    const isVidhide = /vidhide/i.test(srv.title);
-                    const isTunnelServer = /desustream|ondesuhd|odstream/i.test(srv.title);
-
+                  {samehadakuServers.map((srv, idx) => {
+                    const isSelected = activeServerTitle.includes(srv.title);
                     return (
                       <button
-                        key={srv.serverId}
-                        onClick={() => handleSelectServer(srv, group.title)}
-                        className={`px-3.5 py-1.5 rounded-full text-xs font-semibold spring-press transition-all flex items-center gap-1 ${
+                        key={`${srv.post}-${srv.nume}-${idx}`}
+                        type="button"
+                        onClick={() => handleSelectSamehadakuServer(srv)}
+                        className={`px-4 py-2 rounded-full text-xs font-bold spring-press transition-all flex items-center gap-1.5 ${
                           isSelected
-                            ? 'bg-white text-black font-bold shadow-md scale-105'
-                            : isVidhide
-                            ? 'bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-300 border border-cyan-500/30'
-                            : isTunnelServer
-                            ? 'bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
-                            : 'bg-white/[0.04] hover:bg-white/[0.1] text-zinc-300 hover:text-white border border-white/[0.06]'
+                            ? 'bg-emerald-400 text-black shadow-lg shadow-emerald-400/30 scale-105'
+                            : 'bg-emerald-950/40 hover:bg-emerald-900/50 text-emerald-300 border border-emerald-500/30'
                         }`}
                       >
-                        <span>{srv.title.toUpperCase()}</span>
-                        {isVidhide && <span className="text-[10px] text-cyan-400 font-bold">★</span>}
-                        {isTunnelServer && <span className="text-[10px] text-emerald-400 font-bold">⚡</span>}
+                        <Zap className="w-3 h-3 text-emerald-400" />
+                        <span>{srv.title}</span>
                       </button>
                     );
                   })}
                 </div>
               </div>
-            ))}
+            ) : (
+              <div className="py-4 text-center space-y-2">
+                <p className="text-xs text-zinc-400">Server Samehadaku belum termuat untuk episode ini.</p>
+                <button
+                  type="button"
+                  onClick={loadSamehadakuForCurrentEpisode}
+                  className="px-4 py-2 rounded-full bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40 text-xs font-bold spring-press inline-flex items-center gap-1.5"
+                >
+                  <RefreshCw className="w-3.5 h-3.5" />
+                  <span>Muat Ulang Server Samehadaku</span>
+                </button>
+              </div>
+            )}
           </div>
-        </div>
-      )}
+        )}
+
+        {activeProvider === 'kurama' && (
+          <div className="space-y-3 pt-1 border-t border-white/[0.06]">
+            <div className="text-[11px] text-zinc-400 flex items-center gap-1.5">
+              <Play className="w-3.5 h-3.5 text-purple-400" />
+              <span>Multi-VIP & Kuramanime High-Speed Streams:</span>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {vipServers.map((vip, idx) => {
+                const isSelected = activeServerTitle.includes(vip.serverName);
+                const matchesRes = vip.quality.toLowerCase().includes(selectedResolution.toLowerCase().replace(' fhd', ''));
+                return (
+                  <button
+                    key={`${vip.serverName}-${idx}`}
+                    type="button"
+                    onClick={() => handleSelectVipServer(vip)}
+                    className={`px-4 py-2 rounded-full text-xs font-bold spring-press transition-all flex items-center gap-1.5 ${
+                      isSelected
+                        ? 'bg-purple-400 text-black shadow-lg shadow-purple-400/30 scale-105'
+                        : matchesRes
+                        ? 'bg-purple-950/60 hover:bg-purple-900/60 text-purple-200 border border-purple-400/50'
+                        : 'bg-white/[0.04] hover:bg-white/[0.1] text-zinc-300 hover:text-white border border-white/[0.06]'
+                    }`}
+                  >
+                    <Play className="w-3 h-3 text-purple-400 fill-purple-400" />
+                    <span>{vip.serverName}</span>
+                    <span className="text-[10px] px-1.5 py-0.2 rounded bg-black/40 text-purple-300 font-mono">
+                      {vip.quality}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+      </div>
 
       {/* Episode Drawer */}
       {detail.info?.episodeList && detail.info.episodeList.length > 0 && (
@@ -829,6 +1150,20 @@ function WatchContent() {
         currentServer={activeServerTitle}
         availableServers={allServers}
         onServerChange={(serverId) => {
+          if (serverId.startsWith('samehadaku-')) {
+            const s = samehadakuServers.find((srv) => `samehadaku-${srv.post}-${srv.nume}` === serverId);
+            if (s) {
+              handleSelectSamehadakuServer(s);
+              return;
+            }
+          }
+          if (serverId.startsWith('vip-')) {
+            const v = vipServers.find((vip) => `vip-${vip.serverName}` === serverId);
+            if (v) {
+              handleSelectVipServer(v);
+              return;
+            }
+          }
           const matched = detail.server?.qualities
             ?.flatMap((q) => q.serverList.map((s) => ({ s, qTitle: q.title })))
             .find((item) => item.s.serverId === serverId);

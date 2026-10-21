@@ -19,6 +19,7 @@ import {
   getCachedData,
   setCachedData,
 } from './securityVault';
+import { extractManhwaChapterImages, fetchChapterImagesDirect } from '@/services/wibuEngine';
 
 const API_BASE_URLS = [
   'https://www.sankavollerei.web.id',
@@ -698,23 +699,16 @@ export async function fetchKomikuChapterImages(slug: string, chapter: string): P
     `https://komiku.org/${cleanSlug}-chapter-${cleanChapter.padStart(2, '0')}/`,
     `https://komiku.org/komik-${cleanSlug}-chapter-${cleanChapter}/`,
     `https://komiku.org/${cleanSlug}-chapter-${cleanChapter}-indo/`,
+    `https://kiryuu.org/${cleanSlug}-chapter-${cleanChapter}/`,
+    `https://bacakomik.me/chapter/${cleanSlug}-chapter-${cleanChapter}/`,
   ];
 
   for (const url of candidateUrls) {
     try {
       const html = await nativeFetchText(url, 8000);
-      const matches: string[] = [];
-      const imgRegex =
-        /<img[^>]+(?:src|data-src|data-lazy-src)="([^"]*(?:komiku\.(?:org|to)\/upload|upload[0-9]*\/)[^"]*)"[^>]*>/gi;
-      let m;
-      while ((m = imgRegex.exec(html)) !== null) {
-        const src = m[1]?.trim();
-        if (src && !matches.includes(src)) {
-          matches.push(sanitizeSafeUrl(src));
-        }
-      }
-      if (matches.length > 0) {
-        return matches;
+      const extracted = extractManhwaChapterImages(html);
+      if (extracted.length > 0) {
+        return extracted.map((u) => sanitizeSafeUrl(u));
       }
     } catch {}
   }
@@ -1522,6 +1516,23 @@ export async function fetchComicChapter(chapterSlug: string, titleHint?: string)
     .replace(/\/.*$/, '');
   const searchTitle = titleHint || rawMangaSlug.replace(/-/g, ' ');
 
+  // 0. Direct URL Scraper if chapterSlug is a full HTTP URL
+  if (chapterSlug.startsWith('http')) {
+    try {
+      const directImgs = await fetchChapterImagesDirect(chapterSlug);
+      if (directImgs.length > 0) {
+        return {
+          title: `${searchTitle} Chapter ${chapterNumber}`,
+          chapterSlug,
+          images: directImgs.map((u) => sanitizeSafeUrl(u)),
+          navigation: {},
+        };
+      }
+    } catch (e) {
+      safeLogError('Chapter Failover Step 0 (Direct URL) failed', e);
+    }
+  }
+
   // 1. Try Komiku Chapter Scraper (Komiku-Rest-Api & Direct Native Scraper)
   try {
     const komikuImages = await fetchKomikuChapterImages(rawMangaSlug, chapterNumber);
@@ -1585,6 +1596,25 @@ export async function fetchComicChapter(chapterSlug: string, titleHint?: string)
   } catch (e) {
     safeLogError('Chapter Failover Step 3 (Sanka Kiryuu) failed', e);
   }
+
+  // 3b. Try Direct Native Kiryuu / Bacakomik Scraper via ts_reader.run
+  try {
+    const kiryuuUrls = [
+      `https://kiryuu.org/${rawMangaSlug}-chapter-${chapterNumber}/`,
+      `https://bacakomik.me/chapter/${rawMangaSlug}-chapter-${chapterNumber}/`,
+    ];
+    for (const kUrl of kiryuuUrls) {
+      const directKiryuuImgs = await fetchChapterImagesDirect(kUrl);
+      if (directKiryuuImgs.length > 0) {
+        return {
+          title: `${searchTitle} Chapter ${chapterNumber}`,
+          chapterSlug,
+          images: directKiryuuImgs.map((u) => sanitizeSafeUrl(u)),
+          navigation: {},
+        };
+      }
+    }
+  } catch {}
 
   // 4. Try Sanka Default Comic API
   try {
