@@ -23,6 +23,8 @@ import {
   ListPlus,
   BookmarkCheck,
   Clock,
+  Shield,
+  Zap,
 } from 'lucide-react';
 import { getEpisodeDetail, resolveServerStream } from '@/lib/clientApi';
 import {
@@ -39,7 +41,7 @@ import CommunityDiscussionView from '@/components/CommunityDiscussionView';
 import DownloadManagerModal from '@/components/DownloadManagerModal';
 import PlayerSettingsModal from '@/components/PlayerSettingsModal';
 import ErrorBoundary from '@/components/ErrorBoundary';
-import { sanitizeStreamPlayerUrl } from '@/lib/streamTunnel';
+import { sanitizeStreamPlayerUrl, tunnelStream, TunnelResult } from '@/lib/streamTunnel';
 import {
   fetchSamehadakuEpisodeServers,
   resolveSamehadakuPlayerAjax,
@@ -87,6 +89,13 @@ function WatchContent() {
   const [activeQuality, setActiveQuality] = useState<string>('720p');
   const [switchingServer, setSwitchingServer] = useState(false);
   const [iframeLoaded, setIframeLoaded] = useState(false);
+
+  // Stream Tunnel state (active by default to bypass connection refused on ondesuhd/odstream)
+  const [tunnelEnabled, setTunnelEnabled] = useState<boolean>(true);
+  const [isTunneling, setIsTunneling] = useState<boolean>(false);
+  const [tunnelResult, setTunnelResult] = useState<TunnelResult | null>(null);
+  const [rawTargetUrl, setRawTargetUrl] = useState<string>('');
+  const [currentServerName, setCurrentServerName] = useState<string>('');
 
   // Visual settings & automations
   const [lightsOff, setLightsOff] = useState(false);
@@ -246,20 +255,105 @@ function WatchContent() {
     }
   };
 
-  const executeTunneling = async (targetUrl: string, serverName: string) => {
-    try {
-      const sanitized = sanitizeStreamPlayerUrl(targetUrl);
-      const direct = isRealDirectVideoFile(sanitized);
+  // Load persisted tunnel mode preference
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('nexus_tunnel_mode');
+      if (saved !== null) {
+        setTunnelEnabled(saved === 'true');
+      }
+    }
+  }, []);
+
+  const handleToggleTunnelMode = () => {
+    const nextState = !tunnelEnabled;
+    setTunnelEnabled(nextState);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('nexus_tunnel_mode', String(nextState));
+    }
+    showToast(
+      nextState
+        ? 'Mode Tunnel Aktif ⚡ (Bypass Connection Refused)'
+        : 'Mode Tunnel Off (Direct Embed)'
+    );
+    if (rawTargetUrl) {
+      executeTunneling(rawTargetUrl, currentServerName || activeServerTitle, nextState);
+    }
+  };
+
+  const executeTunneling = async (targetUrl: string, serverName: string, forceTunnel?: boolean) => {
+    if (!targetUrl) return;
+    const sanitized = sanitizeStreamPlayerUrl(targetUrl);
+    setRawTargetUrl(sanitized);
+    setCurrentServerName(serverName);
+
+    const activeTunnel = forceTunnel !== undefined ? forceTunnel : tunnelEnabled;
+
+    // Check if it's already a direct video file (.mp4 / .m3u8)
+    if (isRealDirectVideoFile(sanitized)) {
       setStreamUrl(sanitized);
-      setIsDirectVideo(direct);
       setBlobSrcDoc('');
+      setIsDirectVideo(true);
       setIframeLoaded(true);
-    } catch (err) {
-      console.warn('[Watch] Setup error', err);
-      const sanitized = sanitizeStreamPlayerUrl(targetUrl);
+      setTunnelResult({
+        success: true,
+        mode: 'direct',
+        streamUrl: sanitized,
+        layer: 1,
+        tunnelActive: false,
+        message: 'Direct Video File',
+      });
+      return;
+    }
+
+    const isCandidateForTunnel =
+      /desustream|ondesuhd|odstream|odsstream|default/i.test(serverName) ||
+      /desustream|ondesuhd|odstream|odsstream/i.test(sanitized);
+
+    if (activeTunnel && (isCandidateForTunnel || forceTunnel)) {
+      setIsTunneling(true);
+      setSwitchingServer(true);
+      setIframeLoaded(false);
+
+      try {
+        const tunnel = await tunnelStream(sanitized);
+        setTunnelResult(tunnel);
+
+        if (tunnel.mode === 'direct' && tunnel.streamUrl) {
+          setStreamUrl(tunnel.streamUrl);
+          setBlobSrcDoc('');
+          setIsDirectVideo(true);
+          setIframeLoaded(true);
+          showToast('⚡ Mode Tunnel: Memutar Direct Stream');
+        } else if (tunnel.mode === 'blob' && tunnel.srcDoc) {
+          setStreamUrl(tunnel.blobUrl || sanitized);
+          setBlobSrcDoc(tunnel.srcDoc);
+          setIsDirectVideo(false);
+          setIframeLoaded(true);
+          showToast('⚡ Mode Tunnel: HTML Sandbox Aktif (Anti-Refused)');
+        } else {
+          // Fallback direct embed
+          setStreamUrl(sanitized);
+          setBlobSrcDoc('');
+          setIsDirectVideo(false);
+          setIframeLoaded(true);
+        }
+      } catch (tunnelErr) {
+        console.warn('[Watch] Stream Tunnel error, falling back to direct embed', tunnelErr);
+        setStreamUrl(sanitized);
+        setBlobSrcDoc('');
+        setIsDirectVideo(false);
+        setIframeLoaded(true);
+      } finally {
+        setIsTunneling(false);
+        setSwitchingServer(false);
+      }
+    } else {
       setStreamUrl(sanitized);
-      setIsDirectVideo(false);
+      setBlobSrcDoc('');
+      setIsDirectVideo(isRealDirectVideoFile(sanitized));
       setIframeLoaded(true);
+      setTunnelResult(null);
     }
   };
 
@@ -340,14 +434,7 @@ function WatchContent() {
       if (resolvedUrl) {
         setActiveServerTitle(`${server.title} (${quality})`);
         setActiveQuality(quality);
-
-        const sanitized = sanitizeStreamPlayerUrl(resolvedUrl);
-        const isDirect = isRealDirectVideoFile(sanitized);
-
-        setStreamUrl(sanitized);
-        setBlobSrcDoc('');
-        setIsDirectVideo(isDirect);
-        setIframeLoaded(true);
+        await executeTunneling(resolvedUrl, `${server.title} (${quality})`);
       } else {
         await executeTunneling(detail?.defaultStreamingUrl || '', 'Fallback Default');
       }
@@ -394,12 +481,7 @@ function WatchContent() {
       }
 
       if (resolvedUrl) {
-        const sanitized = sanitizeStreamPlayerUrl(resolvedUrl);
-        const isDirect = isRealDirectVideoFile(sanitized);
-        setStreamUrl(sanitized);
-        setBlobSrcDoc('');
-        setIsDirectVideo(isDirect);
-        setIframeLoaded(true);
+        await executeTunneling(resolvedUrl, `Samehadaku ${srv.title} (${quality})`);
       } else {
         showToast('Server Samehadaku lambat, beralih ke Server Utama...');
         if (detail?.defaultStreamingUrl) {
@@ -598,6 +680,22 @@ function WatchContent() {
             </div>
 
             <div className="flex items-center gap-2 shrink-0">
+              {/* Mode Tunnel Toggle */}
+              <button
+                type="button"
+                onClick={handleToggleTunnelMode}
+                className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-all active:scale-95 flex items-center gap-1.5 ${
+                  tunnelEnabled
+                    ? 'bg-[#2C2C2E] text-white border-[#3A3A3C]'
+                    : 'bg-[#141414] text-zinc-400 hover:text-white border-[#262626]'
+                }`}
+                title="Bypass Connection Refused & Iklan"
+              >
+                <Shield className={`w-3.5 h-3.5 ${tunnelEnabled ? 'text-white' : 'text-zinc-500'}`} />
+                <span className="hidden sm:inline">Tunnel:</span>
+                <span>{tunnelEnabled ? 'Aktif' : 'Off'}</span>
+              </button>
+
               {/* Mode Bioskop */}
               <button
                 type="button"
@@ -628,14 +726,16 @@ function WatchContent() {
 
           {/* 16:9 Video Canvas */}
           <div className="relative w-full aspect-video bg-black flex items-center justify-center overflow-hidden">
-            {(switchingServer || !iframeLoaded) && (
+            {(switchingServer || !iframeLoaded || isTunneling) && (
               <div className="absolute inset-0 z-10 bg-black flex flex-col items-center justify-center gap-2 text-white pointer-events-none">
                 <RefreshCw className="w-6 h-6 animate-spin text-zinc-400" />
-                <p className="text-xs text-zinc-400 font-medium">Menghubungkan ke Pemutar...</p>
+                <p className="text-xs text-zinc-400 font-medium">
+                  {isTunneling ? 'Mempersiapkan Stream Tunnel (Bypass Refused)...' : 'Menghubungkan ke Pemutar...'}
+                </p>
               </div>
             )}
 
-            {streamUrl ? (
+            {streamUrl || blobSrcDoc ? (
               isDirectVideo ? (
                 <video
                   ref={videoRef}
@@ -653,8 +753,9 @@ function WatchContent() {
                 />
               ) : (
                 <iframe
-                  key={streamUrl}
-                  src={streamUrl}
+                  key={(streamUrl || 'stream') + (blobSrcDoc ? '-blob' : '')}
+                  src={blobSrcDoc ? undefined : streamUrl}
+                  srcDoc={blobSrcDoc || undefined}
                   className="w-full h-full border-0"
                   referrerPolicy="no-referrer"
                   onLoad={() => {
@@ -685,6 +786,12 @@ function WatchContent() {
               <span className="text-[10px] px-2 py-0.5 rounded-md bg-[#1C1C1E] text-zinc-400 border border-[#262626] font-mono shrink-0">
                 {activeQuality}
               </span>
+              {tunnelEnabled && (
+                <span className="text-[10px] px-2 py-0.5 rounded-md bg-[#1C1C1E] text-white border border-[#3A3A3C] font-semibold shrink-0 flex items-center gap-1">
+                  <Zap className="w-3 h-3 text-white" />
+                  <span>{tunnelResult?.layer === 1 ? 'Direct' : tunnelResult?.layer === 2 ? 'Sandbox' : 'Tunnel'}</span>
+                </span>
+              )}
             </div>
 
             <div className="flex items-center gap-2 shrink-0">

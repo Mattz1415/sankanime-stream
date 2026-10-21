@@ -11,11 +11,12 @@ export interface TunnelResult {
   message: string;
 }
 
-// Proxy fallbacks when CapacitorHttp native bridge is not active
+// Proxy fallbacks when CapacitorHttp native bridge is not active or when ISP connection is refused
 const CORS_PROXIES = [
   (url: string) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
-  (url: string) => `https://corsproxy.io/?${encodeURIComponent(url)}`,
   (url: string) => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
+  (url: string) => `https://cors.eu.org/${url}`,
+  (url: string) => `https://thingproxy.freeboard.io/fetch/${url}`,
 ];
 
 /**
@@ -24,35 +25,55 @@ const CORS_PROXIES = [
 async function fetchTargetHtml(targetUrl: string): Promise<string> {
   const isNative = typeof Capacitor !== 'undefined' && Capacitor.isNativePlatform();
 
+  let referer = 'https://otakudesu.cloud/';
+  try {
+    const parsed = new URL(targetUrl);
+    if (parsed.hostname.includes('samehadaku') || parsed.hostname.includes('east_player')) {
+      referer = 'https://samehadaku.email/';
+    } else if (
+      parsed.hostname.includes('desustream') ||
+      parsed.hostname.includes('ondesuhd') ||
+      parsed.hostname.includes('odstream') ||
+      parsed.hostname.includes('odsstream')
+    ) {
+      referer = 'https://otakudesu.cloud/';
+    } else {
+      referer = parsed.origin + '/';
+    }
+  } catch {}
+
   // 1. Try Native CapacitorHttp if on Android / Native
   if (isNative) {
     try {
       const response = await CapacitorHttp.get({
         url: targetUrl,
         headers: {
-          'Referer': 'https://otakudesu.cloud/',
-          'Origin': 'https://otakudesu.cloud',
+          'Referer': referer,
+          'Origin': referer.replace(/\/$/, ''),
           'User-Agent':
             'Mozilla/5.0 (Linux; Android 14; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36',
           'Accept':
             'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
           'Accept-Language': 'id-ID,id;q=0.9,en-US;q=0.8,en;q=0.7',
         },
-        connectTimeout: 10000,
-        readTimeout: 10000,
+        connectTimeout: 8000,
+        readTimeout: 8000,
       });
 
       if (response && response.data) {
-        return typeof response.data === 'string'
+        const text = typeof response.data === 'string'
           ? response.data
           : JSON.stringify(response.data);
+        if (text && text.length > 50 && !text.includes('ERR_CONNECTION_REFUSED')) {
+          return text;
+        }
       }
     } catch (nativeErr) {
-      console.warn('[Tunnel] CapacitorHttp native fetch failed, trying fallbacks', nativeErr);
+      console.warn('[Tunnel] CapacitorHttp native direct fetch failed, trying proxy fallbacks', nativeErr);
     }
   }
 
-  // 2. Direct fetch attempt with credentials omit
+  // 2. Direct fetch attempt with credentials omit (web dev)
   try {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 6000);
@@ -66,20 +87,45 @@ async function fetchTargetHtml(targetUrl: string): Promise<string> {
       if (text && text.length > 50) return text;
     }
   } catch {
-    // Expected CORS error on web, continue to proxies
+    // Expected CORS error on web or connection refused, continue to proxies
   }
 
-  // 3. Fallback proxies for web/testing
+  // 3. Fallback proxies for ISP connection refused / CORS / blocked domains
   for (const proxyGen of CORS_PROXIES) {
     try {
       const proxyUrl = proxyGen(targetUrl);
+
+      // In native environment, try CapacitorHttp with the proxy first
+      if (isNative) {
+        try {
+          const capProxyRes = await CapacitorHttp.get({
+            url: proxyUrl,
+            headers: {
+              'User-Agent':
+                'Mozilla/5.0 (Linux; Android 14; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36',
+              'Accept': '*/*',
+            },
+            connectTimeout: 8000,
+            readTimeout: 8000,
+          });
+          if (capProxyRes && capProxyRes.data) {
+            const dataStr = typeof capProxyRes.data === 'string' ? capProxyRes.data : JSON.stringify(capProxyRes.data);
+            if (dataStr.length > 50 && !dataStr.includes('keyless_legacy_url') && !dataStr.includes('"error":')) {
+              return dataStr;
+            }
+          }
+        } catch {}
+      }
+
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), 7000);
       const proxyRes = await fetch(proxyUrl, { signal: controller.signal });
       clearTimeout(timer);
       if (proxyRes.ok) {
         const text = await proxyRes.text();
-        if (text && text.length > 50) return text;
+        if (text && text.length > 50 && !text.includes('keyless_legacy_url') && !text.includes('"error":')) {
+          return text;
+        }
       }
     } catch {
       // Continue to next proxy
@@ -322,8 +368,13 @@ export function sanitizeStreamPlayerUrl(rawUrl: string): string {
     const parsed = new URL(url);
     const host = parsed.hostname.toLowerCase();
 
-    // Optimize ondesuhd / odstream / desustream domains
-    if (host.includes('ondesuhd') || host.includes('odstream') || host.includes('desustream')) {
+    // Optimize ondesuhd / odstream / odsstream / desustream domains
+    if (
+      host.includes('ondesuhd') ||
+      host.includes('odstream') ||
+      host.includes('odsstream') ||
+      host.includes('desustream')
+    ) {
       return parsed.toString();
     }
   } catch {}
