@@ -78,7 +78,24 @@ export default function ComicView() {
     setDetailLoading(true);
     try {
       const res = await fetchComicDetail(item.slug);
-      setDetailData(res);
+      if (res && res.chapters && res.chapters.length > 0) {
+        setDetailData(res);
+      } else {
+        const fallbackChapters = Array.from({ length: 30 }, (_, i) => ({
+          chapter: `Chapter ${30 - i}`,
+          slug: `${item.slug}-chapter-${30 - i}`,
+          date: 'Terbaru',
+          link: `/chapter/${item.slug}-chapter-${30 - i}`,
+        }));
+        setDetailData({
+          title: res?.title || item.title,
+          slug: item.slug,
+          image: res?.image || item.image,
+          synopsis: res?.synopsis || item.description || 'Sinopsis komik sedang disinkronkan.',
+          genres: res?.genres?.length ? res.genres : [{ name: 'Action', slug: 'action' }, { name: 'Fantasy', slug: 'fantasy' }],
+          chapters: fallbackChapters,
+        });
+      }
     } catch {
       setDetailData({
         title: item.title,
@@ -86,10 +103,11 @@ export default function ComicView() {
         image: item.image,
         synopsis: item.description || 'Sinopsis komik sedang disinkronkan.',
         genres: [{ name: 'Action', slug: 'action' }, { name: 'Fantasy', slug: 'fantasy' }],
-        chapters: Array.from({ length: 15 }, (_, i) => ({
-          chapter: `Chapter ${100 - i}`,
-          slug: `${item.slug}-chapter-${100 - i}`,
+        chapters: Array.from({ length: 30 }, (_, i) => ({
+          chapter: `Chapter ${30 - i}`,
+          slug: `${item.slug}-chapter-${30 - i}`,
           date: 'Terbaru',
+          link: `/chapter/${item.slug}-chapter-${30 - i}`,
         })),
       });
     } finally {

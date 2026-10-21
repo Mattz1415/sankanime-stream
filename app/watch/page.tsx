@@ -39,6 +39,7 @@ import CommunityDiscussionView from '@/components/CommunityDiscussionView';
 import DownloadManagerModal from '@/components/DownloadManagerModal';
 import PlayerSettingsModal from '@/components/PlayerSettingsModal';
 import ErrorBoundary from '@/components/ErrorBoundary';
+import { sanitizeStreamPlayerUrl } from '@/lib/streamTunnel';
 import {
   fetchSamehadakuEpisodeServers,
   resolveSamehadakuPlayerAjax,
@@ -196,6 +197,17 @@ function WatchContent() {
     };
   }, [episodeId]);
 
+  // Safety timer to prevent infinite loading state if iframe event delays
+  useEffect(() => {
+    if (switchingServer || !iframeLoaded) {
+      const timer = setTimeout(() => {
+        setIframeLoaded(true);
+        setSwitchingServer(false);
+      }, 4500);
+      return () => clearTimeout(timer);
+    }
+  }, [switchingServer, iframeLoaded, streamUrl]);
+
   const pickBestServer = async (data: EpisodeDetail) => {
     const qualities = data.server?.qualities || [];
     let defaultUrl = data.defaultStreamingUrl || '';
@@ -236,14 +248,16 @@ function WatchContent() {
 
   const executeTunneling = async (targetUrl: string, serverName: string) => {
     try {
-      const direct = isRealDirectVideoFile(targetUrl);
-      setStreamUrl(targetUrl);
+      const sanitized = sanitizeStreamPlayerUrl(targetUrl);
+      const direct = isRealDirectVideoFile(sanitized);
+      setStreamUrl(sanitized);
       setIsDirectVideo(direct);
       setBlobSrcDoc('');
       setIframeLoaded(true);
     } catch (err) {
       console.warn('[Watch] Setup error', err);
-      setStreamUrl(targetUrl);
+      const sanitized = sanitizeStreamPlayerUrl(targetUrl);
+      setStreamUrl(sanitized);
       setIsDirectVideo(false);
       setIframeLoaded(true);
     }
@@ -327,7 +341,10 @@ function WatchContent() {
         setActiveServerTitle(`${server.title} (${quality})`);
         setActiveQuality(quality);
 
-        setStreamUrl(resolvedUrl);
+        const sanitized = sanitizeStreamPlayerUrl(resolvedUrl);
+        const isDirect = isRealDirectVideoFile(sanitized);
+
+        setStreamUrl(sanitized);
         setBlobSrcDoc('');
         setIsDirectVideo(isDirect);
         setIframeLoaded(true);
@@ -353,19 +370,52 @@ function WatchContent() {
       setActiveServerTitle(`Samehadaku ${srv.title} (${quality})`);
       setActiveQuality(quality);
 
-      const resolvedUrl = await resolveSamehadakuServer(srv.serverId || '', srv.post, srv.nume, srv.type);
+      // 5-second timeout on resolving the server
+      const resolveWithTimeout = (targetSrv: typeof srv): Promise<string | null> => {
+        return Promise.race([
+          resolveSamehadakuServer(targetSrv.serverId || '', targetSrv.post, targetSrv.nume, targetSrv.type),
+          new Promise<null>((resolve) => setTimeout(() => resolve(null), 5000)),
+        ]);
+      };
+
+      let resolvedUrl = await resolveWithTimeout(srv);
+
+      // Instant auto-fallback if selected server fails or times out
+      if (!resolvedUrl && samehadakuServers && samehadakuServers.length > 1) {
+        const altServers = samehadakuServers.filter((s) => s !== srv && (s.post !== srv.post || s.nume !== srv.nume));
+        for (const alt of altServers.slice(0, 3)) {
+          showToast(`Mencoba server cadangan ${alt.title}...`);
+          resolvedUrl = await resolveWithTimeout(alt);
+          if (resolvedUrl) {
+            setActiveServerTitle(`Samehadaku ${alt.title} (${quality})`);
+            break;
+          }
+        }
+      }
+
       if (resolvedUrl) {
-        const isDirect = isRealDirectVideoFile(resolvedUrl);
-        setStreamUrl(resolvedUrl);
+        const sanitized = sanitizeStreamPlayerUrl(resolvedUrl);
+        const isDirect = isRealDirectVideoFile(sanitized);
+        setStreamUrl(sanitized);
         setBlobSrcDoc('');
         setIsDirectVideo(isDirect);
         setIframeLoaded(true);
       } else {
-        showToast('Gagal memuat server Samehadaku');
+        showToast('Server Samehadaku lambat, beralih ke Server Utama...');
+        if (detail?.defaultStreamingUrl) {
+          await executeTunneling(detail.defaultStreamingUrl, 'Server Utama');
+        } else {
+          setIframeLoaded(true);
+        }
       }
     } catch (e) {
       console.error('Error selecting Samehadaku server', e);
-      showToast('Kendala menghubungkan server Samehadaku');
+      showToast('Beralih ke Server Utama...');
+      if (detail?.defaultStreamingUrl) {
+        await executeTunneling(detail.defaultStreamingUrl, 'Server Utama');
+      } else {
+        setIframeLoaded(true);
+      }
     } finally {
       setSwitchingServer(false);
     }
@@ -606,6 +656,7 @@ function WatchContent() {
                   key={streamUrl}
                   src={streamUrl}
                   className="w-full h-full border-0"
+                  referrerPolicy="no-referrer"
                   onLoad={() => {
                     setIframeLoaded(true);
                     setSwitchingServer(false);

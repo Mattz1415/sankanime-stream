@@ -293,7 +293,10 @@ public class MainActivity extends BridgeActivity {
                                               hostLower.contains("kuuhaku") ||
                                               hostLower.contains("shiro");
 
-                    if (isImage || isHotlinkedHost) {
+                    // Only intercept image assets to bypass 403 Forbidden hotlink blocks.
+                    // Video embeds, iframes, and media chunks (desustream, ondesuhd, odstream, vidhide)
+                    // MUST bypass to Chromium native stack for hardware accelerated streaming without timeouts.
+                    if (isImage) {
                         try {
                             URL url = new URL(uri.toString());
                             HttpURLConnection conn = (HttpURLConnection) url.openConnection();

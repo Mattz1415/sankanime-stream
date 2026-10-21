@@ -710,6 +710,7 @@ export default function DrakorView() {
                 key={`${currentStreamUrl}-${playingDrakor.currentEpNumber}-${selectedServerIndex}`}
                 src={currentStreamUrl}
                 className="w-full h-full border-0"
+                referrerPolicy="no-referrer"
                 allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
                 allowFullScreen
                 title={`${playingDrakor.detail.title} - Episode ${playingDrakor.currentEpNumber}`}

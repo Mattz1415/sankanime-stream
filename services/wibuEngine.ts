@@ -578,7 +578,7 @@ export async function resolveSamehadakuPlayerAjax(
         type,
       },
       domain,
-      7000
+      5000
     );
 
     // Extract iframe src
@@ -751,29 +751,40 @@ export function extractManhwaChapterImages(htmlContent: string): string[] {
     if (results.length > 0) return results;
   }
 
-  // Method 3: div#Baca_Komik img (Komiku standard)
-  const bacaKomikMatch = htmlContent.match(/<div[^>]+id="Baca_Komik"[^>]*>([\s\S]*?)<\/div>/i);
+  // Method 3: div/section#Baca_Komik img (Komiku standard)
+  const bacaKomikMatch = htmlContent.match(/<(?:div|section)[^>]+id="Baca_Komik"[^>]*>([\s\S]*?)<\/(?:div|section)>/i);
   if (bacaKomikMatch) {
     const imgRegex = /<img[^>]+(?:src|data-src|data-lazy-src)="([^"]+)"/gi;
     let match;
     while ((match = imgRegex.exec(bacaKomikMatch[1])) !== null) {
       let url = match[1].trim();
       if (url.startsWith('//')) url = 'https:' + url;
-      if (url.startsWith('http') && !url.includes('placeholder') && !url.includes('advert')) {
+      if (
+        url.startsWith('http') &&
+        !url.includes('placeholder') &&
+        !url.includes('advert') &&
+        !url.includes('promosi') &&
+        !url.includes('promooktober')
+      ) {
         results.push(url);
       }
     }
-    if (results.length > 0) return results;
+    if (results.length > 0) return Array.from(new Set(results));
   }
 
   // Method 4: Generic chapter images in container
   const genericImgRegex =
-    /<img[^>]+(?:src|data-src)="([^"]*(?:upload|manga|chapter|komiku|kiryuu|images)[^"]*\.(?:jpg|jpeg|png|webp))"[^>]*>/gi;
+    /<img[^>]+(?:src|data-src|data-lazy-src)="([^"]*(?:upload|manga|chapter|komiku|kiryuu|images)[^"]*\.(?:jpg|jpeg|png|webp))"[^>]*>/gi;
   let gMatch;
   while ((gMatch = genericImgRegex.exec(htmlContent)) !== null) {
     let url = gMatch[1].trim();
     if (url.startsWith('//')) url = 'https:' + url;
-    if (url.startsWith('http')) {
+    if (
+      url.startsWith('http') &&
+      !url.includes('promosi') &&
+      !url.includes('promooktober') &&
+      !url.includes('advert')
+    ) {
       results.push(url);
     }
   }

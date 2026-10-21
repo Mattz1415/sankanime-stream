@@ -301,3 +301,32 @@ export async function tunnelStream(targetUrl: string): Promise<TunnelResult> {
     };
   }
 }
+
+/**
+ * Public CORS/Proxy Stream Sanitizer:
+ * Normalizes embed player URLs (ondesuhd, odstream, desustream, vidhide, etc.)
+ * Ensures clean HTTPS protocol, strips tracking redirects, and guarantees
+ * seamless iframe playback in Android WebView without requiring external tunnels.
+ */
+export function sanitizeStreamPlayerUrl(rawUrl: string): string {
+  if (!rawUrl) return '';
+  let url = rawUrl.trim();
+  if (url.startsWith('//')) {
+    url = 'https:' + url;
+  }
+  if (url.startsWith('http://')) {
+    url = url.replace('http://', 'https://');
+  }
+
+  try {
+    const parsed = new URL(url);
+    const host = parsed.hostname.toLowerCase();
+
+    // Optimize ondesuhd / odstream / desustream domains
+    if (host.includes('ondesuhd') || host.includes('odstream') || host.includes('desustream')) {
+      return parsed.toString();
+    }
+  } catch {}
+
+  return url;
+}

@@ -121,7 +121,25 @@ export default function ManhwaView() {
     setDetailLoading(true);
     try {
       const res = await fetchComicDetail(item.slug);
-      setDetailData(res);
+      if (res && res.chapters && res.chapters.length > 0) {
+        setDetailData(res);
+      } else {
+        const fallbackChapters = Array.from({ length: 30 }, (_, i) => ({
+          chapter: `Chapter ${30 - i}`,
+          slug: `${item.slug}-chapter-${30 - i}`,
+          date: 'Terbaru',
+          link: `/chapter/${item.slug}-chapter-${30 - i}`,
+        }));
+        setDetailData({
+          title: res?.title || item.title,
+          slug: item.slug,
+          image: res?.image || item.image,
+          synopsis: res?.synopsis || item.description || 'Webtoon Korea berwarna dengan jalan cerita intens.',
+          metadata: res?.metadata || { type: 'Manhwa / Webtoon', status: 'Ongoing', concept: 'Full Color' },
+          genres: res?.genres?.length ? res.genres : [{ name: 'Action', slug: 'action' }, { name: 'Drama', slug: 'drama' }],
+          chapters: fallbackChapters,
+        });
+      }
     } catch {
       setDetailData({
         title: item.title,
@@ -131,9 +149,10 @@ export default function ManhwaView() {
         metadata: { type: 'Manhwa / Webtoon', status: 'Ongoing', concept: 'Full Color' },
         genres: [{ name: 'Action', slug: 'action' }, { name: 'Drama', slug: 'drama' }],
         chapters: Array.from({ length: 30 }, (_, i) => ({
-          chapter: `Chapter ${120 - i}`,
-          slug: `${item.slug}-chapter-${120 - i}`,
+          chapter: `Chapter ${30 - i}`,
+          slug: `${item.slug}-chapter-${30 - i}`,
           date: 'Terbaru',
+          link: `/chapter/${item.slug}-chapter-${30 - i}`,
         })),
       });
     } finally {

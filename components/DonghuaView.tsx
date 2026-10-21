@@ -406,6 +406,7 @@ export default function DonghuaView() {
                   key={currentServerUrl}
                   src={currentServerUrl}
                   className="w-full h-full border-0"
+                  referrerPolicy="no-referrer"
                   allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
                   allowFullScreen
                   title="Nexus Donghua Stream"
