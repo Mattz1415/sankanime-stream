@@ -12,13 +12,13 @@ export interface ThemeInfo {
 }
 
 export const THEME_LIST: ThemeInfo[] = [
+  { id: 'white', name: 'Monochrome Dark', accent: '#ffffff', glow: 'rgba(255, 255, 255, 0.2)' },
   { id: 'cyan', name: 'Neon Cyan', accent: '#00f0ff', glow: 'rgba(0, 240, 255, 0.45)' },
   { id: 'purple', name: 'Electric Purple', accent: '#a855f7', glow: 'rgba(168, 85, 247, 0.45)' },
   { id: 'crimson', name: 'Crimson Red', accent: '#ef4444', glow: 'rgba(239, 68, 68, 0.45)' },
   { id: 'emerald', name: 'Emerald Green', accent: '#10b981', glow: 'rgba(16, 185, 129, 0.45)' },
   { id: 'amber', name: 'Amber Gold', accent: '#f59e0b', glow: 'rgba(245, 158, 11, 0.45)' },
   { id: 'pink', name: 'Cyber Pink', accent: '#ec4899', glow: 'rgba(236, 72, 153, 0.45)' },
-  { id: 'white', name: 'Pure White', accent: '#ffffff', glow: 'rgba(255, 255, 255, 0.45)' },
 ];
 
 interface ThemeContextType {
@@ -35,22 +35,22 @@ interface ThemeContextType {
 }
 
 const ThemeContext = createContext<ThemeContextType>({
-  palette: 'cyan',
+  palette: 'white',
   setPalette: () => {},
   cyclePalette: () => {},
-  accentColor: '#00f0ff',
-  glowColor: 'rgba(0, 240, 255, 0.45)',
-  themeName: 'Neon Cyan',
+  accentColor: '#ffffff',
+  glowColor: 'rgba(255, 255, 255, 0.2)',
+  themeName: 'Monochrome Dark',
   isOledBlack: true,
   toggleOledBlack: () => {},
-  glowIntensity: 'vivid',
+  glowIntensity: 'subtle',
   setGlowIntensity: () => {},
 });
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [palette, setPaletteState] = useState<ThemePalette>('cyan');
+  const [palette, setPaletteState] = useState<ThemePalette>('white');
   const [isOledBlack, setIsOledBlackState] = useState<boolean>(true);
-  const [glowIntensity, setGlowIntensityState] = useState<'subtle' | 'vivid' | 'neon'>('vivid');
+  const [glowIntensity, setGlowIntensityState] = useState<'subtle' | 'vivid' | 'neon'>('subtle');
 
   useEffect(() => {
     try {

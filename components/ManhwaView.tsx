@@ -220,10 +220,10 @@ export default function ManhwaView() {
   return (
     <div className="space-y-8 animate-fade-in font-sans">
       {/* Hero Banner */}
-      <div className="relative rounded-3xl overflow-hidden card-frosted-obsidian border border-purple-500/30 p-6 sm:p-10 shadow-[0_20px_50px_rgba(168,85,247,0.15)]">
+      <div className="relative rounded-3xl overflow-hidden card-frosted-obsidian border border-[#262626] p-6 sm:p-10 shadow-lg">
         <div className="relative z-10 max-w-3xl space-y-4">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-purple-500/20 border border-purple-400/40 text-purple-300 text-xs font-bold shadow-[0_0_15px_rgba(168,85,247,0.3)]">
-            <Palette className="w-3.5 h-3.5 text-purple-400" />
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#2C2C2E] border border-[#3A3A3C] text-zinc-200 text-xs font-bold shadow-sm">
+            <Palette className="w-3.5 h-3.5 text-zinc-300" />
             <span>KOREAN WEBTOON & MANHWA FULL COLOR HD</span>
           </div>
 
@@ -232,22 +232,22 @@ export default function ManhwaView() {
           </h1>
 
           <p className="text-xs sm:text-sm text-zinc-300 leading-relaxed max-w-2xl">
-            Akses ribuan judul Manhwa terlengkap mulai dari drama romansa mendalam seperti <span className="text-purple-300 font-bold">Serena</span> & <span className="text-purple-300 font-bold">Cry, or Better Yet, Beg</span> hingga aksi legendaris <span className="text-purple-300 font-bold">Solo Leveling</span> & <span className="text-purple-300 font-bold">Omniscient Reader</span> dengan Vertical Reader tanpa batas.
+            Akses ribuan judul Manhwa terlengkap mulai dari drama romansa mendalam seperti <span className="text-zinc-200 font-bold">Serena</span> & <span className="text-zinc-200 font-bold">Cry, or Better Yet, Beg</span> hingga aksi legendaris <span className="text-zinc-200 font-bold">Solo Leveling</span> & <span className="text-zinc-200 font-bold">Omniscient Reader</span> dengan Vertical Reader tanpa batas.
           </p>
 
           {/* Search Bar */}
           <div className="pt-2 flex flex-wrap items-center gap-3">
             <div className="relative flex-1 min-w-[240px] max-w-md">
-              <Search className="w-4 h-4 text-purple-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+              <Search className="w-4 h-4 text-zinc-300 absolute left-3.5 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Cari Serena, Solo Leveling, Lookism, Cry Beg..."
-                className="w-full pl-10 pr-10 py-2.5 rounded-2xl bg-white/[0.08] border border-white/[0.12] text-xs text-white placeholder-zinc-400 focus:outline-none focus:border-purple-400/70 shadow-inner"
+                className="w-full pl-10 pr-10 py-2.5 rounded-2xl bg-white/[0.08] border border-white/[0.12] text-xs text-white placeholder-zinc-400 focus:outline-none focus:border-zinc-400 shadow-inner"
               />
               {isSearching && (
-                <RefreshCw className="w-3.5 h-3.5 text-purple-400 animate-spin absolute right-3.5 top-1/2 -translate-y-1/2" />
+                <RefreshCw className="w-3.5 h-3.5 text-zinc-300 animate-spin absolute right-3.5 top-1/2 -translate-y-1/2" />
               )}
             </div>
             {searchQuery && (
@@ -273,7 +273,7 @@ export default function ManhwaView() {
               onClick={() => setSelectedGenre(tab.id)}
               className={`flex items-center gap-1.5 px-3.5 py-2 rounded-2xl text-xs font-bold whitespace-nowrap transition-all duration-300 spring-press ${
                 isActive
-                  ? 'bg-purple-600 text-white shadow-[0_0_20px_rgba(168,85,247,0.5)] scale-[1.02]'
+                  ? 'bg-[#2C2C2E] border border-[#3A3A3C] text-white shadow-sm scale-[1.02]'
                   : 'bg-white/[0.04] text-zinc-400 hover:text-white hover:bg-white/[0.08] border border-white/[0.05]'
               }`}
             >
@@ -288,7 +288,7 @@ export default function ManhwaView() {
       <div className="space-y-4">
         <div className="flex items-center justify-between border-b border-white/[0.08] pb-3">
           <div className="flex items-center gap-2">
-            <Flame className="w-4 h-4 text-purple-400" />
+            <Flame className="w-4 h-4 text-zinc-300" />
             <h3 className="font-cinematic font-bold text-sm text-white uppercase tracking-wider">
               Katalog Manhwa ({filteredList.length} Judul)
             </h3>
@@ -300,7 +300,7 @@ export default function ManhwaView() {
 
         {loading ? (
           <div className="py-24 text-center space-y-3">
-            <RefreshCw className="w-9 h-9 animate-spin text-purple-400 mx-auto drop-shadow-[0_0_15px_rgba(168,85,247,0.8)]" />
+            <RefreshCw className="w-9 h-9 animate-spin text-zinc-300 mx-auto " />
             <p className="text-xs text-zinc-400 font-semibold">Mengambil ribuan chapter Manhwa Korea...</p>
           </div>
         ) : filteredList.length === 0 ? (
@@ -309,7 +309,7 @@ export default function ManhwaView() {
             <p className="text-sm font-bold text-zinc-300">Tidak ada judul yang sesuai dengan pencarian.</p>
             <button
               onClick={handleResetSearch}
-              className="px-4 py-2 rounded-full bg-purple-600 text-white text-xs font-bold spring-press"
+              className="px-4 py-2 rounded-full bg-[#2C2C2E] border border-[#3A3A3C] text-white text-xs font-bold spring-press"
             >
               Kembali ke Semua Manhwa
             </button>
@@ -335,7 +335,7 @@ export default function ManhwaView() {
 
                   {/* Chapter badge */}
                   <div className="absolute top-2.5 left-2.5 z-10 pointer-events-none">
-                    <span className="px-2.5 py-0.5 rounded-full liquid-glass-pill text-[10px] font-bold text-purple-300 shadow-md">
+                    <span className="px-2.5 py-0.5 rounded-full liquid-glass-pill text-[10px] font-bold text-zinc-200 shadow-md">
                       {item.chapter || 'Full Color'}
                     </span>
                   </div>
@@ -350,12 +350,12 @@ export default function ManhwaView() {
                 </div>
 
                 <div className="p-3 flex-1 flex flex-col justify-between space-y-1.5 bg-[#08080e]/90">
-                  <h4 className="font-bold text-xs text-zinc-100 group-hover:text-purple-300 line-clamp-2 transition-colors leading-snug">
+                  <h4 className="font-bold text-xs text-zinc-100 group-hover:text-white line-clamp-2 transition-colors leading-snug">
                     {item.title}
                   </h4>
                   <div className="flex items-center justify-between text-[10px] text-zinc-500 pt-1 border-t border-white/[0.04]">
                     <span className="text-zinc-400">Webtoon HD</span>
-                    <span className="text-purple-400 font-bold group-hover:underline flex items-center gap-0.5">
+                    <span className="text-zinc-300 font-bold group-hover:underline flex items-center gap-0.5">
                       Baca <ChevronRight className="w-3 h-3 inline" />
                     </span>
                   </div>
@@ -371,16 +371,16 @@ export default function ManhwaView() {
             <button
               onClick={handleLoadMore}
               disabled={loadingMore}
-              className="px-6 py-3 rounded-full bg-white/[0.06] hover:bg-purple-600 border border-purple-400/30 hover:border-purple-400 text-xs font-bold text-white shadow-lg spring-press transition-all inline-flex items-center gap-2"
+              className="px-6 py-3 rounded-full bg-white/[0.06] hover:bg-[#2C2C2E] border border-[#3A3A3C] border border-[#262626] hover:border-[#3A3A3C] text-xs font-bold text-white shadow-lg spring-press transition-all inline-flex items-center gap-2"
             >
               {loadingMore ? (
                 <>
-                  <RefreshCw className="w-4 h-4 animate-spin text-purple-300" />
+                  <RefreshCw className="w-4 h-4 animate-spin text-zinc-200" />
                   <span>Memuat Lebih Banyak Manhwa...</span>
                 </>
               ) : (
                 <>
-                  <Sparkles className="w-4 h-4 text-purple-400" />
+                  <BookOpen className="w-4 h-4 text-white" />
                   <span>Muat Lebih Banyak Judul Manhwa</span>
                 </>
               )}
@@ -392,7 +392,7 @@ export default function ManhwaView() {
       {/* Detail Modal */}
       {selectedManhwa && (
         <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto animate-fade-in">
-          <div className="relative w-full max-w-2xl rounded-3xl card-frosted-obsidian border border-purple-400/30 p-6 shadow-2xl space-y-5 my-8">
+          <div className="relative w-full max-w-2xl rounded-3xl card-frosted-obsidian border border-[#262626] p-6 shadow-2xl space-y-5 my-8">
             <button
               onClick={() => setSelectedManhwa(null)}
               className="absolute top-4 right-4 w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center spring-press z-10"
@@ -402,7 +402,7 @@ export default function ManhwaView() {
 
             {detailLoading || !detailData ? (
               <div className="py-20 text-center space-y-3">
-                <RefreshCw className="w-8 h-8 animate-spin text-purple-400 mx-auto" />
+                <RefreshCw className="w-8 h-8 animate-spin text-zinc-300 mx-auto" />
                 <p className="text-xs text-zinc-400">Memuat info webtoon & daftar chapter...</p>
               </div>
             ) : (
@@ -421,7 +421,7 @@ export default function ManhwaView() {
                       {detailData.title}
                     </h3>
                     <div className="flex flex-wrap items-center gap-1.5 pt-1">
-                      <span className="px-2 py-0.5 rounded-md bg-purple-500/20 text-purple-300 font-bold text-[11px] border border-purple-400/30">
+                      <span className="px-2 py-0.5 rounded-md bg-[#2C2C2E] text-zinc-200 font-bold text-[11px] border border-[#262626]">
                         Manhwa (Webtoon)
                       </span>
                       <span className="px-2 py-0.5 rounded-md bg-white/10 text-emerald-400 font-mono text-[11px] font-bold">
@@ -452,7 +452,7 @@ export default function ManhwaView() {
                     <h4 className="font-cinematic font-bold text-xs uppercase tracking-wider text-zinc-300">
                       Pilih Chapter ({detailData.chapters.length})
                     </h4>
-                    <span className="text-[11px] text-purple-400 font-semibold">Vertical Reader HD</span>
+                    <span className="text-[11px] text-zinc-300 font-semibold">Vertical Reader HD</span>
                   </div>
 
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-56 overflow-y-auto pr-1">
@@ -461,10 +461,10 @@ export default function ManhwaView() {
                         key={ch.slug}
                         type="button"
                         onClick={() => handleLaunchReader(ch.slug, detailData.title)}
-                        className="px-3 py-2.5 rounded-xl bg-white/[0.05] hover:bg-purple-500/20 border border-white/[0.08] hover:border-purple-400/40 text-xs font-bold text-zinc-200 hover:text-purple-300 text-left truncate spring-press transition-all flex items-center justify-between"
+                        className="px-3 py-2.5 rounded-xl bg-white/[0.05] hover:bg-[#2C2C2E] border border-white/[0.08] hover:border-[#3A3A3C] text-xs font-bold text-zinc-200 hover:text-white text-left truncate spring-press transition-all flex items-center justify-between"
                       >
                         <span className="truncate">{ch.chapter}</span>
-                        <ChevronRight className="w-3.5 h-3.5 text-purple-400 shrink-0 ml-1" />
+                        <ChevronRight className="w-3.5 h-3.5 text-zinc-300 shrink-0 ml-1" />
                       </button>
                     ))}
                   </div>

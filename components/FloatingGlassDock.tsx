@@ -3,8 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Compass, LayoutGrid, Clock, MessageSquare, User, Dice5, Sparkles } from 'lucide-react';
-import { useTheme } from '@/lib/themeContext';
+import { Compass, LayoutGrid, Clock, MessageSquare, User } from 'lucide-react';
 
 export type DockTab = 'jelajah' | 'list' | 'riwayat' | 'chat' | 'profil';
 
@@ -17,10 +16,8 @@ interface FloatingGlassDockProps {
 export default function FloatingGlassDock({
   activeTab,
   onTabChange,
-  onOpenGacha,
 }: FloatingGlassDockProps) {
   const pathname = usePathname();
-  const { accentColor } = useTheme();
 
   const tabs: { id: DockTab; label: string; icon: React.ElementType; href: string }[] = [
     { id: 'jelajah', label: 'Jelajah', icon: Compass, href: '/' },
@@ -48,12 +45,10 @@ export default function FloatingGlassDock({
 
   return (
     <div className="fixed bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 z-50 pointer-events-none flex items-center gap-2 sm:gap-3">
-      {/* =========================================================================
-          LIQUID GLASS FLOATING CAPSULE DOCK
-         ========================================================================= */}
+      {/* Strict Flutter Monochrome Floating Dock */}
       <nav
         aria-label="Bottom Navigation"
-        className="pointer-events-auto liquid-glass-convex px-2 sm:px-3 py-1.5 sm:py-2 rounded-full flex items-center gap-1 sm:gap-1.5 shadow-[0_24px_60px_rgba(0,0,0,0.95)]"
+        className="pointer-events-auto bg-[#141414] border border-[#262626] px-2 py-1.5 rounded-full flex items-center gap-1 shadow-[0_16px_40px_rgba(0,0,0,0.9)]"
       >
         {tabs.map((tab) => {
           const Icon = tab.icon;
@@ -62,26 +57,18 @@ export default function FloatingGlassDock({
           const content = (
             <button
               onClick={() => onTabChange && onTabChange(tab.id)}
-              className={`relative flex items-center gap-1.5 sm:gap-2 px-3.5 sm:px-4 py-2 rounded-full text-xs sm:text-sm font-bold transition-all duration-300 active:scale-95 ${
+              className={`flex items-center gap-1.5 sm:gap-2 px-3.5 sm:px-4 py-2 rounded-full text-xs sm:text-sm font-semibold transition-all duration-200 active:scale-95 ${
                 isActive
-                  ? 'liquid-glass-pill text-white shadow-lg scale-100'
-                  : 'text-zinc-400 hover:text-white hover:bg-white/[0.04]'
+                  ? 'bg-[#2C2C2E] text-white shadow-sm'
+                  : 'text-zinc-400 hover:text-white hover:bg-[#1C1C1E]'
               }`}
             >
-              <Icon className={`w-4 h-4 ${isActive ? 'stroke-[2.5]' : 'stroke-2'}`} />
+              <Icon className={`w-4 h-4 ${isActive ? 'stroke-[2.2]' : 'stroke-2 text-zinc-400'}`} />
               <span
-                className={`${isActive ? 'inline-block' : 'hidden sm:inline-block'} text-xs font-bold`}
+                className={`${isActive ? 'inline-block' : 'hidden sm:inline-block'} text-xs font-medium`}
               >
                 {tab.label}
               </span>
-
-              {/* Liquid Droplet Indicator */}
-              {isActive && (
-                <span
-                  className="w-2 h-2 rounded-full absolute -top-1 right-2.5 shadow-[0_0_10px_currentColor] animate-pulse"
-                  style={{ backgroundColor: accentColor || '#06b6d4', color: accentColor || '#06b6d4' }}
-                />
-              )}
             </button>
           );
 
@@ -96,21 +83,6 @@ export default function FloatingGlassDock({
           );
         })}
       </nav>
-
-      {/* =========================================================================
-          FLUTTER EXTENDED FAB (GACHA / REZE AI SUMMON)
-         ========================================================================= */}
-      {onOpenGacha && (
-        <button
-          type="button"
-          onClick={onOpenGacha}
-          className="pointer-events-auto h-11 sm:h-12 px-3.5 sm:px-4 rounded-full liquid-glass-convex hover:border-amber-400/50 flex items-center gap-2 text-xs font-extrabold text-amber-300 shadow-[0_12px_32px_rgba(251,191,36,0.35)] active:scale-90 transition-all group shrink-0"
-          title="Putar Gacha Acak Anime"
-        >
-          <Dice5 className="w-4 h-4 group-hover:rotate-12 transition-transform" />
-          <span className="hidden md:inline font-bold">Acak Anime</span>
-        </button>
-      )}
     </div>
   );
 }

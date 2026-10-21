@@ -114,8 +114,8 @@ export default function ComicView() {
       {/* Header Banner */}
       <div className="relative rounded-3xl overflow-hidden card-frosted-obsidian border border-white/[0.08] p-6 sm:p-8 flex flex-col md:flex-row items-center justify-between gap-6 shadow-2xl">
         <div className="space-y-3 max-w-xl text-center md:text-left">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-cyan-500/20 border border-cyan-400/40 text-cyan-300 text-xs font-bold shadow-[0_0_15px_rgba(6,182,212,0.3)]">
-            <BookOpen className="w-3.5 h-3.5 text-cyan-400" />
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#2C2C2E] border border-[#3A3A3C] text-zinc-200 text-xs font-medium">
+            <BookOpen className="w-3.5 h-3.5 text-zinc-300" />
             <span>KATALOG KOMIK & MANGA JEPANG</span>
           </div>
           <h2 className="font-cinematic font-black text-2xl sm:text-3xl text-white tracking-wide">
@@ -135,12 +135,12 @@ export default function ComicView() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Cari One Piece, Jujutsu..."
-              className="w-full pl-9 pr-3 py-2.5 rounded-2xl bg-white/[0.06] border border-white/[0.1] text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-cyan-400/60"
+              className="w-full pl-9 pr-3 py-2.5 rounded-2xl bg-white/[0.06] border border-white/[0.1] text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-zinc-400"
             />
           </div>
           <button
             type="submit"
-            className="px-4 py-2.5 rounded-2xl bg-cyan-400 text-black font-extrabold text-xs hover:bg-cyan-300 spring-press"
+            className="px-4 py-2.5 rounded-2xl bg-white text-black font-bold text-xs hover:bg-zinc-200 spring-press"
           >
             {isSearching ? <RefreshCw className="w-4 h-4 animate-spin" /> : 'Cari'}
           </button>
@@ -152,7 +152,7 @@ export default function ComicView() {
         <div className="flex items-center gap-2">
           {searchResults !== null ? (
             <div className="flex items-center gap-2">
-              <span className="text-xs font-bold text-cyan-300">
+              <span className="text-xs font-bold text-zinc-200">
                 Hasil Pencarian &ldquo;{searchQuery}&rdquo; ({searchResults.length})
               </span>
               <button
@@ -201,7 +201,7 @@ export default function ComicView() {
       {/* Comic Grid */}
       {loading ? (
         <div className="py-20 text-center space-y-3">
-          <RefreshCw className="w-8 h-8 animate-spin text-cyan-400 mx-auto drop-shadow-[0_0_12px_rgba(0,240,255,0.7)]" />
+          <RefreshCw className="w-8 h-8 animate-spin text-zinc-300 mx-auto drop-shadow-[0_0_12px_rgba(0,240,255,0.7)]" />
           <p className="text-xs text-zinc-400 font-semibold">Mengambil katalog komik...</p>
         </div>
       ) : displayList.length === 0 ? (
@@ -241,12 +241,12 @@ export default function ComicView() {
               </div>
 
               <div className="p-3 flex-1 flex flex-col justify-between space-y-1">
-                <h4 className="font-bold text-xs text-zinc-200 group-hover:text-cyan-300 line-clamp-2 transition-colors">
+                <h4 className="font-bold text-xs text-zinc-200 group-hover:text-white line-clamp-2 transition-colors">
                   {item.title}
                 </h4>
                 <div className="flex items-center justify-between text-[10px] text-zinc-500 pt-1">
                   <span>Manga Sub Indo</span>
-                  <span className="text-cyan-400 font-semibold group-hover:underline">Baca 📖</span>
+                  <span className="text-zinc-300 font-semibold group-hover:underline">Baca 📖</span>
                 </div>
               </div>
             </div>
@@ -267,7 +267,7 @@ export default function ComicView() {
 
             {detailLoading || !detailData ? (
               <div className="py-20 text-center space-y-3">
-                <RefreshCw className="w-8 h-8 animate-spin text-cyan-400 mx-auto" />
+                <RefreshCw className="w-8 h-8 animate-spin text-zinc-300 mx-auto" />
                 <p className="text-xs text-zinc-400">Memuat info komik & daftar chapter...</p>
               </div>
             ) : (
@@ -296,7 +296,7 @@ export default function ComicView() {
                         {detailData.metadata?.type || 'Manga'}
                       </span>
                       {detailData.metadata?.author && (
-                        <span className="px-2 py-0.5 rounded-md bg-cyan-950/60 text-cyan-300 text-[11px] border border-cyan-500/30">
+                        <span className="px-2 py-0.5 rounded-md bg-[#1C1C1E] text-zinc-300 text-[11px] border border-[#2E2E30]">
                           {detailData.metadata.author}
                         </span>
                       )}
@@ -325,7 +325,7 @@ export default function ComicView() {
                     <h4 className="font-cinematic font-bold text-xs uppercase tracking-wider text-zinc-300">
                       Daftar Chapter ({detailData.chapters.length})
                     </h4>
-                    <span className="text-[11px] text-cyan-400 font-semibold">Bahasa Indonesia</span>
+                    <span className="text-[11px] text-zinc-300 font-semibold">Bahasa Indonesia</span>
                   </div>
 
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-56 overflow-y-auto pr-1">
@@ -334,10 +334,10 @@ export default function ComicView() {
                         key={ch.slug}
                         type="button"
                         onClick={() => handleLaunchReader(ch.slug, detailData.title)}
-                        className="px-3 py-2.5 rounded-xl bg-white/[0.05] hover:bg-cyan-500/20 border border-white/[0.08] hover:border-cyan-400/40 text-xs font-bold text-zinc-200 hover:text-cyan-300 text-left truncate spring-press transition-all flex items-center justify-between"
+                        className="px-3 py-2.5 rounded-xl bg-white/[0.05] hover:bg-[#2C2C2E] border border-[#262626] hover:border-[#3A3A3C] text-xs font-medium text-zinc-200 hover:text-white text-left truncate spring-press transition-all flex items-center justify-between"
                       >
                         <span className="truncate">{ch.chapter}</span>
-                        <ChevronRight className="w-3.5 h-3.5 text-cyan-400 shrink-0 ml-1" />
+                        <ChevronRight className="w-3.5 h-3.5 text-zinc-300 shrink-0 ml-1" />
                       </button>
                     ))}
                   </div>

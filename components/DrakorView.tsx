@@ -229,9 +229,9 @@ export default function DrakorView() {
         <div className="relative w-full rounded-[36px] overflow-hidden liquid-glass-surface p-6 sm:p-10 flex flex-col md:flex-row items-center gap-6 sm:gap-10 shadow-[0_24px_60px_rgba(0,0,0,0.85)]">
           {/* Dual Specular Edge Reflection */}
           <div className="absolute top-0 left-0 right-0 h-[1.5px] bg-gradient-to-r from-transparent via-white/50 to-transparent z-20 pointer-events-none" />
-          <div className="absolute inset-0 bg-gradient-to-r from-pink-950/40 via-[#06060c]/85 to-black/90 pointer-events-none" />
+          <div className="absolute inset-0 bg-[#141414] pointer-events-none" />
 
-          {/* Left Poster (Squircle rounded-[28px]) */}
+          {/* Left Poster */}
           <div className="relative z-10 w-44 sm:w-56 shrink-0 aspect-[2/3] rounded-[28px] overflow-hidden shadow-2xl border border-white/20 group">
             <SmartImage
               src={heroDrakor.thumbnail}
@@ -242,7 +242,7 @@ export default function DrakorView() {
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent" />
             <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between text-xs">
-              <span className="px-2.5 py-0.5 rounded-full liquid-glass-pill text-pink-300 font-extrabold text-[10px] tracking-wide">
+              <span className="px-2.5 py-0.5 rounded-full liquid-glass-pill text-zinc-200 font-medium text-[10px] tracking-wide">
                 HOT K-DRAMA
               </span>
               <span className="flex items-center gap-1 font-bold text-amber-300 text-xs px-2 py-0.5 rounded-full bg-black/60 backdrop-blur-md border border-amber-400/30">
@@ -254,8 +254,8 @@ export default function DrakorView() {
 
           {/* Right Content */}
           <div className="relative z-10 flex-1 space-y-4 text-center md:text-left">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full liquid-glass-pill text-pink-300 text-xs font-bold">
-              <Heart className="w-3.5 h-3.5 fill-pink-400 text-pink-400" />
+            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full liquid-glass-pill text-zinc-200 text-xs font-bold">
+              <Heart className="w-3.5 h-3.5 fill-white text-white" />
               <span>Drama Korea Sub Indo</span>
             </div>
 
@@ -264,7 +264,7 @@ export default function DrakorView() {
             </h1>
 
             {heroDrakor.alterTitle && (
-              <p className="text-xs sm:text-sm text-pink-200/70 font-medium">
+              <p className="text-xs sm:text-sm text-zinc-400 font-medium">
                 {heroDrakor.alterTitle}
               </p>
             )}
@@ -279,7 +279,7 @@ export default function DrakorView() {
               <span className="px-2.5 py-1 rounded-full liquid-glass-pill text-zinc-300">
                 {heroDrakor.eps || '16 Episode'}
               </span>
-              <span className="px-2.5 py-1 rounded-full liquid-glass-pill text-pink-300 font-bold">
+              <span className="px-2.5 py-1 rounded-full liquid-glass-pill text-zinc-200 font-bold">
                 {heroDrakor.status}
               </span>
             </div>
@@ -292,7 +292,7 @@ export default function DrakorView() {
               <button
                 type="button"
                 onClick={() => handleOpenDetail(heroDrakor)}
-                className="px-6 py-2.5 rounded-full bg-gradient-to-r from-pink-500 via-rose-500 to-purple-600 text-white font-black text-xs sm:text-sm hover:opacity-95 shadow-[0_8px_25px_rgba(236,72,153,0.4)] active:scale-95 transition-all flex items-center gap-2"
+                className="px-6 py-2.5 rounded-full bg-white text-black font-bold text-xs sm:text-sm hover:bg-zinc-200 shadow-md active:scale-95 transition-all flex items-center gap-2"
               >
                 <Play className="w-4 h-4 fill-white" />
                 <span>Nonton Episode 1</span>
@@ -325,7 +325,7 @@ export default function DrakorView() {
             }}
             className={`flex-1 sm:flex-initial px-4 py-2 rounded-full text-xs font-bold transition-all duration-300 flex items-center justify-center gap-1.5 ${
               activeTab === 'ongoing' && !searchQuery
-                ? 'liquid-glass-pill text-pink-300 shadow-lg scale-100'
+                ? 'bg-[#2C2C2E] text-white shadow-sm'
                 : 'text-zinc-400 hover:text-white'
             }`}
           >
@@ -341,7 +341,7 @@ export default function DrakorView() {
             }}
             className={`flex-1 sm:flex-initial px-4 py-2 rounded-full text-xs font-bold transition-all duration-300 flex items-center justify-center gap-1.5 ${
               activeTab === 'popular' && !searchQuery
-                ? 'liquid-glass-pill text-pink-300 shadow-lg scale-100'
+                ? 'bg-[#2C2C2E] text-white shadow-sm'
                 : 'text-zinc-400 hover:text-white'
             }`}
           >
@@ -357,7 +357,7 @@ export default function DrakorView() {
             }}
             className={`flex-1 sm:flex-initial px-4 py-2 rounded-full text-xs font-bold transition-all duration-300 flex items-center justify-center gap-1.5 ${
               activeTab === 'completed' && !searchQuery
-                ? 'liquid-glass-pill text-pink-300 shadow-lg scale-100'
+                ? 'bg-[#2C2C2E] text-white shadow-sm'
                 : 'text-zinc-400 hover:text-white'
             }`}
           >
@@ -374,7 +374,7 @@ export default function DrakorView() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Cari judul Drakor (cth: Queen of Tears)..."
-            className="w-full pl-10 pr-10 py-2.5 rounded-full liquid-glass-surface text-xs text-white placeholder-zinc-400 focus:outline-none focus:border-pink-400/60 transition-all shadow-inner"
+            className="w-full pl-10 pr-10 py-2.5 rounded-full liquid-glass-surface text-xs text-white placeholder-zinc-400 focus:outline-none focus:border-zinc-400 transition-all shadow-inner"
           />
           {searchQuery && (
             <button
@@ -445,15 +445,15 @@ export default function DrakorView() {
 
                   {/* Floating Water-Lens Play Button on Hover */}
                   <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10 pointer-events-none">
-                    <div className="w-12 h-12 rounded-full liquid-glass-convex text-pink-400 flex items-center justify-center shadow-[0_0_25px_rgba(236,72,153,0.6)] transform translate-y-2 group-hover:translate-y-0 transition-transform duration-300 scale-90 group-hover:scale-100">
-                      <Play className="w-5 h-5 fill-pink-400 ml-0.5" />
+                    <div className="w-12 h-12 rounded-full bg-white/90 text-black flex items-center justify-center shadow-md transform translate-y-2 group-hover:translate-y-0 transition-transform duration-300 scale-90 group-hover:scale-100">
+                      <Play className="w-5 h-5 fill-black ml-0.5" />
                     </div>
                   </div>
 
                   {/* Release Year Badge at Bottom */}
                   {item.year && (
                     <div className="absolute bottom-2 left-2 z-10 px-2 py-0.5 rounded-full bg-black/60 backdrop-blur-md border border-white/10 text-[9px] font-medium text-zinc-300 flex items-center gap-1">
-                      <Calendar className="w-2.5 h-2.5 text-pink-400" />
+                      <Calendar className="w-2.5 h-2.5 text-zinc-300" />
                       {item.year}
                     </div>
                   )}
@@ -461,7 +461,7 @@ export default function DrakorView() {
 
                 {/* Title & Metadata Details */}
                 <div className="p-3 flex-1 flex flex-col justify-between space-y-1 bg-[#06060c]/90 border-t border-white/[0.06]">
-                  <h4 className="font-cinematic font-bold text-xs sm:text-sm text-white group-hover:text-pink-300 line-clamp-2 leading-snug tracking-tight transition-colors">
+                  <h4 className="font-cinematic font-bold text-xs sm:text-sm text-white group-hover:text-white line-clamp-2 leading-snug tracking-tight transition-colors">
                     {item.title}
                   </h4>
 
@@ -469,7 +469,7 @@ export default function DrakorView() {
                     <span className="truncate text-zinc-400 text-[10px]">
                       {item.alterTitle || item.genres?.[0] || 'K-Drama Sub Indo'}
                     </span>
-                    <span className="text-[10px] text-pink-400 font-extrabold shrink-0 ml-1">
+                    <span className="text-[10px] text-zinc-300 font-semibold shrink-0 ml-1">
                       {item.status || 'HD'}
                     </span>
                   </div>
@@ -506,7 +506,7 @@ export default function DrakorView() {
                 <span>Kembali</span>
               </button>
 
-              <span className="text-xs font-bold text-pink-300 tracking-wide uppercase">
+              <span className="text-xs font-bold text-zinc-200 tracking-wide uppercase">
                 Flutter Detail View
               </span>
 
@@ -538,8 +538,8 @@ export default function DrakorView() {
                 </div>
 
                 <div className="flex-1 space-y-2.5 text-center sm:text-left">
-                  <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full liquid-glass-pill text-pink-300 text-[10px] font-bold">
-                    <Heart className="w-3 h-3 fill-pink-400" />
+                  <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full liquid-glass-pill text-zinc-200 text-[10px] font-bold">
+                    <Heart className="w-3 h-3 fill-white" />
                     <span>{detailData.status}</span>
                   </div>
 
@@ -548,7 +548,7 @@ export default function DrakorView() {
                   </h2>
 
                   {detailData.alterTitle && (
-                    <p className="text-xs text-pink-200/70 font-medium">{detailData.alterTitle}</p>
+                    <p className="text-xs text-zinc-400 font-medium">{detailData.alterTitle}</p>
                   )}
 
                   <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 pt-1 text-xs">
@@ -579,7 +579,7 @@ export default function DrakorView() {
                     <button
                       type="button"
                       onClick={() => handlePlayEpisode(detailData, 1)}
-                      className="w-full sm:w-auto px-6 py-2.5 rounded-full bg-gradient-to-r from-pink-500 via-rose-500 to-purple-600 text-white font-black text-xs hover:opacity-95 shadow-[0_6px_20px_rgba(236,72,153,0.4)] active:scale-95 transition-all flex items-center justify-center gap-2"
+                      className="w-full sm:w-auto px-6 py-2.5 rounded-full bg-white text-black font-bold text-xs hover:bg-zinc-200 shadow-md active:scale-95 transition-all flex items-center justify-center gap-2"
                     >
                       <Play className="w-4 h-4 fill-white" />
                       <span>Putar Episode 1 Sekarang</span>
@@ -626,13 +626,13 @@ export default function DrakorView() {
                           key={ep.episodeNumber}
                           type="button"
                           onClick={() => handlePlayEpisode(detailData, Number(ep.episodeNumber))}
-                          className="p-3 rounded-[20px] liquid-glass-surface hover:border-pink-400/60 text-center transition-all active:scale-95 group shadow-sm flex flex-col items-center justify-center gap-0.5"
+                          className="p-3 rounded-[20px] liquid-glass-surface hover:border-zinc-500 text-center transition-all active:scale-95 group shadow-sm flex flex-col items-center justify-center gap-0.5"
                         >
-                          <div className="text-xs font-bold text-white group-hover:text-pink-300">
+                          <div className="text-xs font-bold text-white group-hover:text-white">
                             {ep.title}
                           </div>
-                          <div className="text-[10px] text-pink-400 font-semibold flex items-center gap-1">
-                            <Play className="w-2.5 h-2.5 fill-pink-400" />
+                          <div className="text-[10px] text-zinc-300 font-semibold flex items-center gap-1">
+                            <Play className="w-2.5 h-2.5 fill-white" />
                             <span>Putar HD</span>
                           </div>
                         </button>
@@ -641,7 +641,7 @@ export default function DrakorView() {
                   </div>
                 ) : (
                   <div className="p-4 rounded-[24px] liquid-glass-surface space-y-2">
-                    <h4 className="text-xs font-bold text-pink-300 uppercase tracking-wider">
+                    <h4 className="text-xs font-bold text-zinc-200 uppercase tracking-wider">
                       Ringkasan Cerita
                     </h4>
                     <p className="text-xs sm:text-sm text-zinc-300 leading-relaxed">
@@ -695,7 +695,7 @@ export default function DrakorView() {
               <button
                 type="button"
                 onClick={() => setPlayingDrakor(null)}
-                className="w-8 h-8 rounded-full bg-pink-500/20 hover:bg-pink-500/30 text-pink-400 border border-pink-500/40 flex items-center justify-center active:scale-95 transition-all"
+                className="w-8 h-8 rounded-full bg-[#2C2C2E] hover:bg-[#3A3A3C] text-zinc-200 border border-[#3A3A3C] flex items-center justify-center active:scale-95 transition-all"
                 title="Tutup Player"
               >
                 <X className="w-4 h-4" />
@@ -719,7 +719,7 @@ export default function DrakorView() {
             {/* Server Switcher Pill Bar */}
             <div className="mt-4 p-4 rounded-[24px] liquid-glass-surface flex flex-wrap items-center justify-between gap-3">
               <div className="flex items-center gap-2">
-                <Server className="w-4 h-4 text-pink-400" />
+                <Server className="w-4 h-4 text-zinc-300" />
                 <span className="text-xs font-bold text-white">Ganti Sumber Server:</span>
               </div>
 
@@ -733,7 +733,7 @@ export default function DrakorView() {
                       onClick={() => setSelectedServerIndex(idx)}
                       className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all active:scale-95 ${
                         isSelected
-                          ? 'bg-gradient-to-r from-pink-500 to-purple-600 text-white shadow-md shadow-pink-500/30'
+                          ? 'bg-[#2C2C2E] text-white border border-[#3A3A3C] shadow-sm'
                           : 'liquid-glass-pill text-zinc-300 hover:text-white'
                       }`}
                     >
@@ -781,7 +781,7 @@ export default function DrakorView() {
                       setSelectedServerIndex(0);
                     }
                   }}
-                  className="px-3.5 py-1.5 rounded-full bg-pink-500/20 hover:bg-pink-500/30 text-xs font-bold text-pink-300 border border-pink-500/40 active:scale-95 transition-all flex items-center gap-1"
+                  className="px-3.5 py-1.5 rounded-full bg-[#2C2C2E] hover:bg-[#3A3A3C] text-xs font-medium text-zinc-200 border border-[#3A3A3C] active:scale-95 transition-all flex items-center gap-1"
                 >
                   <span>Episode Selanjutnya</span>
                   <ChevronRight className="w-3.5 h-3.5" />
@@ -805,7 +805,7 @@ export default function DrakorView() {
                       }}
                       className={`px-3 py-1 rounded-full text-[11px] font-bold shrink-0 transition-all ${
                         isCurrent
-                          ? 'bg-pink-500 text-white shadow-md'
+                          ? 'bg-[#2C2C2E] text-white border border-[#3A3A3C]'
                           : 'liquid-glass-pill text-zinc-400 hover:text-white'
                       }`}
                     >

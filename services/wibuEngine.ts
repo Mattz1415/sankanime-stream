@@ -914,6 +914,32 @@ export async function resolveSamehadakuServerBridge(serverId: string): Promise<s
 }
 
 /**
+ * Universal Samehadaku Stream Resolver (player_ajax POST + Server Bridge)
+ */
+export async function resolveSamehadakuServer(
+  serverId: string,
+  post?: string,
+  nume?: string,
+  type?: string
+): Promise<string | null> {
+  if (post && nume) {
+    try {
+      const directSrc = await resolveSamehadakuPlayerAjax(post, nume, type || 'east_player');
+      if (directSrc) return sanitizeSafeUrl(directSrc);
+    } catch {}
+  }
+
+  if (serverId) {
+    try {
+      const bridgeUrl = await resolveSamehadakuServerBridge(serverId);
+      if (bridgeUrl) return sanitizeSafeUrl(bridgeUrl);
+    } catch {}
+  }
+
+  return null;
+}
+
+/**
  * Extract Otakudesu Mirrors from raw HTML
  * Looks for .mirrorstream ul li a[data-content]
  */
@@ -947,62 +973,101 @@ export function extractOtakudesuMirrors(
 }
 
 /* =========================================================================
-   5. KURAMANIME & MULTI-VIP FALLBACK STREAMS
+   5. FULL WIBU-API-PY ROUTES & ENDPOINT WRAPPERS (CapacitorHttp NATIVE)
    ========================================================================= */
 
-export interface VipStreamOption {
-  serverName: string;
-  quality: string;
-  url: string;
-  isDirect: boolean;
-  provider: 'Kuramanime' | 'Multi-VIP';
+export const WIBU_API_BASE_URLS = [
+  'https://api.wibu-api.eu.org/api',
+  'https://www.sankavollerei.com',
+  'https://www.sankavollerei.web.id',
+];
+
+/**
+ * Universal Native Fetch JSON helper for wibu-api-py endpoints
+ */
+export async function wibuNativeFetchJson<T = any>(
+  pathOrUrl: string,
+  timeoutMs: number = 8000
+): Promise<T | null> {
+  const isFull = pathOrUrl.startsWith('http');
+  const targetUrls = isFull
+    ? [pathOrUrl]
+    : WIBU_API_BASE_URLS.map((base) => `${base}${pathOrUrl.startsWith('/') ? pathOrUrl : `/${pathOrUrl}`}`);
+
+  for (const url of targetUrls) {
+    const safeUrl = sanitizeSafeUrl(url);
+
+    // 1. Mobile Native CapacitorHttp
+    if (typeof window !== 'undefined' && Capacitor.isNativePlatform()) {
+      try {
+        const resp = await CapacitorHttp.get({
+          url: safeUrl,
+          headers: {
+            'User-Agent': DEFAULT_USER_AGENT,
+            Accept: 'application/json',
+          },
+          connectTimeout: timeoutMs,
+          readTimeout: timeoutMs,
+        });
+        if (resp.status >= 200 && resp.status < 400 && resp.data) {
+          return typeof resp.data === 'string' ? JSON.parse(resp.data) : resp.data;
+        }
+      } catch {}
+    }
+
+    // 2. Direct browser fetch
+    try {
+      const res = await fetchWithTimeout(safeUrl, { headers: { 'User-Agent': DEFAULT_USER_AGENT } }, timeoutMs);
+      if (res.ok) {
+        return await res.json();
+      }
+    } catch {}
+
+    // 3. CORS Proxies
+    try {
+      const proxyUrl = `https://corsproxy.io/?url=${encodeURIComponent(safeUrl)}`;
+      const res = await fetchWithTimeout(proxyUrl, {}, timeoutMs);
+      if (res.ok) {
+        return await res.json();
+      }
+    } catch {}
+  }
+
+  return null;
 }
 
 /**
- * Generate Multi-VIP & Kuramanime fallback stream options
+ * Anime, Donghua & Hentai endpoints from wibu-api-py
  */
-export function generateVipStreams(
-  animeTitle: string,
-  episodeNum: string | number = 1
-): VipStreamOption[] {
-  const ep = String(episodeNum || 1);
-  const cleanTitle = encodeURIComponent(animeTitle.trim());
+export async function wibuApiAnime(
+  endpoint: 'samehadaku' | 'kuramanime' | 'donghua' | 'anichin' | 'kusonime' | 'lendrive' | 'doronime' | 'anixlife' | 'kazefuri',
+  link: string
+): Promise<any> {
+  const q = encodeURIComponent(link.trim());
+  return await wibuNativeFetchJson(`/anime/${endpoint}?link=${q}`, 10000);
+}
 
-  return [
-    {
-      serverName: 'VIP Ultra Stream (Kurama Fast)',
-      quality: '1080p FHD',
-      url: `https://vidsrc.icu/embed/tv?title=${cleanTitle}&season=1&episode=${ep}`,
-      isDirect: false,
-      provider: 'Kuramanime',
-    },
-    {
-      serverName: 'Kurama VIP Player (720p)',
-      quality: '720p',
-      url: `https://vidsrc.cc/v2/embed/tv?title=${cleanTitle}&season=1&episode=${ep}`,
-      isDirect: false,
-      provider: 'Kuramanime',
-    },
-    {
-      serverName: 'Multi-VIP Global CDN (1080p)',
-      quality: '1080p FHD',
-      url: `https://multiembed.mov/directstream.php?video_id=${cleanTitle}&season=1&episode=${ep}`,
-      isDirect: false,
-      provider: 'Multi-VIP',
-    },
-    {
-      serverName: 'VIP AutoEmbed Fast Server (720p)',
-      quality: '720p',
-      url: `https://player.autoembed.cc/embed/tv/${cleanTitle}/1/${ep}`,
-      isDirect: false,
-      provider: 'Multi-VIP',
-    },
-    {
-      serverName: 'Multi-VIP Backup (480p)',
-      quality: '480p',
-      url: `https://superembed.stream/embed/tv/${cleanTitle}/1/${ep}`,
-      isDirect: false,
-      provider: 'Multi-VIP',
-    },
-  ];
+/**
+ * Manga, Manhua & Manhwa endpoints from wibu-api-py
+ */
+export async function wibuApiManga(
+  endpoint: 'kiryuu' | 'westmanga' | 'komikindo' | 'mangatale' | 'masterkomik' | 'mangakita' | 'rawkuma',
+  link: string
+): Promise<any> {
+  const q = encodeURIComponent(link.trim());
+  return await wibuNativeFetchJson(`/manga/${endpoint}?link=${q}`, 10000);
+}
+
+/**
+ * Drama & Film endpoints from wibu-api-py
+ */
+export async function wibuApiDrama(
+  endpoint: 'wibusubs' | 'adikfilm' | 'lk21',
+  queryOrLink: string
+): Promise<any> {
+  const q = encodeURIComponent(queryOrLink.trim());
+  if (endpoint === 'lk21') {
+    return await wibuNativeFetchJson(`/lk21/search?title=${q}`, 10000);
+  }
+  return await wibuNativeFetchJson(`/${endpoint === 'wibusubs' ? 'drama' : 'film'}/${endpoint}?link=${q}`, 10000);
 }

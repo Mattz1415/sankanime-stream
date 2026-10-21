@@ -49,68 +49,57 @@ body {
 }
 
 /* =========================================================================
-   FLUTTER UI + APPLE LIQUID GLASS DESIGN SYSTEM
+   FLUTTER MONOCHROME DARK DESIGN SYSTEM (60FPS HARDWARE ACCELERATED)
    ========================================================================= */
 
 .liquid-glass-surface {
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0.03) 50%, rgba(255, 255, 255, 0.09) 100%);
-  backdrop-filter: blur(24px) saturate(180%);
-  -webkit-backdrop-filter: blur(24px) saturate(180%);
-  box-shadow: inset 0 1.5px 1px rgba(255, 255, 255, 0.4), inset 0 -1px 1px rgba(255, 255, 255, 0.1), 0 16px 36px -8px rgba(0, 0, 0, 0.65);
-  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: #141414;
+  border: 1px solid #262626;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.85);
 }
 
 .liquid-glass-card {
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.02) 50%, rgba(255, 255, 255, 0.06) 100%);
-  backdrop-filter: blur(20px) saturate(160%);
-  -webkit-backdrop-filter: blur(20px) saturate(160%);
-  box-shadow: inset 0 1.5px 1px rgba(255, 255, 255, 0.35), inset 0 -1px 1px rgba(255, 255, 255, 0.08), 0 16px 36px -8px rgba(0, 0, 0, 0.65);
-  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: #141414;
+  border: 1px solid #262626;
   border-radius: 28px;
-  transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.2s ease, border-color 0.2s ease;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.7);
+  transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1), border-color 0.2s ease;
   will-change: transform;
 }
 
 .liquid-glass-card:hover {
-  border-color: rgba(255, 255, 255, 0.3);
-  box-shadow: inset 0 1.5px 1px rgba(255, 255, 255, 0.45), 0 20px 44px -8px rgba(0, 0, 0, 0.8);
+  border-color: #3A3A3C;
+  transform: translateY(-2px);
 }
 
 .liquid-glass-card:active {
-  transform: scale(0.96);
+  transform: scale(0.97);
 }
 
 .liquid-glass-pill {
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.22) 0%, rgba(255, 255, 255, 0.05) 50%, rgba(255, 255, 255, 0.12) 100%);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  box-shadow: inset 0 1.5px 1px rgba(255, 255, 255, 0.5), inset 0 -1px 1px rgba(255, 255, 255, 0.15), 0 10px 24px -4px rgba(0, 0, 0, 0.5);
-  border: 1px solid rgba(255, 255, 255, 0.22);
+  background: #2C2C2E;
+  border: 1px solid #3A3A3C;
+  color: #FFFFFF;
 }
 
 .liquid-glass-convex {
-  background: radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.35) 0%, rgba(255, 255, 255, 0.06) 60%, rgba(255, 255, 255, 0.14) 100%);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  box-shadow: inset 0 2px 1.5px rgba(255, 255, 255, 0.6), inset 0 -1.5px 1.5px rgba(255, 255, 255, 0.2), 0 12px 28px rgba(0, 0, 0, 0.6);
-  border: 1px solid rgba(255, 255, 255, 0.28);
+  background: #1C1C1E;
+  border: 1px solid #2E2E30;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.6);
 }
 
 .flutter-sheet {
-  border-radius: 34px 34px 0 0;
-  background: linear-gradient(180deg, rgba(16, 16, 24, 0.98) 0%, rgba(6, 6, 10, 0.99) 100%);
-  backdrop-filter: blur(30px);
-  -webkit-backdrop-filter: blur(30px);
-  border-top: 1px solid rgba(255, 255, 255, 0.24);
-  box-shadow: 0 -24px 60px rgba(0, 0, 0, 0.9), inset 0 1.5px 1px rgba(255, 255, 255, 0.35);
+  border-radius: 32px 32px 0 0;
+  background: #141414;
+  border-top: 1px solid #262626;
+  box-shadow: 0 -24px 60px rgba(0, 0, 0, 0.95);
 }
 
 .flutter-drag-handle {
   width: 48px;
-  height: 6px;
+  height: 5px;
   border-radius: 9999px;
-  background: rgba(255, 255, 255, 0.35);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+  background: #3A3A3C;
   margin: 0 auto;
 }
 
@@ -126,197 +115,53 @@ body {
   border-radius: 28px;
 }
 
-/* Dynamic Aurora Background (Lightweight GPU 60fps) */
-.aurora-container {
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 0;
-  overflow: hidden;
-}
-
-.aurora-blob-1 {
-  position: absolute;
-  top: -10%;
-  left: 10%;
-  width: 50vw;
-  height: 40vh;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(6, 182, 212, 0.12) 0%, transparent 70%);
-  filter: blur(60px);
-  transform: translateZ(0);
-}
-
-.aurora-blob-2 {
-  position: absolute;
-  top: 25%;
-  right: -5%;
-  width: 45vw;
-  height: 45vh;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(236, 72, 153, 0.10) 0%, transparent 70%);
-  filter: blur(60px);
-  transform: translateZ(0);
-}
-
-.aurora-blob-3 {
-  position: absolute;
-  bottom: 10%;
-  left: 20%;
-  width: 40vw;
-  height: 35vh;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(168, 85, 247, 0.08) 0%, transparent 70%);
-  filter: blur(70px);
-  transform: translateZ(0);
-}
-
-/* Multi-Layer Frosted Obsidian Card with Specular Highlight (High Performance OLED) */
+/* Multi-Layer Frosted Obsidian Card (High Performance OLED) */
 .card-frosted-obsidian {
-  background: rgba(8, 8, 12, 0.95);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.95), inset 0 1px 0 0 rgba(255, 255, 255, 0.08);
+  background: #141414;
+  border: 1px solid #262626;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.9);
 }
 
 /* Obsidian Panels (High Performance OLED) */
 .glass-obsidian {
-  background: rgba(5, 5, 8, 0.95);
-  border: 1px solid rgba(255, 255, 255, 0.09);
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.98), inset 0 1px 0 0 rgba(255, 255, 255, 0.08);
+  background: #141414;
+  border: 1px solid #262626;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.95);
 }
 
 .glass-obsidian-card {
-  background: rgba(8, 8, 12, 0.95);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.06);
-  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.25s ease, box-shadow 0.25s ease;
-  will-change: transform;
+  background: #141414;
+  border: 1px solid #262626;
+  transition: transform 0.2s ease, border-color 0.2s ease;
 }
 
 .glass-obsidian-card:hover {
-  background: rgba(12, 12, 18, 0.98);
-  border-color: rgba(255, 255, 255, 0.25);
-  transform: translateY(-4px);
-  box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.98), 0 0 20px -4px var(--theme-glow, rgba(0, 240, 255, 0.35));
+  background: #1C1C1E;
+  border-color: #3A3A3C;
+  transform: translateY(-2px);
 }
 
-/* Floating Glass Dock (Bottom Nav - Lightweight blur) */
+/* Floating Dock (Bottom Nav) */
 .glass-dock {
-  background: rgba(2, 2, 5, 0.92);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.98), 0 0 30px rgba(0, 0, 0, 0.9), inset 0 1px 0 0 rgba(255, 255, 255, 0.1);
+  background: #141414;
+  border: 1px solid #262626;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.95);
 }
 
 /* Glass Pill Switcher */
 .glass-pill-container {
-  background: rgba(8, 8, 12, 0.95);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: #141414;
+  border: 1px solid #262626;
 }
 
-/* Dynamic Ambilight & Ambient Glow (Lightweight GPU Offload) */
-.ambient-glow {
-  position: absolute;
-  border-radius: 9999px;
-  filter: blur(40px);
-  opacity: 0.25;
-  pointer-events: none;
-  transition: opacity 0.5s ease-in-out;
-}
-
-.player-ambilight-glow {
-  position: absolute;
-  inset: -8px;
-  border-radius: 1.5rem;
-  background: radial-gradient(circle at center, var(--theme-glow, rgba(0, 240, 255, 0.35)) 0%, transparent 70%);
-  filter: blur(20px);
-  opacity: 0.75;
-  pointer-events: none;
-  z-index: 0;
-  transition: opacity 0.5s ease;
-}
-
-/* Holographic Bento Hub Border Glow */
-@keyframes holographicBorder {
-  0% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
-  100% {
-    background-position: 0% 50%;
-  }
-}
-
-.holographic-bento-hub {
-  position: relative;
-  border-radius: 1.5rem;
-  background: rgba(6, 6, 12, 0.95);
-  overflow: hidden;
-}
-
-.holographic-bento-hub::before {
-  content: '';
-  position: absolute;
-  inset: -2px;
-  border-radius: 1.6rem;
-  padding: 2px;
-  background: linear-gradient(
-    90deg,
-    #ff007f,
-    #7928ca,
-    #0070f3,
-    #00dfd8,
-    #7928ca,
-    #ff007f
-  );
-  background-size: 300% 300%;
-  animation: holographicBorder 8s ease infinite;
-  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-  pointer-events: none;
-}
-
-/* Holographic Foil Card Overlay */
-@keyframes foilSheen {
-  0% {
-    background-position: 0% 0%;
-  }
-  50% {
-    background-position: 100% 100%;
-  }
-  100% {
-    background-position: 0% 0%;
-  }
-}
-
+/* Clean Monochrome Surfaces */
+.holographic-bento-hub,
 .holographic-foil-card {
   position: relative;
+  border-radius: 1.5rem;
+  background: #141414;
+  border: 1px solid #262626;
   overflow: hidden;
-  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.95);
-  transform-style: preserve-3d;
-}
-
-.holographic-foil-card::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0.35) 0%,
-    rgba(255, 215, 0, 0.25) 25%,
-    rgba(0, 240, 255, 0.25) 50%,
-    rgba(255, 0, 128, 0.25) 75%,
-    rgba(255, 255, 255, 0.35) 100%
-  );
-  background-size: 250% 250%;
-  animation: foilSheen 6s ease-in-out infinite;
-  mix-blend-mode: color-dodge;
-  opacity: 0.55;
-  pointer-events: none;
 }
 
 /* Screen Shake for Burst Reveal */
