@@ -44,11 +44,11 @@ export default function FloatingGlassDock({
     })();
 
   return (
-    <div className="fixed bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 z-50 pointer-events-none flex items-center gap-2 sm:gap-3">
-      {/* Strict Flutter Monochrome Floating Dock */}
+    <div className="fixed bottom-5 inset-x-5 z-50 pointer-events-none flex items-center justify-center">
+      {/* Floating Liquid Glass Capsule Dock */}
       <nav
         aria-label="Bottom Navigation"
-        className="pointer-events-auto bg-[#141414] border border-[#262626] px-2 py-1.5 rounded-full flex items-center gap-1 shadow-[0_16px_40px_rgba(0,0,0,0.9)]"
+        className="pointer-events-auto h-16 w-full max-w-lg mx-auto rounded-full glass-dock px-3 flex items-center justify-around gap-1"
       >
         {tabs.map((tab) => {
           const Icon = tab.icon;
@@ -57,13 +57,13 @@ export default function FloatingGlassDock({
           const content = (
             <button
               onClick={() => onTabChange && onTabChange(tab.id)}
-              className={`flex items-center gap-1.5 sm:gap-2 px-3.5 sm:px-4 py-2 rounded-full text-xs sm:text-sm font-semibold transition-all duration-200 active:scale-95 ${
+              className={`flex items-center gap-1.5 px-3.5 py-2.5 rounded-full text-xs font-semibold transition-all duration-200 active:scale-95 ${
                 isActive
-                  ? 'bg-[#2C2C2E] text-white shadow-sm'
-                  : 'text-zinc-400 hover:text-white hover:bg-[#1C1C1E]'
+                  ? 'bg-[#2C2C2E] text-white shadow-[inset_0_1px_0.5px_rgba(255,255,255,0.35)]'
+                  : 'text-zinc-400 hover:text-white hover:bg-white/[0.05]'
               }`}
             >
-              <Icon className={`w-4 h-4 ${isActive ? 'stroke-[2.2]' : 'stroke-2 text-zinc-400'}`} />
+              <Icon className={`w-4 h-4 ${isActive ? 'stroke-[2.5] text-white' : 'stroke-2 text-zinc-400'}`} />
               <span
                 className={`${isActive ? 'inline-block' : 'hidden sm:inline-block'} text-xs font-medium`}
               >

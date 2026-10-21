@@ -874,8 +874,11 @@ function WatchContent() {
         </div>
       </div>
 
-      {/* Strict Monochrome Flutter Dark: Multi-Provider & Resolution Matrix */}
-      <div className="p-5 rounded-2xl bg-[#0D0D0D] border border-[#262626] space-y-4">
+      {/* Strict Monochrome Flutter Dark: Multi-Provider & Resolution Matrix (Flutter Sheet Architecture) */}
+      <div className="p-5 sm:p-6 rounded-[28px] liquid-glass-surface space-y-4 shadow-2xl">
+        {/* Drag-Handle Pill */}
+        <div className="w-10 h-1.5 rounded-full bg-white/25 mx-auto my-3" />
+
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div className="flex items-center gap-2">
             <Server className="w-4 h-4 text-zinc-300" />
@@ -886,17 +889,17 @@ function WatchContent() {
         </div>
 
         {/* Flutter CupertinoSlidingSegmentedControl Provider Switcher */}
-        <div className="p-1 rounded-xl bg-[#141414] border border-[#262626] flex items-center gap-1">
+        <div className="h-11 p-1 rounded-full bg-[#121214] border border-white/10 flex items-center gap-1 shadow-inner">
           <button
             type="button"
             onClick={() => setActiveProvider('otakudesu')}
-            className={`flex-1 py-2 px-3 rounded-lg text-xs font-semibold transition-all flex items-center justify-center gap-2 active:scale-95 ${
+            className={`flex-1 h-9 px-3 rounded-full text-xs font-semibold transition-all flex items-center justify-center gap-2 active:scale-95 ${
               activeProvider === 'otakudesu'
-                ? 'bg-[#2C2C2E] text-white border border-[#3A3A3C]'
-                : 'text-zinc-400 hover:text-white hover:bg-[#1C1C1E]'
+                ? 'bg-[#2C2C2E] text-white shadow-[inset_0_1px_0.5px_rgba(255,255,255,0.35)]'
+                : 'text-zinc-400 hover:text-white hover:bg-white/[0.05]'
             }`}
           >
-            <span>Server Utama (Otakudesu)</span>
+            <span>Sanka / Otakudesu</span>
           </button>
 
           <button
@@ -905,13 +908,13 @@ function WatchContent() {
               setActiveProvider('samehadaku');
               loadSamehadakuForCurrentEpisode();
             }}
-            className={`flex-1 py-2 px-3 rounded-lg text-xs font-semibold transition-all flex items-center justify-center gap-2 active:scale-95 ${
+            className={`flex-1 h-9 px-3 rounded-full text-xs font-semibold transition-all flex items-center justify-center gap-2 active:scale-95 ${
               activeProvider === 'samehadaku'
-                ? 'bg-[#2C2C2E] text-white border border-[#3A3A3C]'
-                : 'text-zinc-400 hover:text-white hover:bg-[#1C1C1E]'
+                ? 'bg-[#2C2C2E] text-white shadow-[inset_0_1px_0.5px_rgba(255,255,255,0.35)]'
+                : 'text-zinc-400 hover:text-white hover:bg-white/[0.05]'
             }`}
           >
-            <span>Server Samehadaku</span>
+            <span>Samehadaku (rizalord)</span>
           </button>
         </div>
 
@@ -927,10 +930,10 @@ function WatchContent() {
                 key={res}
                 type="button"
                 onClick={() => setSelectedResolution(res)}
-                className={`px-3 py-1 rounded-full text-xs font-semibold transition-all active:scale-95 ${
+                className={`px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap shrink-0 min-w-fit transition-all active:scale-95 ${
                   isResActive
-                    ? 'bg-[#2C2C2E] text-white border border-[#3A3A3C]'
-                    : 'bg-[#141414] text-zinc-400 border border-[#262626] hover:text-white hover:bg-[#1C1C1E]'
+                    ? 'bg-[#2C2C2E] text-white shadow-[inset_0_1px_0.5px_rgba(255,255,255,0.35)]'
+                    : 'bg-[#121214] text-zinc-400 border border-white/10 hover:text-white hover:bg-white/[0.05]'
                 }`}
               >
                 {res}
@@ -1079,9 +1082,12 @@ function WatchContent() {
         )}
       </div>
 
-      {/* Episode Drawer */}
+      {/* Episode Drawer (Flutter Sheet Architecture) */}
       {detail.info?.episodeList && detail.info.episodeList.length > 0 && (
-        <div className="p-5 rounded-2xl bg-[#0D0D0D] border border-[#262626] space-y-4">
+        <div className="p-5 sm:p-6 rounded-[28px] liquid-glass-surface space-y-4 shadow-2xl">
+          {/* Drag-Handle Pill */}
+          <div className="w-10 h-1.5 rounded-full bg-white/25 mx-auto my-3" />
+
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <List className="w-4 h-4 text-zinc-300" />

@@ -27,10 +27,10 @@ type GenreFilter = 'Semua' | 'Hits' | 'Romance' | 'Action' | 'Isekai';
 
 const GENRE_TABS: { id: GenreFilter; label: string; icon: any }[] = [
   { id: 'Semua', label: 'Semua Manhwa', icon: Layers },
-  { id: 'Hits', label: '🔥 Hits Terpopuler', icon: Flame },
-  { id: 'Romance', label: '💖 Romance & Drama', icon: Heart },
-  { id: 'Action', label: '⚔️ Action & Fantasy', icon: Swords },
-  { id: 'Isekai', label: '👑 Isekai & Reinkarnasi', icon: Crown },
+  { id: 'Hits', label: 'Hits Terpopuler', icon: Flame },
+  { id: 'Romance', label: 'Romance & Drama', icon: Heart },
+  { id: 'Action', label: 'Action & Fantasy', icon: Swords },
+  { id: 'Isekai', label: 'Isekai & Reinkarnasi', icon: Crown },
 ];
 
 export default function ManhwaView() {
@@ -339,9 +339,9 @@ export default function ManhwaView() {
               <div
                 key={item.slug || idx}
                 onClick={() => handleOpenDetail(item)}
-                className="group cursor-pointer rounded-[28px] overflow-hidden liquid-glass-card shadow-xl active:scale-[0.96] transition-all flex flex-col"
+                className="group cursor-pointer rounded-[24px] overflow-hidden bg-[#121214] border border-white/10 shadow-xl active:scale-[0.96] transition-transform duration-150 flex flex-col"
               >
-                <div className="relative aspect-[2/3] w-full bg-[#0a0a10] overflow-hidden">
+                <div className="relative aspect-[2/3] w-full bg-[#0D0D0F] overflow-hidden">
                   <SmartImage
                     item={item}
                     src={item.image}
@@ -354,25 +354,25 @@ export default function ManhwaView() {
 
                   {/* Chapter badge */}
                   <div className="absolute top-2.5 left-2.5 z-10 pointer-events-none">
-                    <span className="px-2.5 py-0.5 rounded-full liquid-glass-pill text-[10px] font-bold text-zinc-200 shadow-md">
+                    <span className="px-2.5 py-0.5 rounded-full liquid-glass-pill text-[10px] font-bold text-white shadow-md">
                       {item.chapter || 'Full Color'}
                     </span>
                   </div>
 
                   {/* Score badge */}
                   <div className="absolute top-2.5 right-2.5 z-10 pointer-events-none">
-                    <span className="flex items-center gap-1 px-2.5 py-0.5 rounded-full liquid-glass-pill text-[10px] font-mono text-amber-300 font-black shadow-md">
-                      <Star className="w-3 h-3 fill-amber-300" />
+                    <span className="flex items-center gap-1 px-2.5 py-0.5 rounded-full liquid-glass-pill text-[10px] font-mono text-white font-bold shadow-md">
+                      <Star className="w-3 h-3 fill-white text-white" />
                       {item.score || '9.6'}
                     </span>
                   </div>
                 </div>
 
-                <div className="p-3 flex-1 flex flex-col justify-between space-y-1.5 bg-[#08080e]/90">
+                <div className="p-3 flex-1 flex flex-col justify-between space-y-1.5 bg-[#121214]">
                   <h4 className="font-bold text-xs text-zinc-100 group-hover:text-white line-clamp-2 transition-colors leading-snug">
                     {item.title}
                   </h4>
-                  <div className="flex items-center justify-between text-[10px] text-zinc-500 pt-1 border-t border-white/[0.04]">
+                  <div className="flex items-center justify-between text-[10px] text-zinc-500 pt-1 border-t border-white/[0.06]">
                     <span className="text-zinc-400">Webtoon HD</span>
                     <span className="text-zinc-300 font-bold group-hover:underline flex items-center gap-0.5">
                       Baca <ChevronRight className="w-3 h-3 inline" />

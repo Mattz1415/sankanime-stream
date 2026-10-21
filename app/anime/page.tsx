@@ -222,7 +222,7 @@ function AnimeDetailContent() {
   const synopsisText = detail.synopsis?.paragraphs?.join('\n\n') || 'Sinopsis belum tersedia.';
 
   return (
-    <div className="space-y-8 max-w-5xl mx-auto pb-24 animate-fade-in-up relative">
+    <div className="space-y-8 max-w-5xl mx-auto pb-32 animate-fade-in-up relative font-sans">
       {/* Parallax Header Backdrop Poster with Deep OLED Vignette */}
       <div className="relative w-full h-[320px] sm:h-[400px] rounded-3xl overflow-hidden glass-obsidian border border-white/[0.08] shadow-[0_24px_70px_rgba(0,0,0,0.98)]">
         <SmartImage
@@ -260,16 +260,16 @@ function AnimeDetailContent() {
 
         {/* Backdrop Bottom Title Summary */}
         <div className="absolute bottom-6 left-6 right-6 z-20 hidden sm:block">
-          <span className="px-2.5 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 text-[10px] font-bold uppercase tracking-wider border border-cyan-500/30">
+          <span className="px-2.5 py-0.5 rounded-full bg-[#2C2C2E] text-white text-[10px] font-bold uppercase tracking-wider border border-white/20">
             {detail.status || 'Ongoing'}
           </span>
-          <h1 className="font-cinematic font-black text-2xl sm:text-3xl text-white mt-1 drop-shadow-lg">
+          <h1 className="font-sans font-black text-2xl sm:text-3xl text-white mt-1 drop-shadow-lg">
             {detail.title}
           </h1>
         </div>
       </div>
 
-      {/* Main Details Grid: Left Poster Card & Right Meta/CTAs */}
+      {/* Main Details Grid: Left Poster Card & Right Meta/CTAs (Flutter Sheet Style) */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 -mt-16 sm:-mt-24 relative z-30 px-2 sm:px-0">
         {/* Poster Card */}
         <div className="flex flex-col items-center sm:items-start space-y-3">
@@ -283,9 +283,9 @@ function AnimeDetailContent() {
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
             />
             {detail.score && (
-              <div className="absolute top-2.5 right-2.5 px-2.5 py-1 rounded-full bg-black/85 backdrop-blur-md border border-amber-400/40 flex items-center gap-1 shadow-lg">
-                <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-                <span className="text-xs font-black text-amber-300">{detail.score}</span>
+              <div className="absolute top-2.5 right-2.5 px-2.5 py-1 rounded-full bg-black/85 backdrop-blur-md border border-white/20 flex items-center gap-1 shadow-lg">
+                <Star className="w-3.5 h-3.5 fill-white text-white" />
+                <span className="text-xs font-black text-white">{detail.score}</span>
               </div>
             )}
           </div>
@@ -294,7 +294,7 @@ function AnimeDetailContent() {
         {/* Anime Information Header & Quick Action Buttons */}
         <div className="md:col-span-3 space-y-4">
           <div className="space-y-1">
-            <h1 className="font-cinematic font-black text-2xl sm:text-3xl text-white block sm:hidden">
+            <h1 className="font-sans font-black text-2xl sm:text-3xl text-white block sm:hidden">
               {detail.title}
             </h1>
             {detail.japanese && (
@@ -311,17 +311,17 @@ function AnimeDetailContent() {
             )}
             {detail.duration && (
               <span className="px-3 py-1 rounded-full card-frosted-obsidian text-xs font-semibold text-zinc-300 border border-white/10 flex items-center gap-1">
-                <Clock className="w-3 h-3 text-cyan-400" /> {detail.duration}
+                <Clock className="w-3 h-3 text-zinc-400" /> {detail.duration}
               </span>
             )}
             {detail.episodes && (
               <span className="px-3 py-1 rounded-full card-frosted-obsidian text-xs font-semibold text-zinc-300 border border-white/10 flex items-center gap-1">
-                <Film className="w-3 h-3 text-emerald-400" /> {detail.episodes} Episode
+                <Film className="w-3 h-3 text-zinc-400" /> {detail.episodes} Episode
               </span>
             )}
             {detail.studios && (
               <span className="px-3 py-1 rounded-full card-frosted-obsidian text-xs font-semibold text-zinc-300 border border-white/10 flex items-center gap-1">
-                <Building2 className="w-3 h-3 text-purple-400" /> {detail.studios}
+                <Building2 className="w-3 h-3 text-zinc-400" /> {detail.studios}
               </span>
             )}
           </div>
@@ -360,13 +360,13 @@ function AnimeDetailContent() {
                 onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
                 className={`inline-flex items-center gap-2 px-5 py-3 rounded-full backdrop-blur-xl border text-xs sm:text-sm font-semibold spring-press transition-all ${
                   bookmarkedCategory
-                    ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-300 shadow-lg'
-                    : 'bg-white/10 hover:bg-white/15 border-white/15 text-white'
+                    ? 'bg-[#2C2C2E] border-white/20 text-white shadow-lg'
+                    : 'bg-[#121214] hover:bg-[#1C1C1E] border-white/10 text-white'
                 }`}
               >
                 {bookmarkedCategory ? (
                   <>
-                    <BookmarkCheck className="w-4 h-4 text-emerald-400" />
+                    <BookmarkCheck className="w-4 h-4 text-white" />
                     <span>{bookmarkedCategory}</span>
                   </>
                 ) : (
@@ -379,7 +379,7 @@ function AnimeDetailContent() {
               </button>
 
               {showCategoryDropdown && (
-                <div className="absolute left-0 mt-2 w-48 rounded-2xl bg-[#06060c] border border-white/15 p-2 shadow-2xl z-50 text-xs space-y-1">
+                <div className="absolute left-0 mt-2 w-48 rounded-2xl bg-[#121214] border border-white/15 p-2 shadow-2xl z-50 text-xs space-y-1">
                   {WATCHLIST_CATEGORIES.map((cat) => (
                     <button
                       key={cat}
@@ -387,12 +387,12 @@ function AnimeDetailContent() {
                       onClick={() => handleSelectCategory(cat)}
                       className={`w-full text-left px-3 py-2 rounded-xl flex items-center justify-between transition-colors ${
                         bookmarkedCategory === cat
-                          ? 'bg-emerald-500/20 text-emerald-300 font-bold'
+                          ? 'bg-[#2C2C2E] text-white font-bold shadow-sm'
                           : 'hover:bg-white/10 text-zinc-300 hover:text-white'
                       }`}
                     >
                       <span>{cat}</span>
-                      {bookmarkedCategory === cat && <Check className="w-3.5 h-3.5 text-emerald-400" />}
+                      {bookmarkedCategory === cat && <Check className="w-3.5 h-3.5 text-white" />}
                     </button>
                   ))}
                 </div>
@@ -402,14 +402,14 @@ function AnimeDetailContent() {
         </div>
       </div>
 
-      {/* Information Tab Switcher */}
-      <div className="p-1 rounded-2xl glass-pill-container flex items-center gap-1 overflow-x-auto no-scrollbar border border-white/[0.08]">
+      {/* Information Tab Switcher (Flutter Cupertino Segmented Control Style) */}
+      <div className="h-12 p-1 rounded-full bg-[#121214] border border-white/10 flex items-center gap-1 overflow-x-auto no-scrollbar shadow-lg">
         <button
           onClick={() => setActiveTab('episodes')}
-          className={`flex-1 min-w-[120px] py-2.5 rounded-xl text-xs font-bold transition-all spring-press flex items-center justify-center gap-1.5 ${
+          className={`flex-1 min-w-[120px] h-10 px-3 rounded-full text-xs font-semibold transition-all spring-press flex items-center justify-center gap-1.5 ${
             activeTab === 'episodes'
-              ? 'bg-white text-black shadow-lg font-black'
-              : 'text-zinc-400 hover:text-white'
+              ? 'bg-[#2C2C2E] text-white shadow-[inset_0_1px_0.5px_rgba(255,255,255,0.35)]'
+              : 'text-zinc-400 hover:text-white hover:bg-white/[0.05]'
           }`}
         >
           <Layers className="w-3.5 h-3.5" />
@@ -418,10 +418,10 @@ function AnimeDetailContent() {
 
         <button
           onClick={() => setActiveTab('info')}
-          className={`flex-1 min-w-[120px] py-2.5 rounded-xl text-xs font-bold transition-all spring-press flex items-center justify-center gap-1.5 ${
+          className={`flex-1 min-w-[120px] h-10 px-3 rounded-full text-xs font-semibold transition-all spring-press flex items-center justify-center gap-1.5 ${
             activeTab === 'info'
-              ? 'bg-white text-black shadow-lg font-black'
-              : 'text-zinc-400 hover:text-white'
+              ? 'bg-[#2C2C2E] text-white shadow-[inset_0_1px_0.5px_rgba(255,255,255,0.35)]'
+              : 'text-zinc-400 hover:text-white hover:bg-white/[0.05]'
           }`}
         >
           <Info className="w-3.5 h-3.5" />
@@ -430,22 +430,22 @@ function AnimeDetailContent() {
 
         <button
           onClick={() => setActiveTab('similar')}
-          className={`flex-1 min-w-[120px] py-2.5 rounded-xl text-xs font-bold transition-all spring-press flex items-center justify-center gap-1.5 ${
+          className={`flex-1 min-w-[120px] h-10 px-3 rounded-full text-xs font-semibold transition-all spring-press flex items-center justify-center gap-1.5 ${
             activeTab === 'similar'
-              ? 'bg-white text-black shadow-lg font-black'
-              : 'text-zinc-400 hover:text-white'
+              ? 'bg-[#2C2C2E] text-white shadow-[inset_0_1px_0.5px_rgba(255,255,255,0.35)]'
+              : 'text-zinc-400 hover:text-white hover:bg-white/[0.05]'
           }`}
         >
-          <Sparkles className="w-3.5 h-3.5" />
+          <Tv className="w-3.5 h-3.5" />
           <span>Anime Serupa</span>
         </button>
 
         <button
           onClick={() => setActiveTab('reviews')}
-          className={`flex-1 min-w-[120px] py-2.5 rounded-xl text-xs font-bold transition-all spring-press flex items-center justify-center gap-1.5 ${
+          className={`flex-1 min-w-[120px] h-10 px-3 rounded-full text-xs font-semibold transition-all spring-press flex items-center justify-center gap-1.5 ${
             activeTab === 'reviews'
-              ? 'bg-white text-black shadow-lg font-black'
-              : 'text-zinc-400 hover:text-white'
+              ? 'bg-[#2C2C2E] text-white shadow-[inset_0_1px_0.5px_rgba(255,255,255,0.35)]'
+              : 'text-zinc-400 hover:text-white hover:bg-white/[0.05]'
           }`}
         >
           <MessageSquareQuote className="w-3.5 h-3.5" />
@@ -469,7 +469,7 @@ function AnimeDetailContent() {
                     onClick={() => setSelectedBatchRange(opt)}
                     className={`px-3 py-1 rounded-full text-[11px] font-semibold shrink-0 transition-all ${
                       selectedBatchRange === opt
-                        ? 'bg-cyan-500 text-black font-extrabold'
+                        ? 'bg-white text-black font-extrabold'
                         : 'bg-white/5 text-zinc-400 hover:text-white'
                     }`}
                   >
@@ -497,7 +497,7 @@ function AnimeDetailContent() {
                   value={searchEps}
                   onChange={(e) => setSearchEps(e.target.value)}
                   placeholder="Cari episode..."
-                  className="w-full pl-8 pr-3 py-1.5 rounded-xl bg-black/60 border border-white/10 text-xs text-white placeholder-zinc-500 outline-none focus:border-cyan-400/50"
+                  className="w-full pl-8 pr-3 py-1.5 rounded-xl bg-black/60 border border-white/10 text-xs text-white placeholder-zinc-500 outline-none focus:border-white/30"
                 />
               </div>
             </div>
@@ -513,7 +513,7 @@ function AnimeDetailContent() {
                   key={ep.episodeId}
                   href={`/watch?id=${ep.episodeId}`}
                   className={`p-4 rounded-2xl card-frosted-obsidian flex items-center justify-between gap-3 group spring-press transition-all ${
-                    isWatched ? 'border-emerald-500/40 bg-emerald-950/[0.1]' : 'hover:border-cyan-400/40'
+                    isWatched ? 'border-white/40 bg-white/[0.05]' : 'hover:border-white/30'
                   }`}
                 >
                   <div className="min-w-0">
@@ -522,13 +522,13 @@ function AnimeDetailContent() {
                         EPS {ep.eps}
                       </span>
                       {isWatched && (
-                        <span className="flex items-center gap-0.5 text-[10px] text-emerald-400 font-bold bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
-                          <CheckCircle2 className="w-3 h-3" />
+                        <span className="flex items-center gap-0.5 text-[10px] text-white font-bold bg-white/10 px-2 py-0.5 rounded-full border border-white/20">
+                          <CheckCircle2 className="w-3 h-3 text-white" />
                           Ditonton
                         </span>
                       )}
                     </div>
-                    <h4 className="font-cinematic font-bold text-xs text-white group-hover:text-cyan-300 truncate mt-1.5">
+                    <h4 className="font-sans font-bold text-xs text-white group-hover:text-white truncate mt-1.5">
                       {ep.title}
                     </h4>
                     {ep.date && (
@@ -569,7 +569,7 @@ function AnimeDetailContent() {
               <button
                 type="button"
                 onClick={() => setShowFullSynopsis(!showFullSynopsis)}
-                className="text-xs text-cyan-400 hover:text-cyan-300 font-semibold"
+                className="text-xs text-white/80 hover:text-white underline font-semibold"
               >
                 {showFullSynopsis ? 'Tampilkan Lebih Sedikit' : 'Baca Selengkapnya...'}
               </button>
@@ -604,7 +604,7 @@ function AnimeDetailContent() {
               </div>
               <div className="p-3 rounded-xl bg-white/[0.02] border border-white/[0.05]">
                 <span className="text-zinc-500 block text-[10px] uppercase font-bold">Skor Komunitas</span>
-                <span className="text-amber-400 font-bold">{detail.score || '-'}</span>
+                <span className="text-white font-bold">{detail.score || '-'}</span>
               </div>
             </div>
           </div>
@@ -617,7 +617,7 @@ function AnimeDetailContent() {
       {activeTab === 'similar' && (
         <div className="space-y-4 animate-fade-in-up">
           <div className="flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-cyan-400" />
+            <Tv className="w-4 h-4 text-white" />
             <h3 className="font-cinematic font-bold text-sm text-white uppercase tracking-wider">
               Rekomendasi Anime Serupa
             </h3>

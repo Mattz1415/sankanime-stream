@@ -148,45 +148,43 @@ export default function LK21MovieView() {
             <div
               key={movie.id}
               onClick={() => handleOpenMovie(movie)}
-              className="group cursor-pointer rounded-[22px] overflow-hidden bg-[#141414] border border-[#262626] hover:border-[#3A3A3C] shadow-lg flex flex-col active:scale-95 transition-all"
+              className="group cursor-pointer aspect-[2/3] rounded-[24px] overflow-hidden bg-[#121214] border border-white/10 hover:border-white/20 shadow-lg flex flex-col justify-end active:scale-[0.96] transition-transform duration-150 relative"
             >
-              <div className="relative aspect-[2/3] w-full bg-zinc-900 overflow-hidden">
-                <SmartImage
-                  item={movie}
-                  src={movie.poster}
-                  title={movie.title}
-                  alt={movie.title}
-                  type="movie"
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#141414] via-black/30 to-transparent opacity-80" />
+              <SmartImage
+                item={movie}
+                src={movie.poster}
+                title={movie.title}
+                alt={movie.title}
+                type="movie"
+                className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent opacity-90" />
 
-                <div className="absolute top-2 left-2 z-10 pointer-events-none">
-                  <span className="px-2 py-0.5 rounded-full bg-[#2C2C2E] border border-[#3A3A3C] text-[10px] font-medium text-zinc-200">
-                    {movie.category}
-                  </span>
-                </div>
+              <div className="absolute top-2.5 left-2.5 z-10 pointer-events-none">
+                <span className="px-2 py-0.5 rounded-full bg-black/75 backdrop-blur-md border border-white/15 text-[10px] font-medium text-white">
+                  {movie.category}
+                </span>
+              </div>
 
-                <div className="absolute top-2 right-2 z-10 pointer-events-none flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#1C1C1E] border border-[#2E2E30] text-[10px] font-mono text-zinc-200 font-medium">
-                  <Star className="w-3 h-3 fill-white text-white" />
-                  <span>{movie.rating}</span>
-                </div>
+              <div className="absolute top-2.5 right-2.5 z-10 pointer-events-none flex items-center gap-1 px-2 py-0.5 rounded-full bg-black/75 backdrop-blur-md border border-white/15 text-[10px] font-mono text-white font-medium">
+                <Star className="w-3 h-3 fill-white text-white" />
+                <span>{movie.rating}</span>
+              </div>
 
-                {/* Floating Play Button on Hover */}
-                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10 pointer-events-none">
-                  <div className="w-11 h-11 rounded-full bg-white/90 text-black flex items-center justify-center shadow-lg transform translate-y-1 group-hover:translate-y-0 transition-transform duration-200 scale-95 group-hover:scale-100">
-                    <Play className="w-5 h-5 fill-black ml-0.5" />
-                  </div>
+              {/* Floating Play Button on Hover */}
+              <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10 pointer-events-none">
+                <div className="w-11 h-11 rounded-full bg-white text-black flex items-center justify-center shadow-lg transform translate-y-1 group-hover:translate-y-0 transition-transform duration-200 scale-95 group-hover:scale-100">
+                  <Play className="w-5 h-5 fill-black ml-0.5" />
                 </div>
               </div>
 
-              <div className="p-3 flex-1 flex flex-col justify-between space-y-1 bg-[#141414]">
-                <h4 className="font-medium text-xs sm:text-sm text-zinc-100 group-hover:text-white line-clamp-2 transition-colors">
+              <div className="relative z-10 p-3 bg-gradient-to-t from-black via-black/90 to-transparent space-y-1">
+                <h4 className="font-bold text-xs sm:text-sm text-white line-clamp-2 transition-colors">
                   {movie.title}
                 </h4>
-                <div className="flex items-center justify-between text-[11px] text-zinc-500 pt-1">
+                <div className="flex items-center justify-between text-[11px] text-zinc-400 pt-0.5">
                   <span>{movie.year} • HD</span>
-                  <span className="text-zinc-300 font-semibold flex items-center gap-1">
+                  <span className="text-white font-semibold flex items-center gap-1">
                     Play <Play className="w-2.5 h-2.5 fill-white inline" />
                   </span>
                 </div>

@@ -190,22 +190,22 @@ export default function ComicView() {
                 onClick={() => setActiveTab('popular')}
                 className={`px-4 py-2 rounded-full text-xs font-bold transition-all spring-press ${
                   activeTab === 'popular'
-                    ? 'bg-white text-black shadow-md shadow-white/20'
-                    : 'card-frosted-obsidian text-zinc-400 hover:text-white'
+                    ? 'bg-white text-black shadow-md'
+                    : 'bg-[#121214] border border-white/10 text-zinc-400 hover:text-white'
                 }`}
               >
-                🔥 Manga Terpopuler ({popularList.length})
+                Manga Terpopuler ({popularList.length})
               </button>
               <button
                 type="button"
                 onClick={() => setActiveTab('latest')}
                 className={`px-4 py-2 rounded-full text-xs font-bold transition-all spring-press ${
                   activeTab === 'latest'
-                    ? 'bg-white text-black shadow-md shadow-white/20'
-                    : 'card-frosted-obsidian text-zinc-400 hover:text-white'
+                    ? 'bg-white text-black shadow-md'
+                    : 'bg-[#121214] border border-white/10 text-zinc-400 hover:text-white'
                 }`}
               >
-                ⚡ Update Chapter Terbaru ({latestList.length})
+                Update Chapter Terbaru ({latestList.length})
               </button>
             </>
           )}
@@ -233,9 +233,9 @@ export default function ComicView() {
             <div
               key={item.slug || idx}
               onClick={() => handleOpenDetail(item)}
-              className="group cursor-pointer rounded-[28px] overflow-hidden liquid-glass-card shadow-xl active:scale-[0.96] transition-all flex flex-col"
+              className="group cursor-pointer rounded-[24px] overflow-hidden bg-[#121214] border border-white/10 shadow-xl active:scale-[0.96] transition-transform duration-150 flex flex-col"
             >
-              <div className="relative aspect-[2/3] w-full bg-zinc-900 overflow-hidden">
+              <div className="relative aspect-[2/3] w-full bg-[#0D0D0F] overflow-hidden">
                 <SmartImage
                   item={item}
                   src={item.image}
@@ -247,13 +247,13 @@ export default function ComicView() {
                 <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent opacity-90" />
 
                 <div className="absolute top-2.5 left-2.5 z-10 pointer-events-none">
-                  <span className="px-2.5 py-0.5 rounded-full liquid-glass-pill text-[10px] font-bold text-amber-300">
+                  <span className="px-2.5 py-0.5 rounded-full liquid-glass-pill text-[10px] font-bold text-white shadow-sm">
                     {item.chapter || 'Chapter Baru'}
                   </span>
                 </div>
 
-                <div className="absolute top-2.5 right-2.5 z-10 pointer-events-none flex items-center gap-1 px-2.5 py-0.5 rounded-full liquid-glass-pill text-[10px] font-mono text-amber-300 font-bold">
-                  <Star className="w-3 h-3 fill-amber-300" />
+                <div className="absolute top-2.5 right-2.5 z-10 pointer-events-none flex items-center gap-1 px-2.5 py-0.5 rounded-full liquid-glass-pill text-[10px] font-mono text-white font-bold shadow-sm">
+                  <Star className="w-3 h-3 fill-white text-white" />
                   <span>{item.score || '9.0'}</span>
                 </div>
               </div>

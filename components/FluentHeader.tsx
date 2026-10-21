@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { Search, Dice5, Sparkles } from 'lucide-react';
+import { Search } from 'lucide-react';
 import { MediaCategory } from '@/lib/types';
 import { DEFAULT_AVATAR } from '@/lib/imageHelper';
 
@@ -31,23 +31,22 @@ export default function FluentHeader({
   onSelectCategory,
   onOpenProfile,
   onOpenCommandPalette,
-  onOpenGacha,
 }: FluentHeaderProps) {
   const currentCategoryTitle = CATEGORY_TITLES[activeCategory] || 'Stream';
 
   return (
-    <header className="sticky top-0 z-40 w-full bg-[#000000] border-b border-[#262626] px-3 sm:px-6 lg:px-8 pt-[max(env(safe-area-inset-top),12px)] pb-3 transition-all pointer-events-none">
+    <header className="sticky top-0 z-40 w-full bg-[#000000]/95 backdrop-blur-xl border-b border-white/10 px-3 sm:px-6 lg:px-8 pt-[max(env(safe-area-inset-top),12px)] pb-3 transition-all pointer-events-none">
       <div className="max-w-7xl mx-auto flex items-center justify-between gap-3 pointer-events-auto">
-        {/* Logo & Category Title */}
+        {/* Flutter SliverAppBar Title & Logo */}
         <Link href="/" className="flex items-center gap-3 group shrink-0 active:scale-95 transition-all">
-          <div className="w-10 h-10 rounded-2xl bg-[#141414] border border-[#262626] flex items-center justify-center shadow-sm group-hover:border-[#3A3A3C] transition-all">
-            <span className="font-cinematic font-black text-xl text-white">
+          <div className="w-10 h-10 rounded-2xl bg-[#121214] border border-white/10 shadow-[inset_0_1px_0.5px_rgba(255,255,255,0.3)] flex items-center justify-center group-hover:border-white/20 transition-all">
+            <span className="font-sans font-black text-xl text-white">
               N
             </span>
           </div>
 
           <div>
-            <span className="font-cinematic font-black text-lg sm:text-xl tracking-tight text-white block leading-none">
+            <span className="font-sans font-black text-lg sm:text-xl tracking-tight text-white block leading-none">
               Nexus
             </span>
             <span className="text-[11px] text-zinc-400 tracking-wide font-medium">
@@ -56,14 +55,14 @@ export default function FluentHeader({
           </div>
         </Link>
 
-        {/* Dynamic Island Search & Profile */}
+        {/* Liquid Glass Search Capsule & User Profile */}
         <div className="flex items-center gap-2 sm:gap-2.5">
-          {/* Search Pill */}
+          {/* Liquid Glass Search Pill */}
           <button
             id="search-trigger"
             type="button"
             onClick={onOpenCommandPalette}
-            className="h-10 px-3.5 sm:px-4 rounded-full bg-[#141414] hover:bg-[#1C1C1E] border border-[#262626] hover:border-[#3A3A3C] flex items-center gap-2 text-zinc-300 hover:text-white active:scale-95 transition-all"
+            className="h-10 px-3.5 sm:px-4 rounded-full bg-[#121214] hover:bg-[#1C1C1E] border border-white/10 hover:border-white/20 shadow-[inset_0_1px_0.5px_rgba(255,255,255,0.2)] flex items-center gap-2 text-zinc-300 hover:text-white active:scale-95 transition-all"
             title="Pencarian Global (Ctrl+K)"
             aria-label="Pencarian Global"
           >
@@ -76,11 +75,11 @@ export default function FluentHeader({
             </kbd>
           </button>
 
-          {/* User Profile Avatar */}
+          {/* User Profile Avatar with Liquid Glass Ring */}
           <button
             type="button"
             onClick={onOpenProfile}
-            className="relative w-10 h-10 rounded-full p-[2px] bg-[#141414] border border-[#262626] active:scale-95 transition-all overflow-hidden"
+            className="relative w-10 h-10 rounded-full p-[2px] bg-[#121214] border border-white/10 shadow-[inset_0_1px_0.5px_rgba(255,255,255,0.3)] active:scale-95 transition-all overflow-hidden"
             title="Profil Pengguna"
             aria-label="Profil Pengguna"
           >

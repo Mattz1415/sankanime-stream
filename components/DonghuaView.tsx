@@ -146,7 +146,7 @@ export default function DonghuaView() {
             </h1>
 
             <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-zinc-300">
-              <span className="px-2.5 py-1 rounded-lg bg-white/10 text-emerald-400 font-mono">
+              <span className="px-2.5 py-1 rounded-lg bg-white/10 text-white font-mono">
                 ★ {heroItem.rating || '9.4'}
               </span>
               <span className="px-2.5 py-1 rounded-lg bg-white/10 text-white">
@@ -165,7 +165,7 @@ export default function DonghuaView() {
               <button
                 type="button"
                 onClick={() => handleOpenDetail(heroItem)}
-                className="px-6 py-3 rounded-2xl bg-cyan-400 text-black font-extrabold text-xs sm:text-sm hover:bg-cyan-300 shadow-lg shadow-cyan-400/30 spring-press flex items-center gap-2"
+                className="px-6 py-3 rounded-full bg-white text-black font-extrabold text-xs sm:text-sm hover:bg-zinc-200 shadow-lg spring-press flex items-center gap-2"
               >
                 <Play className="w-4 h-4 fill-black" />
                 <span>Nonton Donghua</span>
@@ -177,28 +177,28 @@ export default function DonghuaView() {
 
       {/* Segment Switcher: Ongoing vs Completed */}
       <div className="flex items-center justify-between gap-3 border-b border-white/[0.08] pb-4">
-        <div className="flex items-center gap-2">
+        <div className="h-11 rounded-full bg-[#121214] p-1 border border-white/10 flex items-center gap-1">
           <button
             type="button"
             onClick={() => setActiveTab('ongoing')}
-            className={`px-4 py-2 rounded-full text-xs font-bold transition-all spring-press ${
+            className={`h-9 px-4 rounded-full text-xs font-semibold transition-all ${
               activeTab === 'ongoing'
-                ? 'bg-white text-black shadow-md shadow-white/20'
-                : 'card-frosted-obsidian text-zinc-400 hover:text-white'
+                ? 'bg-[#2C2C2E] text-white shadow-[inset_0_1px_0.5px_rgba(255,255,255,0.35)]'
+                : 'text-zinc-400 hover:text-white'
             }`}
           >
-            🔥 Rilis Terbaru ({latestList.length})
+            Rilis Terbaru ({latestList.length})
           </button>
           <button
             type="button"
             onClick={() => setActiveTab('completed')}
-            className={`px-4 py-2 rounded-full text-xs font-bold transition-all spring-press ${
+            className={`h-9 px-4 rounded-full text-xs font-semibold transition-all ${
               activeTab === 'completed'
-                ? 'bg-white text-black shadow-md shadow-white/20'
-                : 'card-frosted-obsidian text-zinc-400 hover:text-white'
+                ? 'bg-[#2C2C2E] text-white shadow-[inset_0_1px_0.5px_rgba(255,255,255,0.35)]'
+                : 'text-zinc-400 hover:text-white'
             }`}
           >
-            🏆 Donghua Tamat ({completedList.length})
+            Donghua Tamat ({completedList.length})
           </button>
         </div>
 
@@ -211,47 +211,45 @@ export default function DonghuaView() {
       {/* Grid of Donghua Cards */}
       {loading ? (
         <div className="py-20 text-center space-y-3">
-          <RefreshCw className="w-8 h-8 animate-spin text-zinc-400 mx-auto drop-shadow-[0_0_12px_rgba(0,240,255,0.7)]" />
+          <RefreshCw className="w-8 h-8 animate-spin text-zinc-400 mx-auto" />
           <p className="text-xs text-zinc-400 font-semibold">Mengambil daftar Donghua dari server...</p>
         </div>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
           {currentList.map((item, idx) => (
             <div
               key={item.slug || idx}
               onClick={() => handleOpenDetail(item)}
-              className="group cursor-pointer rounded-[28px] overflow-hidden liquid-glass-card shadow-xl active:scale-[0.96] transition-all flex flex-col"
+              className="group cursor-pointer aspect-[2/3] rounded-[24px] bg-[#121214] border border-white/10 overflow-hidden active:scale-[0.96] transition-transform duration-150 relative flex flex-col justify-end"
             >
-              <div className="relative aspect-[2/3] w-full bg-zinc-900 overflow-hidden">
-                <SmartImage
-                  item={item}
-                  src={item.poster}
-                  title={item.title}
-                  alt={item.title}
-                  type="donghua"
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent opacity-90" />
+              <SmartImage
+                item={item}
+                src={item.poster}
+                title={item.title}
+                alt={item.title}
+                type="donghua"
+                className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent opacity-90" />
 
-                <div className="absolute top-2.5 left-2.5 z-10 pointer-events-none">
-                  <span className="px-2.5 py-0.5 rounded-full liquid-glass-pill text-[10px] font-bold text-zinc-200">
-                    {item.currentEpisode || (item.status === 'Completed' ? 'Tamat' : 'Ongoing')}
-                  </span>
-                </div>
-
-                <div className="absolute top-2.5 right-2.5 z-10 pointer-events-none flex items-center gap-1 px-2.5 py-0.5 rounded-full liquid-glass-pill text-[10px] font-mono text-amber-300 font-bold">
-                  <Star className="w-3 h-3 fill-amber-300" />
-                  <span>{item.rating || '8.8'}</span>
-                </div>
+              <div className="absolute top-2.5 left-2.5 z-10 pointer-events-none">
+                <span className="px-2.5 py-0.5 rounded-full bg-black/75 backdrop-blur-md border border-white/15 text-[10px] font-bold text-white">
+                  {item.currentEpisode || (item.status === 'Completed' ? 'Tamat' : 'Ongoing')}
+                </span>
               </div>
 
-              <div className="p-3 flex-1 flex flex-col justify-between space-y-1">
-                <h4 className="font-bold text-xs text-zinc-200 group-hover:text-zinc-200 line-clamp-2 transition-colors">
+              <div className="absolute top-2.5 right-2.5 z-10 pointer-events-none flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-black/75 backdrop-blur-md border border-white/15 text-[10px] font-mono text-white font-bold">
+                <Star className="w-3 h-3 fill-white text-white" />
+                <span>{item.rating || '8.8'}</span>
+              </div>
+
+              <div className="relative z-10 p-3 bg-gradient-to-t from-black via-black/90 to-transparent">
+                <h4 className="font-bold text-xs text-white line-clamp-2 transition-colors">
                   {item.title}
                 </h4>
-                <div className="flex items-center justify-between text-[10px] text-zinc-500 pt-1">
+                <div className="flex items-center justify-between text-[10px] text-zinc-400 pt-1">
                   <span>Donghua 3D</span>
-                  <span className="text-zinc-400 font-semibold group-hover:underline">Putar ▶</span>
+                  <span className="text-white font-semibold">Putar ▶</span>
                 </div>
               </div>
             </div>
@@ -294,13 +292,13 @@ export default function DonghuaView() {
                       <p className="text-xs text-zinc-400 italic">{detailData.alterTitle}</p>
                     )}
                     <div className="flex flex-wrap items-center gap-1.5 pt-1">
-                      <span className="px-2 py-0.5 rounded-md bg-amber-400/20 text-amber-300 font-mono text-[11px] font-bold border border-amber-400/30">
+                      <span className="px-2 py-0.5 rounded-full bg-white/10 text-white font-mono text-[11px] font-bold border border-white/20">
                         ★ {detailData.rating}
                       </span>
-                      <span className="px-2 py-0.5 rounded-md bg-white/10 text-white text-[11px] font-semibold">
+                      <span className="px-2 py-0.5 rounded-full bg-white/10 text-white text-[11px] font-semibold">
                         {detailData.status}
                       </span>
-                      <span className="px-2 py-0.5 rounded-md bg-[#1C1C1E] text-zinc-300 text-[11px] border border-[#2E2E30]">
+                      <span className="px-2 py-0.5 rounded-full bg-[#1C1C1E] text-zinc-300 text-[11px] border border-[#2E2E30]">
                         {detailData.network || 'Tencent / Bilibili'}
                       </span>
                     </div>
@@ -309,7 +307,7 @@ export default function DonghuaView() {
                       {detailData.genres.map((g) => (
                         <span
                           key={g}
-                          className="px-2 py-0.5 rounded bg-white/[0.05] text-[10px] text-zinc-300 border border-white/[0.06]"
+                          className="px-2 py-0.5 rounded-lg bg-white/[0.05] text-[10px] text-zinc-300 border border-white/[0.06]"
                         >
                           {g}
                         </span>
@@ -325,7 +323,7 @@ export default function DonghuaView() {
                 {/* Episode List Section */}
                 <div className="space-y-3 pt-2 border-t border-white/[0.08]">
                   <div className="flex items-center justify-between">
-                    <h4 className="font-cinematic font-bold text-xs uppercase tracking-wider text-zinc-300">
+                    <h4 className="font-sans font-bold text-xs uppercase tracking-wider text-zinc-300">
                       Pilih Episode ({detailData.episodesList.length})
                     </h4>
                     <span className="text-[11px] text-zinc-400 font-semibold">Sub Indo Ready</span>
@@ -340,10 +338,10 @@ export default function DonghuaView() {
                           setSelectedDonghua(null);
                           handlePlayEpisode(ep.slug);
                         }}
-                        className="px-3 py-2.5 rounded-xl bg-white/[0.05] hover:bg-cyan-500/20 border border-white/[0.08] hover:border-cyan-400/40 text-xs font-bold text-zinc-200 hover:text-zinc-200 text-left truncate spring-press transition-all flex items-center justify-between"
+                        className="px-3 py-2.5 rounded-xl bg-white/[0.05] hover:bg-white/10 border border-white/[0.08] hover:border-white/30 text-xs font-bold text-zinc-200 hover:text-white text-left truncate spring-press transition-all flex items-center justify-between"
                       >
                         <span className="truncate">{ep.title}</span>
-                        <Play className="w-3 h-3 text-zinc-400 shrink-0 ml-1" />
+                        <Play className="w-3 h-3 text-white shrink-0 ml-1" />
                       </button>
                     ))}
                   </div>

@@ -245,8 +245,8 @@ export default function DrakorView() {
               <span className="px-2.5 py-0.5 rounded-full liquid-glass-pill text-zinc-200 font-medium text-[10px] tracking-wide">
                 HOT K-DRAMA
               </span>
-              <span className="flex items-center gap-1 font-bold text-amber-300 text-xs px-2 py-0.5 rounded-full bg-black/60 backdrop-blur-md border border-amber-400/30">
-                <Star className="w-3.5 h-3.5 fill-amber-300" />
+              <span className="flex items-center gap-1 font-bold text-white text-xs px-2 py-0.5 rounded-full bg-black/60 backdrop-blur-md border border-white/20">
+                <Star className="w-3.5 h-3.5 fill-white text-white" />
                 {heroDrakor.rating}
               </span>
             </div>
@@ -270,8 +270,8 @@ export default function DrakorView() {
             )}
 
             <div className="flex flex-wrap items-center justify-center md:justify-start gap-2 text-xs font-semibold text-zinc-300">
-              <span className="px-2.5 py-1 rounded-full liquid-glass-pill text-amber-300 font-bold flex items-center gap-1">
-                <Star className="w-3 h-3 fill-amber-300" /> {heroDrakor.rating} TMDB
+              <span className="px-2.5 py-1 rounded-full liquid-glass-pill text-white font-bold flex items-center gap-1">
+                <Star className="w-3 h-3 fill-white text-white" /> {heroDrakor.rating} TMDB
               </span>
               <span className="px-2.5 py-1 rounded-full liquid-glass-pill text-white font-mono">
                 {heroDrakor.year}
@@ -294,7 +294,7 @@ export default function DrakorView() {
                 onClick={() => handleOpenDetail(heroDrakor)}
                 className="px-6 py-2.5 rounded-full bg-white text-black font-bold text-xs sm:text-sm hover:bg-zinc-200 shadow-md active:scale-95 transition-all flex items-center gap-2"
               >
-                <Play className="w-4 h-4 fill-white" />
+                <Play className="w-4 h-4 fill-black" />
                 <span>Nonton Episode 1</span>
               </button>
 
@@ -329,7 +329,7 @@ export default function DrakorView() {
                 : 'text-zinc-400 hover:text-white'
             }`}
           >
-            <Sparkles className="w-3.5 h-3.5" />
+            <Play className="w-3.5 h-3.5" />
             <span>Sedang Tayang</span>
           </button>
 
@@ -408,7 +408,7 @@ export default function DrakorView() {
               <div
                 key={item.id || index}
                 onClick={() => handleOpenDetail(item)}
-                className={`group relative flex flex-col rounded-[28px] liquid-glass-card overflow-hidden cursor-pointer shadow-xl animate-fade-in-up ${stagger}`}
+                className={`group relative flex flex-col aspect-[2/3] rounded-[24px] bg-[#121214] border border-white/10 hover:border-white/20 overflow-hidden cursor-pointer shadow-xl active:scale-[0.96] transition-transform duration-150 ${stagger}`}
               >
                 {/* 1.5px Specular Top Highlight */}
                 <div className="absolute top-0 left-0 right-0 h-[1.5px] bg-gradient-to-r from-transparent via-white/40 to-transparent z-20 pointer-events-none" />
@@ -420,7 +420,7 @@ export default function DrakorView() {
                     title={item.title}
                     alt={item.title}
                     type="anime"
-                    className="w-full h-full object-cover group-hover:scale-108 transition-transform duration-500 ease-out"
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 ease-out"
                   />
 
                   {/* Deep Liquid Vignette Overlay */}
@@ -433,11 +433,11 @@ export default function DrakorView() {
                     </span>
                   </div>
 
-                  {/* Top-Right Gold Star Rating Badge */}
+                  {/* Top-Right Star Rating Badge */}
                   {item.rating && (
                     <div className="absolute top-2.5 right-2.5 z-10 pointer-events-none">
-                      <span className="flex items-center gap-1 px-2 py-0.5 rounded-full liquid-glass-pill text-[10px] font-black text-amber-300 shadow-md">
-                        <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
+                      <span className="flex items-center gap-1 px-2 py-0.5 rounded-full liquid-glass-pill text-[10px] font-black text-white shadow-md">
+                        <Star className="w-3 h-3 fill-white text-white" />
                         {item.rating}
                       </span>
                     </div>
@@ -507,7 +507,7 @@ export default function DrakorView() {
               </button>
 
               <span className="text-xs font-bold text-zinc-200 tracking-wide uppercase">
-                Flutter Detail View
+                Detail Drama Korea
               </span>
 
               <button
@@ -552,8 +552,8 @@ export default function DrakorView() {
                   )}
 
                   <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 pt-1 text-xs">
-                    <span className="px-2.5 py-0.5 rounded-full liquid-glass-pill text-amber-300 font-bold flex items-center gap-1">
-                      <Star className="w-3 h-3 fill-amber-300" /> {detailData.rating}
+                    <span className="px-2.5 py-0.5 rounded-full liquid-glass-pill text-white font-bold flex items-center gap-1">
+                      <Star className="w-3 h-3 fill-white text-white" /> {detailData.rating}
                     </span>
                     <span className="px-2.5 py-0.5 rounded-full liquid-glass-pill text-white font-mono">
                       {detailData.year}
@@ -581,7 +581,7 @@ export default function DrakorView() {
                       onClick={() => handlePlayEpisode(detailData, 1)}
                       className="w-full sm:w-auto px-6 py-2.5 rounded-full bg-white text-black font-bold text-xs hover:bg-zinc-200 shadow-md active:scale-95 transition-all flex items-center justify-center gap-2"
                     >
-                      <Play className="w-4 h-4 fill-white" />
+                      <Play className="w-4 h-4 fill-black" />
                       <span>Putar Episode 1 Sekarang</span>
                     </button>
                   </div>
@@ -677,7 +677,7 @@ export default function DrakorView() {
                   {playingDrakor.detail.title} - Episode {playingDrakor.currentEpNumber}
                 </h3>
                 <p className="text-[10px] text-zinc-400">
-                  {playingDrakor.detail.alterTitle || 'NEXUS Spatial Streaming Engine'}
+                  {playingDrakor.detail.alterTitle || 'Streaming Player HD'}
                 </p>
               </div>
             </div>

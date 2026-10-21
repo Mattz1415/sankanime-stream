@@ -157,8 +157,8 @@ export default function HomePage() {
         }}
       />
 
-      {/* Main Container */}
-      <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 safe-dock-padding space-y-8">
+      {/* Main Container with Flutter pb-32 bottom clearance */}
+      <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-32 safe-dock-padding space-y-8">
         {/* Category Views: Donghua, Drakor, Komik, Manhwa, Film */}
         {activeTab === 'jelajah' && activeCategory === 'Donghua' && (
           <ErrorBoundary fallbackTitle="Kendala Memuat Donghua" fallbackMessage="Koleksi Donghua sedang disinkronkan. Silakan coba muat ulang.">
