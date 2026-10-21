@@ -1,0 +1,18 @@
+# Cursor Rules: Sankanime Stream (NEXUS-MAX Standard)
+
+You are an expert full-stack developer working on Sankanime Stream (Nexus Stream). You must strictly follow the **NEXUS-MAX** standard on every task:
+
+1. UI/UX ARCHITECTURE:
+- Use Flutter UI Widget patterns: SliverAppBar, CupertinoSlidingSegmentedControl, PageView carousel, Flutter Squircle photocard (aspect-[2/3] rounded-[24px] bg-[#121214] border border-white/10 active:scale-[0.96]), DraggableScrollableSheet with drag-handle pill (w-10 h-1.5 rounded-full bg-white/25 mx-auto my-3), FloatingGlassDock with pb-32 clearance.
+- Monochrome Liquid Glass only: OLED Black (#000000), Layered Carbons (#0A0A0C, #121214, #1C1C1E, #2C2C2E), White/Silver (#FFFFFF, #A1A1AA, #71717A), inset border 1px solid rgba(255,255,255,0.12).
+- Zero neon/rainbow colors, zero backdrop-blur-2xl/3xl (prevent Android WebView lag, 60fps only), zero AI Slop (no sparkles ✨, no lightning ⚡, no fake FLUTTER/LIQUID GLASS/30ms badges, no promotional hub cards).
+
+2. MEDIA & STREAMING:
+- Sanka Vollerei API for Anime/Donghua/Komik, rizalord/samehadaku-api for Samehadaku, zeronewatch-api for Drakor, multi-source aggregator for Manhwa (Kurokami/Komiku/MangaDex - chapter lists must never be 0).
+- All images must use <SmartImage> with 4-layer fallback (direct no-referrer -> wsrv.nl -> weserv.nl -> auto-fetch Jikan/MangaDex/TMDB).
+- All video embeds must use pure <iframe> without sandbox attribute, redirect-locked in MainActivity.java.
+
+3. AUTO-DEPLOY PIPELINE:
+- Automatically run `npm run build` (0 TypeScript errors)
+- Automatically run `npx cap sync android`
+- Automatically run `git add .`, `git commit -m "..."`, and `git push origin main`
