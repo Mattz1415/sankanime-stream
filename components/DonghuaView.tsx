@@ -220,7 +220,7 @@ export default function DonghuaView() {
             <div
               key={item.slug || idx}
               onClick={() => handleOpenDetail(item)}
-              className="group cursor-pointer rounded-2xl overflow-hidden card-frosted-obsidian border border-white/[0.08] hover:border-cyan-400/50 hover:shadow-[0_0_25px_rgba(0,240,255,0.2)] transition-all duration-300 spring-press flex flex-col"
+              className="group cursor-pointer rounded-[28px] overflow-hidden liquid-glass-card shadow-xl active:scale-[0.96] transition-all flex flex-col"
             >
               <div className="relative aspect-[2/3] w-full bg-zinc-900 overflow-hidden">
                 <SmartImage
@@ -234,12 +234,12 @@ export default function DonghuaView() {
                 <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent opacity-90" />
 
                 <div className="absolute top-2.5 left-2.5 z-10 pointer-events-none">
-                  <span className="px-2 py-0.5 rounded-lg bg-black/80 backdrop-blur-md text-[10px] font-bold text-cyan-300 border border-cyan-400/30">
+                  <span className="px-2.5 py-0.5 rounded-full liquid-glass-pill text-[10px] font-bold text-cyan-300">
                     {item.currentEpisode || (item.status === 'Completed' ? 'Tamat' : 'Ongoing')}
                   </span>
                 </div>
 
-                <div className="absolute top-2.5 right-2.5 z-10 pointer-events-none flex items-center gap-1 px-2 py-0.5 rounded-lg bg-black/85 backdrop-blur-md text-[10px] font-mono text-amber-300 font-bold border border-amber-400/30">
+                <div className="absolute top-2.5 right-2.5 z-10 pointer-events-none flex items-center gap-1 px-2.5 py-0.5 rounded-full liquid-glass-pill text-[10px] font-mono text-amber-300 font-bold">
                   <Star className="w-3 h-3 fill-amber-300" />
                   <span>{item.rating || '8.8'}</span>
                 </div>

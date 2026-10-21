@@ -66,7 +66,7 @@ export default function TopTenShelf({ animeList }: TopTenShelfProps) {
               </div>
 
               {/* Poster Card Floating Over the Number */}
-              <div className="relative w-32 sm:w-36 h-48 sm:h-52 rounded-2xl overflow-hidden glass-obsidian-card border border-white/15 z-10 shadow-2xl flex flex-col justify-between group-hover:border-cyan-400/50 transition-colors">
+              <div className="relative w-32 sm:w-36 h-48 sm:h-52 rounded-[28px] overflow-hidden liquid-glass-card border border-white/20 z-10 shadow-2xl flex flex-col justify-between group-hover:border-cyan-400/50 active:scale-[0.96] transition-all">
                 <SmartImage
                   item={anime}
                   src={anime.poster}

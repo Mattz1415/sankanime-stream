@@ -41,7 +41,7 @@ export default function ReleaseCountdownBanner({ schedule }: ReleaseCountdownBan
   };
 
   return (
-    <div className="relative w-full rounded-2xl p-4 sm:p-5 card-frosted-obsidian border border-white/[0.08] shadow-[0_16px_40px_rgba(0,0,0,0.95)] overflow-hidden flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+    <div className="relative w-full rounded-[28px] p-4 sm:p-5 liquid-glass-surface shadow-[0_16px_40px_rgba(0,0,0,0.8)] overflow-hidden flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
       {/* Background Accent Pulse */}
       <div className="absolute top-0 right-0 w-64 h-full bg-gradient-to-l from-cyan-500/10 via-transparent to-transparent pointer-events-none" />
 

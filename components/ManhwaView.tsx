@@ -320,7 +320,7 @@ export default function ManhwaView() {
               <div
                 key={item.slug || idx}
                 onClick={() => handleOpenDetail(item)}
-                className="group cursor-pointer rounded-2xl overflow-hidden card-frosted-obsidian border border-white/[0.08] hover:border-purple-400/60 hover:shadow-[0_0_25px_rgba(168,85,247,0.3)] transition-all duration-300 spring-press flex flex-col"
+                className="group cursor-pointer rounded-[28px] overflow-hidden liquid-glass-card shadow-xl active:scale-[0.96] transition-all flex flex-col"
               >
                 <div className="relative aspect-[2/3] w-full bg-[#0a0a10] overflow-hidden">
                   <SmartImage
@@ -334,15 +334,15 @@ export default function ManhwaView() {
                   <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent opacity-90 group-hover:opacity-95 transition-opacity" />
 
                   {/* Chapter badge */}
-                  <div className="absolute top-2 left-2 z-10 pointer-events-none">
-                    <span className="px-2 py-0.5 rounded-lg bg-black/80 backdrop-blur-md text-[10px] font-bold text-purple-300 border border-purple-400/40 shadow-md">
+                  <div className="absolute top-2.5 left-2.5 z-10 pointer-events-none">
+                    <span className="px-2.5 py-0.5 rounded-full liquid-glass-pill text-[10px] font-bold text-purple-300 shadow-md">
                       {item.chapter || 'Full Color'}
                     </span>
                   </div>
 
                   {/* Score badge */}
-                  <div className="absolute top-2 right-2 z-10 pointer-events-none">
-                    <span className="flex items-center gap-1 px-1.5 py-0.5 rounded-lg bg-black/85 backdrop-blur-md text-[10px] font-mono text-amber-300 font-black border border-amber-400/40 shadow-md">
+                  <div className="absolute top-2.5 right-2.5 z-10 pointer-events-none">
+                    <span className="flex items-center gap-1 px-2.5 py-0.5 rounded-full liquid-glass-pill text-[10px] font-mono text-amber-300 font-black shadow-md">
                       <Star className="w-3 h-3 fill-amber-300" />
                       {item.score || '9.6'}
                     </span>

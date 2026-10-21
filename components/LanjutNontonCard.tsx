@@ -49,9 +49,9 @@ export default function LanjutNontonCard({
   };
 
   return (
-    <div className="relative w-full rounded-3xl p-5 sm:p-6 card-frosted-obsidian border border-white/[0.09] shadow-[0_24px_60px_rgba(0,0,0,0.98)] overflow-hidden group animate-fade-in-up">
-      {/* 1px Specular Highlight at Top */}
-      <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-white/30 to-transparent pointer-events-none" />
+    <div className="relative w-full rounded-[32px] p-5 sm:p-6 liquid-glass-surface shadow-[0_24px_60px_rgba(0,0,0,0.85)] overflow-hidden group animate-fade-in-up">
+      {/* 1.5px Specular Highlight at Top */}
+      <div className="absolute top-0 left-0 right-0 h-[1.5px] bg-gradient-to-r from-transparent via-white/40 to-transparent pointer-events-none" />
 
       {/* Ambient Radial Glow */}
       <div
